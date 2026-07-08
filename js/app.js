@@ -177,7 +177,55 @@ function stopCatalog() {
   state.catalogTimers.forEach(clearInterval);
   state.catalogTimers = [];
   if (catalogObserver) { catalogObserver.disconnect(); catalogObserver = null; }
-  $("#catalog-list").querySelectorAll("video").forEach((v) => v.pause());
+  document.querySelectorAll("#catalog-list video, #detail-ex video").forEach((v) => v.pause());
+}
+
+// ---- メニュー詳細（開始前に全体像を見せて確認） ----
+function openDetail(workout, from) {
+  stopCatalog();
+  const p = workout;
+  state.detailFrom = from || "home";
+  const seq = p.exercises.length * p.rounds;
+  const totalSec = seq * p.workSec + (seq - 1) * p.restSec + state.settings.prepareSec;
+  const min = Math.max(1, Math.round(totalSec / 60));
+  const kcal = estimateKcal(seq * p.workSec);
+  $("#detail-title").textContent = p.short || p.title;
+  $("#detail-hero").className = `detail-hero glass tint-${p.tint}`;
+  $("#detail-hero").innerHTML =
+    `<span class="detail-hero-ico"><img src="assets/ui/pict-${p.pict}.png" alt=""></span>` +
+    `<span class="detail-hero-info">` +
+      `<span class="detail-badge">${p.badge}</span>` +
+      `<b class="detail-hero-title">${p.title}</b>` +
+      `<span class="detail-hero-desc">${p.desc}</span>` +
+      `<span class="detail-hero-meta">` +
+        `<span>🥷 ${seq}種目</span><span>⏱ 約${min}分</span>` +
+        `<span>🔁 ${p.rounds}周</span><span>🔥 ${kcal}kcal</span>` +
+      `</span>` +
+    `</span>`;
+  const wrap = $("#detail-ex");
+  wrap.innerHTML = "";
+  p.exercises.forEach((key, idx) => {
+    const row = document.createElement("div");
+    row.className = "detail-ex-row glass";
+    row.style.animationDelay = `${idx * 0.04}s`;
+    row.innerHTML =
+      `<span class="detail-ex-no">${idx + 1}</span>` +
+      `<div class="detail-ex-thumb"></div>` +
+      `<span class="detail-ex-name">${EXERCISES[key].name}</span>` +
+      `<span class="detail-ex-sec">${p.workSec}秒</span>`;
+    wrap.appendChild(row);
+    startThumb(row.querySelector(".detail-ex-thumb"), key);
+  });
+  $("#btn-detail-start").onclick = () => { stopCatalog(); startWorkout(p); };
+  $("#detail-hero").onclick = null;
+  $(".detail-scroll").scrollTop = 0;
+  show("screen-detail");
+}
+
+function detailBack() {
+  stopCatalog();
+  if (state.detailFrom === "catalog") renderCatalog();
+  else renderHome();
 }
 
 function renderCatalog() {
@@ -211,7 +259,7 @@ function renderCatalog() {
     const startBtn = document.createElement("button");
     startBtn.className = "catalog-start";
     startBtn.textContent = "この修行を始める";
-    startBtn.onclick = () => { stopCatalog(); startWorkout(p); };
+    startBtn.onclick = () => openDetail(p, "catalog");
     card.appendChild(startBtn);
     list.appendChild(card);
   });
@@ -357,7 +405,7 @@ function renderHome() {
           `<span class="hud-prog-num">${done}/${goal}</span></span>` +
       `</span>` +
       `<span class="hud-card-go">›</span>`;
-    li.onclick = () => startWorkout(p);
+    li.onclick = () => openDetail(p, "home");
     list.appendChild(li);
   });
   const tc = todayStats().count;
@@ -532,6 +580,7 @@ document.addEventListener("DOMContentLoaded", () => {
   $("#btn-done-home").onclick = renderHome;
   $("#btn-catalog").onclick = renderCatalog;
   $("#btn-catalog-back").onclick = renderHome;
+  $("#btn-detail-back").onclick = detailBack;
   document.querySelectorAll(".hud-tab[data-soon]").forEach(b => {
     b.onclick = () => showToast(`${b.dataset.soon} はただいま準備中だよ 🥷`);
   });

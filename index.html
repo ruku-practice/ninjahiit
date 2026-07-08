@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=31">
+  <link rel="stylesheet" href="css/style.css?v=32">
 </head>
 <body>
 
@@ -54,6 +54,25 @@
   </section>
 
   <div id="toast" class="toast"></div>
+
+  <!-- メニュー詳細（開始確認） -->
+  <section id="screen-detail" class="screen hud">
+    <div class="hud-env"></div>
+    <div class="hud-scroll detail-scroll">
+      <header class="detail-top">
+        <button id="btn-detail-back" class="hbtn-dark" aria-label="戻る">←</button>
+        <h2 id="detail-title">メニュー</h2>
+      </header>
+      <div id="detail-hero" class="detail-hero glass"></div>
+      <div class="hud-sec">種目リスト<i class="hud-slash"></i></div>
+      <div id="detail-ex" class="detail-ex"></div>
+      <p class="fan-note">本アプリはCryptoNinjaのファンメイド（二次創作）アプリです。</p>
+    </div>
+    <div class="detail-cta">
+      <span class="detail-cta-q">このメニューを始めますか？</span>
+      <button id="btn-detail-start" class="detail-start-btn">はい、はじめる <b>›</b></button>
+    </div>
+  </section>
 
   <!-- ワークアウト一覧 -->
   <section id="screen-catalog" class="screen">
@@ -112,9 +131,9 @@
     </div>
   </section>
 
-  <script src="js/data.js?v=31"></script>
-  <script src="js/audio.js?v=31"></script>
-  <script src="js/timer.js?v=31"></script>
-  <script src="js/app.js?v=31"></script>
+  <script src="js/data.js?v=32"></script>
+  <script src="js/audio.js?v=32"></script>
+  <script src="js/timer.js?v=32"></script>
+  <script src="js/app.js?v=32"></script>
 </body>
 </html>
