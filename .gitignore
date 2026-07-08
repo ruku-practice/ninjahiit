@@ -7,3 +7,8 @@ assets/characters/sakuya/スマホアイコン.png
 # OS
 .DS_Store
 **/.DS_Store
+# UI素材の原本（アプリ実行には不要・重い）
+assets/fitness_ui_assets/
+assets/fitness_ui_assets.zip
+assets/backgroud.png
+assets/名称未設定フォルダ/

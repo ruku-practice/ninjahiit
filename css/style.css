@@ -82,18 +82,9 @@ button, .btn-primary, .btn-ghost, .catalog-link { font-family: inherit; }
 /* ================= HUD ホーム（SF・ハイテク） ================= */
 #screen-home.hud { position: relative; padding: 0; background: #aabfe0; }
 
-/* 環境背景：明るい近未来ジム（空→反射床＋グリッド＋コーナー発光） */
+/* 環境背景：近未来ジムのレンダー画像（ユーザー提供） */
 .hud-env { position: fixed; inset: 0; z-index: 0; overflow: hidden;
-  background: radial-gradient(120% 72% at 50% -12%, #eef4ff 0%, #d3e0f4 42%, #bccfec 64%, #a9c0e2 100%); }
-.hud-env::before { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 46%;
-  background: linear-gradient(180deg, rgba(180,200,230,0) 0%, #c9d9f0 26%, #e0ebfa 100%); }
-.hud-env::after { content: ""; position: absolute; inset: 0;
-  background:
-    radial-gradient(58% 42% at 12% 10%, rgba(255,90,150,0.18), transparent 60%),
-    radial-gradient(58% 42% at 90% 16%, rgba(23,201,214,0.18), transparent 60%),
-    repeating-linear-gradient(90deg, rgba(120,150,190,0.11) 0 1px, transparent 1px 48px);
-  -webkit-mask: linear-gradient(180deg, #000 0 60%, transparent 80%);
-          mask: linear-gradient(180deg, #000 0 60%, transparent 80%); }
+  background: #e9eff8 url(../assets/ui/background.jpg) center bottom / cover no-repeat; }
 
 .hud-scroll { position: relative; z-index: 1; min-height: 100dvh;
   padding: 12px 12px calc(80px + env(safe-area-inset-bottom));
