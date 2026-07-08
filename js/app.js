@@ -427,6 +427,15 @@ function renderHistory() {
 function startWorkout(workout) {
   Sound.init();
   Sound.enabled = state.settings.sound;
+  Voice.useCtx(Sound.ctx);
+  Voice.enabled = state.settings.sound;
+  // この修行で使う声を先読み（定型＋登場種目の「最初は/つぎは」）
+  const exKeys = [...new Set(workout.exercises)];
+  Voice.preload([
+    "count_3", "count_2", "count_1", "go_1", "go_2",
+    "mid_1", "mid_2", "mid_3", "last10_1", "last10_2", "finish_1", "finish_2",
+    ...exKeys.map((k) => `first_${k}`), ...exKeys.map((k) => `next_${k}`),
+  ]);
   acquireWakeLock();
   state.currentWorkout = workout;
 
@@ -447,11 +456,14 @@ function startWorkout(workout) {
 
       if (seg.type === "work") {
         Sound.workStart();
+        Voice.playOne(["go_1", "go_2"]);                       // 「はじめっ！」（種目名は直前に予告済み）
         $("#run-quote").textContent = quote("work_start", { exercise: EXERCISES[seg.exercise].name });
       } else if (seg.type === "rest") {
         Sound.restStart();
+        if (next) Voice.play(`next_${next.exercise}`);          // 休憩中に次の種目を予告「つぎは、〇〇！」
         $("#run-quote").textContent = quote("rest");
       } else {
+        Voice.play(`first_${seg.exercise}`);                    // 開始「最初は、〇〇！」
         $("#run-quote").textContent = quote("prepare", { exercise: EXERCISES[seg.exercise].name });
       }
       lastTickSec = null;
@@ -467,14 +479,25 @@ function startWorkout(workout) {
 
       if (sec !== lastTickSec) {
         lastTickSec = sec;
-        if (sec <= 3 && sec >= 1) Sound.countTick();
-        if (seg.type === "work" && sec === 5) $("#run-quote").textContent = quote("work_last5");
-        if (seg.type === "work" && sec === Math.ceil(seg.sec / 2)) $("#run-quote").textContent = quote("work_mid");
+        // ワーク・休憩の終わる瞬間、カウントに合わせて「さん・に・いち」
+        if ((seg.type === "work" || seg.type === "rest") && sec <= 3 && sec >= 1) {
+          Sound.countTick();
+          Voice.play(`count_${sec}`);
+        }
+        if (seg.type === "work" && sec === 10) {                // ラスト10秒（旧ラスト5秒を置換）
+          Voice.playOne(["last10_1", "last10_2"]);
+          $("#run-quote").textContent = "あと10秒、あとちょっと！";
+        }
+        if (seg.type === "work" && sec === Math.ceil(seg.sec / 2)) {
+          Voice.playOne(["mid_1", "mid_2", "mid_3"]);
+          $("#run-quote").textContent = quote("work_mid");
+        }
       }
     },
 
     onFinish() {
       Sound.finish();
+      Voice.playOne(["finish_1", "finish_2"]);
       stopSprite();
       $("#run-chara video")?.pause();
       releaseWakeLock();
@@ -496,6 +519,7 @@ function togglePause() {
   if (e.pausedAt === null) {
     e.pause();
     stopSprite();
+    Voice.stop();
     $("#run-chara video")?.pause();
     $("#btn-pause").textContent = "▶";
   } else {
@@ -509,6 +533,7 @@ function quitWorkout() {
   if (!confirm("修行を中断する？")) return;
   state.engine?.stop();
   stopSprite();
+  Voice.stop();
   $("#run-chara video")?.pause();
   releaseWakeLock();
   renderHome();
@@ -589,6 +614,8 @@ document.addEventListener("DOMContentLoaded", () => {
   $("#btn-sound").onclick = () => {
     state.settings.sound = !state.settings.sound;
     Sound.enabled = state.settings.sound;
+    Voice.enabled = state.settings.sound;
+    if (!state.settings.sound) Voice.stop();
     store.set("settings", state.settings);
     $("#btn-sound").textContent = state.settings.sound ? "🔊" : "🔇";
   };

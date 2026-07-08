@@ -31,3 +31,54 @@ const Sound = {
   restStart() { this._tone(520, 300, "sine", 0.2); },              // 休憩開始
   finish()    { [523, 659, 784, 1047].forEach((f, i) => this._tone(f, 260, "sine", 0.25, i * 0.15)); },
 };
+
+// サクヤの声（事前生成した音声クリップを Sound のAudioContextで再生）
+// iOSは開始タップで解錠済みのContextを使い回すので確実に鳴る。
+const Voice = {
+  ctx: null,
+  base: "assets/audio/sakuya/",
+  buffers: {},        // name -> AudioBuffer（decode済み）
+  pending: {},        // name -> Promise（多重fetch防止）
+  missing: {},        // name -> true（無い/失敗）
+  current: null,      // 再生中のsource
+  enabled: true,
+
+  useCtx(ctx) { this.ctx = ctx; },
+
+  _load(name) {
+    if (this.buffers[name] || this.missing[name] || !this.ctx) return this.pending[name] || Promise.resolve();
+    if (this.pending[name]) return this.pending[name];
+    this.pending[name] = fetch(this.base + name + ".mp3")
+      .then((r) => { if (!r.ok) throw new Error("404"); return r.arrayBuffer(); })
+      .then((buf) => new Promise((res, rej) => this.ctx.decodeAudioData(buf, res, rej)))
+      .then((decoded) => { this.buffers[name] = decoded; })
+      .catch(() => { this.missing[name] = true; })
+      .finally(() => { delete this.pending[name]; });
+    return this.pending[name];
+  },
+
+  // 使う分をまとめて先読み（キャッシュから即返る）
+  preload(names) { if (this.ctx) names.forEach((n) => this._load(n)); },
+
+  // name を再生。無ければ黙って読み込むだけ（次回用）。interrupt=trueで前の声を止める
+  play(name, interrupt = true) {
+    if (!this.enabled || !this.ctx || !name) return;
+    const buf = this.buffers[name];
+    if (!buf) { this._load(name); return; }
+    if (interrupt) this.stop();
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(this.ctx.destination);
+    src.onended = () => { if (this.current === src) this.current = null; };
+    try { src.start(); } catch (e) { return; }
+    this.current = src;
+  },
+
+  // 候補配列からランダムに1つ再生
+  playOne(names, interrupt = true) {
+    if (!names || !names.length) return;
+    this.play(names[Math.floor(Math.random() * names.length)], interrupt);
+  },
+
+  stop() { if (this.current) { try { this.current.stop(); } catch (e) {} this.current = null; } },
+};
