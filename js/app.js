@@ -251,14 +251,86 @@ function releaseWakeLock() {
   state.wakeLock = null;
 }
 
+// ---- 進捗（忍びランク・今日/今週の集計・文脈セリフ）----
+function totalExp() {
+  return state.history
+    .filter(h => h.completed)
+    .reduce((sum, h) => sum + expForResult(h.totalWorkSec), 0);
+}
+
+function todayStats() {
+  const t = todayStr();
+  const today = state.history.filter(h => h.completed && h.date === t);
+  const workSec = today.reduce((a, h) => a + h.totalWorkSec, 0);
+  return { count: today.length, workSec, kcal: estimateKcal(workSec) };
+}
+
+// 今週（月曜始まり）の活動日ドット。やさしく「日数」で数える
+function weekRecord() {
+  const now = new Date();
+  const dow = (now.getDay() + 6) % 7; // 月=0 … 日=6
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - dow);
+  const doneDates = new Set(state.history.filter(h => h.completed).map(h => h.date));
+  const todayS = todayStr(now);
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    const ds = todayStr(d);
+    days.push({ label: "月火水木金土日"[i], done: doneDates.has(ds), isToday: ds === todayS });
+  }
+  return { days, count: days.filter(d => d.done).length, goal: WEEKLY_GOAL };
+}
+
+// ホームの一言：初回・久しぶり（責めない）・連続・時間帯で出し分け
+function homeGreeting() {
+  const completed = state.history.filter(h => h.completed);
+  if (completed.length === 0) return "はじめまして。今日から一緒に、4分だけ。";
+  const last = completed[completed.length - 1];
+  const daysSince = Math.round(
+    (new Date(todayStr() + "T00:00:00") - new Date(last.date + "T00:00:00")) / 86400000);
+  if (daysSince >= 3) return `${daysSince}日ぶりだね。おかえり、また一緒にやろう。`;
+  const s = streakDays();
+  if (s >= 2) return `${s}日連続、その調子だよ！`;
+  const hour = new Date().getHours();
+  if (hour < 10) return "おはよう。朝の4分、いってみる？";
+  if (hour >= 20) return "今日もお疲れさま。寝る前に少しだけ動く？";
+  return quote("home");
+}
+
+function renderStatusCard() {
+  const r = rankInfo(totalExp());
+  const ts = todayStats();
+  const wr = weekRecord();
+  const pct = Math.round(r.progress * 100);
+  const strip = wr.days.map(d =>
+    `<div class="sc-day${d.done ? " done" : ""}${d.isToday ? " today" : ""}">` +
+    `<span class="sc-dot"></span><span class="sc-dlabel">${d.label}</span></div>`).join("");
+  $("#status-card").innerHTML =
+    `<div class="sc-rank-row">` +
+      `<span class="sc-rank">🥷 ${r.name}</span>` +
+      `<span class="sc-next">${r.next ? `昇格まで あと ${r.remain}` : "最高位！"}</span>` +
+    `</div>` +
+    `<div class="sc-exp"><div class="sc-exp-fill" style="width:${pct}%"></div></div>` +
+    `<div class="sc-stats">` +
+      `<div class="sc-stat"><b>${ts.count}</b><span>今日の完走</span></div>` +
+      `<div class="sc-stat"><b>${Math.round(ts.workSec / 60 * 10) / 10}</b><span>分</span></div>` +
+      `<div class="sc-stat"><b>${ts.kcal}</b><span>kcal</span></div>` +
+    `</div>` +
+    `<div class="sc-week-head">今週の修行 <b>${wr.count}/${wr.goal}日</b></div>` +
+    `<div class="sc-week">${strip}</div>`;
+}
+
 // ---- ホーム画面 ----
 function renderHome() {
   stopCatalog();
   // ヒーローカードでは「迎えてくれる」joyポーズ（いいね）を表示
   showPose($("#home-chara"), "joy_2", trainer().name);
-  $("#home-quote").textContent = quote("home");
+  $("#home-quote").textContent = homeGreeting();
   const s = streakDays();
-  $("#home-streak").textContent = s > 0 ? `🔥 ${s}日連続で修行中` : "今日から修行を始めよう";
+  $("#home-streak").textContent = s >= 2 ? `🔥 ${s}日連続` : "";
+  renderStatusCard();
   const list = $("#preset-list");
   list.innerHTML = "";
   PRESETS.forEach((p, i) => {
@@ -408,10 +480,21 @@ function renderDone(workout, totalWorkSec) {
   showPose($("#done-chara"), `joy_${joyIndex}`, trainer().name);
   fireConfetti();
   const s = streakDays();
-  $("#done-quote").textContent = s >= 2 ? quote("streak", { days: s }) : quote("finish");
+
+  // 修行値と昇格判定（saveResultで履歴に追加済みなので、今回分を引いて前後比較）
+  const gained = expForResult(totalWorkSec);
+  const expAfter = totalExp();
+  const rankBefore = rankInfo(expAfter - gained);
+  const rankAfter = rankInfo(expAfter);
+  const leveledUp = rankAfter.index > rankBefore.index;
+
+  $("#done-quote").textContent = leveledUp
+    ? `やった、${rankAfter.name}に昇格だね！おめでとう🎉`
+    : (s >= 2 ? quote("streak", { days: s }) : quote("finish"));
   $("#done-stats").innerHTML =
     `<li>${workout.title} 完走 🎉</li>` +
     `<li>運動時間 ${Math.round(totalWorkSec / 60 * 10) / 10}分 ・ 約${estimateKcal(totalWorkSec)}kcal</li>` +
+    `<li>🥷 ${rankAfter.name} ・ +${gained} 修行値</li>` +
     `<li>${s > 0 ? `🔥 ${s}日連続` : "また明日も待ってるよ"}</li>`;
   const text = encodeURIComponent(
     `${trainer().name}と一緒に「${workout.title}」完走した！🥷 #サクヤ4分HIIT #CryptoNinja`);

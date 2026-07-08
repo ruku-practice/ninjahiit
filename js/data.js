@@ -103,3 +103,34 @@ const DEFAULT_SETTINGS = { trainer: "sakuya", sound: true, prepareSec: 10 };
 function estimateKcal(totalWorkSec) {
   return Math.round((8.0 * 60 * (totalWorkSec / 3600)) * 1.05);
 }
+
+// ---- 忍びランク＆修行値（EXP）----
+// 完走1回の修行値 = 100 + そのワークアウトの推定kcal（4分タバタ≈134）
+function expForResult(totalWorkSec) {
+  return 100 + estimateKcal(totalWorkSec);
+}
+
+// 見習い→頭領。閾値は序盤サクサク・後半じっくり
+const RANKS = [
+  { name: "見習い忍び", exp: 0 },
+  { name: "下忍",       exp: 300 },
+  { name: "中忍",       exp: 900 },
+  { name: "上忍",       exp: 2000 },
+  { name: "頭領",       exp: 4000 },
+  { name: "伝説の忍び", exp: 7000 },
+];
+
+// 累計EXPから現在ランク・次ランク・進捗を求める
+function rankInfo(totalExp) {
+  let i = 0;
+  for (let k = 0; k < RANKS.length; k++) if (totalExp >= RANKS[k].exp) i = k;
+  const cur = RANKS[i];
+  const next = RANKS[i + 1] || null;
+  const progress = next
+    ? (totalExp - cur.exp) / (next.exp - cur.exp)
+    : 1;
+  return { index: i, name: cur.name, cur, next, progress, remain: next ? next.exp - totalExp : 0 };
+}
+
+// やさしい週目標（今週この回数やれたら花丸、くらいのゆるさ）
+const WEEKLY_GOAL = 3;
