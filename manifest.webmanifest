@@ -1,0 +1,16 @@
+{
+  "name": "NinjaHIIT — 忍びと一緒にHIIT",
+  "short_name": "NinjaHIIT",
+  "description": "クリプトニンジャのキャラと一緒に頑張るHIIT・タバタタイマー（ファンメイドアプリ）",
+  "lang": "ja",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fef9f2",
+  "theme_color": "#2b3a67",
+  "icons": [
+    { "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

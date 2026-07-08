@@ -1,0 +1,9 @@
+# バックアップ・退避原本（公開不要、合計約12MB）
+assets/old/
+**/_originals/
+# 素材元データ（webp/大きいpngのソース。アプリ実行には不要）
+assets/characters/sakuya/*.webp
+assets/characters/sakuya/スマホアイコン.png
+# OS
+.DS_Store
+**/.DS_Store

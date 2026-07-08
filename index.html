@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <title>NinjaHIIT — 忍びと一緒にHIIT</title>
+  <meta name="description" content="クリプトニンジャのキャラと一緒に頑張るHIIT・タバタタイマー（ファンメイドアプリ）">
+  <meta name="theme-color" content="#2b3a67">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css?v=15">
+</head>
+<body>
+
+  <!-- ホーム -->
+  <section id="screen-home" class="screen active">
+    <div class="home-blob home-blob-a"></div>
+    <div class="home-blob home-blob-b"></div>
+    <h1 class="app-title">NinjaHIIT <span class="app-title-emoji">🥷</span>
+      <small>忍びと一緒に、4分だけ。</small>
+    </h1>
+    <div class="chara-stage"><div id="home-chara" class="chara-box"></div></div>
+    <p id="home-quote" class="quote-bubble"></p>
+    <p id="home-streak" class="streak"></p>
+
+    <p class="section-label">今日の修行メニュー</p>
+    <div id="preset-list"></div>
+
+    <button id="btn-catalog" class="catalog-link"><span>📜</span> ワークアウト一覧（種目のうごきを確認）</button>
+
+    <p class="section-label">修行の巻物（記録）</p>
+    <div class="history-box">
+      <p id="history-total"></p>
+      <ul id="history-list"></ul>
+    </div>
+
+    <p class="fan-note">本アプリはCryptoNinjaのファンメイド（二次創作）アプリです。<br>公式・公認アプリではありません。</p>
+  </section>
+
+  <!-- ワークアウト一覧 -->
+  <section id="screen-catalog" class="screen">
+    <header class="catalog-header">
+      <button id="btn-catalog-back" class="hbtn-dark" aria-label="戻る">←</button>
+      <h2>ワークアウト一覧</h2>
+    </header>
+    <div id="catalog-list"></div>
+  </section>
+
+  <!-- 実行 -->
+  <section id="screen-run" class="screen phase-prepare">
+      <header class="run-header">
+        <button id="btn-quit" class="hbtn" aria-label="中断">←</button>
+        <div class="run-titles">
+          <div id="run-title"></div>
+          <div id="run-progress"></div>
+        </div>
+        <button id="btn-sound" class="hbtn" aria-label="サウンド">🔊</button>
+      </header>
+
+      <div id="run-phase"></div>
+      <div class="chara-stage chara-stage-run"><div id="run-chara" class="chara-box"></div></div>
+      <p id="run-quote"></p>
+
+      <div class="gauge-wrap">
+        <svg viewBox="0 0 100 100">
+          <defs>
+            <linearGradient id="gauge-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#fff"></stop>
+              <stop offset="100%" stop-color="#ffd9e6"></stop>
+            </linearGradient>
+          </defs>
+          <circle id="gauge-bg" cx="50" cy="50" r="45"></circle>
+          <circle id="gauge-arc" cx="50" cy="50" r="45"
+                  stroke-dasharray="282.74" stroke-dashoffset="0"></circle>
+        </svg>
+        <div id="run-count"></div>
+      </div>
+
+      <button id="btn-pause" aria-label="一時停止">⏸</button>
+      <p id="run-next"></p>
+  </section>
+
+  <!-- 完了 -->
+  <section id="screen-done" class="screen">
+    <div id="confetti-layer" class="confetti-layer"></div>
+    <div class="chara-stage chara-stage-done"><div id="done-chara" class="chara-box"></div></div>
+    <p id="done-quote" class="quote-bubble" style="color: var(--ink)"></p>
+    <ul id="done-stats"></ul>
+    <div>
+      <a id="btn-share" class="btn-primary" target="_blank" rel="noopener">Xでシェア</a>
+    </div>
+    <div>
+      <button id="btn-done-home" class="btn-ghost">ホームへ戻る</button>
+    </div>
+  </section>
+
+  <script src="js/data.js?v=15"></script>
+  <script src="js/audio.js?v=15"></script>
+  <script src="js/timer.js?v=15"></script>
+  <script src="js/app.js?v=15"></script>
+</body>
+</html>
