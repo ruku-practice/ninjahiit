@@ -19,6 +19,11 @@
   --grad-forest: linear-gradient(135deg, #2e5339, #57966a);
   --grad-gold: linear-gradient(135deg, #ffb648, #ff7a59);
   --grad-pink: linear-gradient(135deg, #ff4f81, #ff86b0);
+  /* モックのピクトグラム色に合わせたカードアクセント */
+  --grad-teal: linear-gradient(135deg, #17c6b0, #45d69a);
+  --grad-purple: linear-gradient(135deg, #9a7be6, #b79cf0);
+  --grad-blue: linear-gradient(135deg, #4f9bf0, #74baf6);
+  --grad-orange: linear-gradient(135deg, #ffab48, #ff8757);
 
   --shadow-card: 0 6px 18px rgba(43, 58, 103, 0.09), 0 1px 3px rgba(43, 58, 103, 0.08);
   --shadow-pop: 0 10px 24px rgba(255, 79, 129, 0.28);
@@ -157,12 +162,13 @@ button, .btn-primary, .btn-ghost, .catalog-link { font-family: inherit; }
   animation: pop-in 0.35s cubic-bezier(.22,1,.36,1) backwards; }
 .hud-card:active { transform: scale(0.98); }
 .hud-card::before { content: ""; flex: none; width: 5px; align-self: stretch; border-radius: 0 4px 4px 0; }
-.hud-card-icon { flex: none; width: 36px; height: 36px; align-self: center; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; box-shadow: inset 0 -2px 4px rgba(0,0,0,0.1); }
-.hud-card.tint-pink::before, .hud-card.tint-pink .hud-card-icon, .hud-card.tint-pink .hud-prog-bar i, .hud-card.tint-pink .hud-card-go { background: var(--grad-pink); }
-.hud-card.tint-indigo::before, .hud-card.tint-indigo .hud-card-icon, .hud-card.tint-indigo .hud-prog-bar i, .hud-card.tint-indigo .hud-card-go { background: var(--grad-indigo); }
-.hud-card.tint-forest::before, .hud-card.tint-forest .hud-card-icon, .hud-card.tint-forest .hud-prog-bar i, .hud-card.tint-forest .hud-card-go { background: var(--grad-forest); }
-.hud-card.tint-gold::before, .hud-card.tint-gold .hud-card-icon, .hud-card.tint-gold .hud-prog-bar i, .hud-card.tint-gold .hud-card-go { background: var(--grad-gold); }
-.hud-card.tint-vermilion::before, .hud-card.tint-vermilion .hud-card-icon, .hud-card.tint-vermilion .hud-prog-bar i, .hud-card.tint-vermilion .hud-card-go { background: var(--grad-vermilion); }
+.hud-card-icon { flex: none; width: 46px; align-self: center; display: flex; align-items: center; justify-content: center; }
+.hud-card-icon img { max-width: 46px; max-height: 46px; filter: drop-shadow(0 3px 4px rgba(50,74,120,0.22)); }
+.hud-card.tint-pink::before, .hud-card.tint-pink .hud-prog-bar i, .hud-card.tint-pink .hud-card-go { background: var(--grad-pink); }
+.hud-card.tint-teal::before, .hud-card.tint-teal .hud-prog-bar i, .hud-card.tint-teal .hud-card-go { background: var(--grad-teal); }
+.hud-card.tint-purple::before, .hud-card.tint-purple .hud-prog-bar i, .hud-card.tint-purple .hud-card-go { background: var(--grad-purple); }
+.hud-card.tint-blue::before, .hud-card.tint-blue .hud-prog-bar i, .hud-card.tint-blue .hud-card-go { background: var(--grad-blue); }
+.hud-card.tint-orange::before, .hud-card.tint-orange .hud-prog-bar i, .hud-card.tint-orange .hud-card-go { background: var(--grad-orange); }
 .hud-card-body { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .hud-card-title { font-size: 0.84rem; font-weight: 800; color: #1f2a44; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .hud-card-desc { font-size: 0.55rem; color: #6b779a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -250,6 +256,10 @@ button, .btn-primary, .btn-ghost, .catalog-link { font-family: inherit; }
 .preset-icon.tint-forest    { background: var(--grad-forest); }
 .preset-icon.tint-gold      { background: var(--grad-gold); }
 .preset-icon.tint-vermilion { background: var(--grad-vermilion); }
+.preset-icon.tint-teal      { background: var(--grad-teal); }
+.preset-icon.tint-purple    { background: var(--grad-purple); }
+.preset-icon.tint-blue      { background: var(--grad-blue); }
+.preset-icon.tint-orange    { background: var(--grad-orange); }
 .preset-body { flex: 1; display: flex; flex-direction: column; gap: 3px; }
 .preset-title { font-size: 1.02rem; font-weight: 700; color: var(--ink); }
 .preset-meta { font-size: 0.72rem; color: #99917f; }

@@ -350,7 +350,7 @@ function renderHome() {
     li.className = `hud-card tint-${p.tint}`;
     li.style.animationDelay = `${i * 0.05}s`;
     li.innerHTML =
-      `<span class="hud-card-icon">${p.icon}</span>` +
+      `<span class="hud-card-icon"><img src="assets/ui/pict-${p.pict}.png" alt=""></span>` +
       `<span class="hud-card-body">` +
         `<b class="hud-card-title">${p.title}</b>` +
         `<span class="hud-card-desc">${p.badge}・${p.desc}</span>` +
