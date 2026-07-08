@@ -1,0 +1,215 @@
+{
+  "note": "Generated flat mockups were cropped into implementation reference assets. These are not true layer-separated UI components.",
+  "variants": [
+    {
+      "variant": 1,
+      "source_file": "フィットネスアプリのダッシュボード.png",
+      "image_size": [
+        941,
+        1672
+      ],
+      "assets": {
+        "reference": [
+          "full_mockup.png"
+        ],
+        "background": [
+          "background_full_reference.png",
+          "left_character_area_reference.png",
+          "top_header_reference.png"
+        ],
+        "menu_parts": [
+          "right_menu_panel_all.png",
+          "menu_card_01.png",
+          "menu_card_02.png",
+          "menu_card_03.png",
+          "menu_card_04.png",
+          "menu_card_05.png",
+          "left_status_widgets.png"
+        ],
+        "footer": [
+          "footer_nav_full.png",
+          "footer_tab_01.png",
+          "footer_tab_02.png",
+          "footer_tab_03.png",
+          "footer_tab_04.png",
+          "footer_tab_05.png"
+        ]
+      }
+    },
+    {
+      "variant": 2,
+      "source_file": "フィットネスゲームのダッシュボード.png",
+      "image_size": [
+        941,
+        1672
+      ],
+      "assets": {
+        "reference": [
+          "full_mockup.png"
+        ],
+        "background": [
+          "background_full_reference.png",
+          "left_character_area_reference.png",
+          "top_header_reference.png"
+        ],
+        "menu_parts": [
+          "right_menu_panel_all.png",
+          "menu_card_01.png",
+          "menu_card_02.png",
+          "menu_card_03.png",
+          "menu_card_04.png",
+          "menu_card_05.png",
+          "left_status_widgets.png"
+        ],
+        "footer": [
+          "footer_nav_full.png",
+          "footer_tab_01.png",
+          "footer_tab_02.png",
+          "footer_tab_03.png",
+          "footer_tab_04.png",
+          "footer_tab_05.png"
+        ]
+      }
+    },
+    {
+      "variant": 3,
+      "source_file": "未来的なフィットネスアプリのホーム.png",
+      "image_size": [
+        941,
+        1672
+      ],
+      "assets": {
+        "reference": [
+          "full_mockup.png"
+        ],
+        "background": [
+          "background_full_reference.png",
+          "left_character_area_reference.png",
+          "top_header_reference.png"
+        ],
+        "menu_parts": [
+          "right_menu_panel_all.png",
+          "menu_card_01.png",
+          "menu_card_02.png",
+          "menu_card_03.png",
+          "menu_card_04.png",
+          "menu_card_05.png",
+          "left_status_widgets.png"
+        ],
+        "footer": [
+          "footer_nav_full.png",
+          "footer_tab_01.png",
+          "footer_tab_02.png",
+          "footer_tab_03.png",
+          "footer_tab_04.png",
+          "footer_tab_05.png"
+        ]
+      }
+    },
+    {
+      "variant": 4,
+      "source_file": "未来のフィットネスアプリui.png",
+      "image_size": [
+        941,
+        1672
+      ],
+      "assets": {
+        "reference": [
+          "full_mockup.png"
+        ],
+        "background": [
+          "background_full_reference.png",
+          "left_character_area_reference.png",
+          "top_header_reference.png"
+        ],
+        "menu_parts": [
+          "right_menu_panel_all.png",
+          "menu_card_01.png",
+          "menu_card_02.png",
+          "menu_card_03.png",
+          "menu_card_04.png",
+          "menu_card_05.png",
+          "left_status_widgets.png"
+        ],
+        "footer": [
+          "footer_nav_full.png",
+          "footer_tab_01.png",
+          "footer_tab_02.png",
+          "footer_tab_03.png",
+          "footer_tab_04.png",
+          "footer_tab_05.png"
+        ]
+      }
+    },
+    {
+      "variant": 5,
+      "source_file": "リズムフィットのゲームインターフェース.png",
+      "image_size": [
+        941,
+        1672
+      ],
+      "assets": {
+        "reference": [
+          "full_mockup.png"
+        ],
+        "background": [
+          "background_full_reference.png",
+          "left_character_area_reference.png",
+          "top_header_reference.png"
+        ],
+        "menu_parts": [
+          "right_menu_panel_all.png",
+          "menu_card_01.png",
+          "menu_card_02.png",
+          "menu_card_03.png",
+          "menu_card_04.png",
+          "menu_card_05.png",
+          "left_status_widgets.png"
+        ],
+        "footer": [
+          "footer_nav_full.png",
+          "footer_tab_01.png",
+          "footer_tab_02.png",
+          "footer_tab_03.png",
+          "footer_tab_04.png",
+          "footer_tab_05.png"
+        ]
+      }
+    },
+    {
+      "variant": 6,
+      "source_file": "未来のフィットネスアプリ_ui.png",
+      "image_size": [
+        941,
+        1672
+      ],
+      "assets": {
+        "reference": [
+          "full_mockup.png"
+        ],
+        "background": [
+          "background_full_reference.png",
+          "left_character_area_reference.png",
+          "top_header_reference.png"
+        ],
+        "menu_parts": [
+          "right_menu_panel_all.png",
+          "menu_card_01.png",
+          "menu_card_02.png",
+          "menu_card_03.png",
+          "menu_card_04.png",
+          "menu_card_05.png",
+          "left_status_widgets.png"
+        ],
+        "footer": [
+          "footer_nav_full.png",
+          "footer_tab_01.png",
+          "footer_tab_02.png",
+          "footer_tab_03.png",
+          "footer_tab_04.png",
+          "footer_tab_05.png"
+        ]
+      }
+    }
+  ]
+}
