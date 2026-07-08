@@ -110,9 +110,9 @@ button, .btn-primary, .btn-ghost, .catalog-link { font-family: inherit; }
 /* トップバー */
 .hud-topbar { display: flex; align-items: center; justify-content: space-between; padding: 9px 15px; border-radius: 15px;
   clip-path: polygon(0 0, 100% 0, 100% 100%, 16px 100%, 0 calc(100% - 16px)); }
-.hud-title { font-weight: 900; font-size: 1.02rem; color: #1f2a44; letter-spacing: 0.02em; line-height: 1.05; }
-.hud-title span { display: block; font-size: 0.48rem; font-weight: 800; letter-spacing: 0.18em; color: #8492b5; margin-top: 2px; }
-.hud-energy { font-size: 0.78rem; font-weight: 800; color: #ff4f81; background: rgba(255,255,255,0.66); border-radius: 999px; padding: 5px 13px; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.85); }
+.hud-title { font-weight: 900; font-size: 1.22rem; color: #1f2a44; letter-spacing: 0.02em; line-height: 1.05; }
+.hud-title span { display: block; font-size: 0.56rem; font-weight: 800; letter-spacing: 0.18em; color: #8492b5; margin-top: 2px; }
+.hud-energy { font-size: 0.9rem; font-weight: 800; color: #ff4f81; background: rgba(255,255,255,0.66); border-radius: 999px; padding: 6px 15px; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.85); }
 .hud-energy b { color: #1f2a44; }
 
 /* サマリーパネル（4メトリクス＋週ドット） */
@@ -120,37 +120,37 @@ button, .btn-primary, .btn-ghost, .catalog-link { font-family: inherit; }
 .hud-metrics { display: flex; }
 .hud-metric { flex: 1; text-align: center; position: relative; padding: 0 3px; }
 .hud-metric + .hud-metric::before { content: ""; position: absolute; left: 0; top: 16%; height: 68%; width: 1px; background: rgba(120,150,190,0.28); }
-.hud-m-ico { font-size: 0.78rem; }
-.hud-metric b { display: block; font-size: 1.12rem; font-weight: 900; color: #1f2a44; line-height: 1.15; }
-.hud-metric small { font-size: 0.5rem; color: #8492b5; font-weight: 800; }
-.hud-metric-rank b { font-size: 0.86rem; color: #ff4f81; margin-top: 1px; }
-.hud-rank-cap { display: block; letter-spacing: 0.02em; }
+.hud-m-ico { font-size: 0.92rem; }
+.hud-metric b { display: block; font-size: 1.34rem; font-weight: 900; color: #1f2a44; line-height: 1.15; }
+.hud-metric small { font-size: 0.6rem; color: #8492b5; font-weight: 800; }
+.hud-metric-rank b { font-size: 1.02rem; color: #ff4f81; margin-top: 1px; }
+.hud-rank-cap { display: block; letter-spacing: 0.02em; font-size: 0.58rem; }
 .hud-rank-exp { display: block; height: 5px; border-radius: 999px; background: rgba(120,150,190,0.28); margin: 3px 3px 2px; overflow: hidden; }
 .hud-rank-exp i { display: block; height: 100%; background: var(--grad-cta); border-radius: 999px; }
 .hud-rank-next { display: block; font-size: 0.46rem; }
 .hud-week { display: flex; align-items: center; gap: 8px; margin-top: 9px; padding-top: 8px; border-top: 1px solid rgba(120,150,190,0.22); }
-.hud-week-lbl { font-size: 0.6rem; color: #8492b5; font-weight: 800; white-space: nowrap; }
+.hud-week-lbl { font-size: 0.7rem; color: #8492b5; font-weight: 800; white-space: nowrap; }
 .hud-week-lbl b { color: #ff4f81; }
 .hud-wd-row { display: flex; gap: 4px; flex: 1; }
-.hud-wd { flex: 1; text-align: center; font-size: 0.56rem; font-weight: 800; color: #9aa6c4; padding: 3px 0; border-radius: 7px; background: rgba(255,255,255,0.45); }
+.hud-wd { flex: 1; text-align: center; font-size: 0.66rem; font-weight: 800; color: #9aa6c4; padding: 4px 0; border-radius: 7px; background: rgba(255,255,255,0.45); }
 .hud-wd.done { background: var(--grad-cta); color: #fff; box-shadow: 0 2px 6px rgba(255,79,129,0.3); }
 .hud-wd.today { outline: 2px solid #ff4f81; outline-offset: -2px; }
 
 /* 本体：左サクヤ（反射）＋右メニュー */
 .hud-body { display: flex; gap: 6px; align-items: flex-start; }
-.hud-companion { flex: 0 0 47%; position: sticky; top: 6px; align-self: flex-start; display: flex; flex-direction: column; align-items: center; }
+.hud-companion { flex: 0 0 41%; position: sticky; top: 6px; align-self: flex-start; display: flex; flex-direction: column; align-items: center; }
 .hud-companion .chara-box { min-height: 0; }
 .hud-companion .chara-box img {
-  max-width: 122%; max-height: 470px; margin-left: -8%;
+  max-width: 138%; max-height: 620px; margin-left: -16%;
   filter: drop-shadow(0 16px 14px rgba(30,50,90,0.30));
   -webkit-box-reflect: below 0 linear-gradient(transparent 62%, rgba(255,255,255,0.28));
   animation: none; /* ふわふわ停止：床にどっしり立たせる */
 }
-.hud-bubble { position: relative; margin-top: 2px; background: rgba(255,255,255,0.92); border: 1px solid rgba(255,255,255,0.9); border-radius: 13px; padding: 7px 10px; font-size: 0.66rem; font-weight: 700; color: #29304a; text-align: center; line-height: 1.4; box-shadow: 0 6px 16px rgba(50,74,120,0.16); }
+.hud-bubble { position: relative; margin-top: 2px; background: rgba(255,255,255,0.92); border: 1px solid rgba(255,255,255,0.9); border-radius: 14px; padding: 9px 12px; font-size: 0.8rem; font-weight: 700; color: #29304a; text-align: center; line-height: 1.4; box-shadow: 0 6px 16px rgba(50,74,120,0.16); }
 .hud-bubble::before { content: ""; position: absolute; top: -6px; left: 50%; transform: translateX(-50%); border: 6px solid transparent; border-top: none; border-bottom: 6px solid rgba(255,255,255,0.92); }
 
 .hud-menu-col { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
-.hud-sec { font-weight: 900; font-size: 0.76rem; color: #1f2a44; letter-spacing: 0.03em; display: flex; align-items: center; gap: 6px; padding-left: 2px; }
+.hud-sec { font-weight: 900; font-size: 0.92rem; color: #1f2a44; letter-spacing: 0.03em; display: flex; align-items: center; gap: 6px; padding-left: 2px; }
 .hud-slash { flex: 1; height: 7px; background: repeating-linear-gradient(115deg, #ff4f81 0 4px, transparent 4px 8px); opacity: 0.5; border-radius: 2px; }
 
 /* メニューカード（角を切ったガラス＋カラーアクセント） */
@@ -158,7 +158,7 @@ button, .btn-primary, .btn-ghost, .catalog-link { font-family: inherit; }
   background: rgba(255,255,255,0.62); backdrop-filter: blur(10px) saturate(1.2); -webkit-backdrop-filter: blur(10px) saturate(1.2);
   border-radius: 13px; clip-path: polygon(0 0, calc(100% - 15px) 0, 100% 15px, 100% 100%, 0 100%);
   box-shadow: 0 8px 20px rgba(50,74,120,0.16), inset 0 1px 0 rgba(255,255,255,0.8);
-  display: flex; align-items: stretch; gap: 9px; padding: 9px 9px 9px 0;
+  display: flex; align-items: stretch; gap: 8px; padding: 10px 8px 10px 0;
   animation: pop-in 0.35s cubic-bezier(.22,1,.36,1) backwards; }
 .hud-card:active { transform: scale(0.98); }
 .hud-card::before { content: ""; flex: none; width: 5px; align-self: stretch; border-radius: 0 4px 4px 0; }
@@ -170,16 +170,16 @@ button, .btn-primary, .btn-ghost, .catalog-link { font-family: inherit; }
 .hud-card.tint-blue::before, .hud-card.tint-blue .hud-prog-bar i, .hud-card.tint-blue .hud-card-go { background: var(--grad-blue); }
 .hud-card.tint-orange::before, .hud-card.tint-orange .hud-prog-bar i, .hud-card.tint-orange .hud-card-go { background: var(--grad-orange); }
 .hud-card-body { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-.hud-card-title { font-size: 0.84rem; font-weight: 800; color: #1f2a44; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.hud-card-desc { font-size: 0.55rem; color: #6b779a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.hud-card-meta { display: flex; gap: 9px; font-size: 0.6rem; color: #556; font-weight: 700; white-space: nowrap; }
-.hud-card-prog { display: flex; align-items: center; gap: 6px; margin-top: 1px; }
-.hud-prog-bar { flex: 1; height: 5px; border-radius: 999px; background: rgba(120,150,190,0.28); overflow: hidden; }
+.hud-card-title { font-size: 1rem; font-weight: 900; color: #1f2a44; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hud-card-desc { font-size: 0.66rem; color: #6b779a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hud-card-meta { display: flex; gap: 11px; font-size: 0.72rem; color: #4a5578; font-weight: 700; white-space: nowrap; }
+.hud-card-prog { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
+.hud-prog-bar { flex: 1; height: 6px; border-radius: 999px; background: rgba(120,150,190,0.28); overflow: hidden; }
 .hud-prog-bar i { display: block; height: 100%; border-radius: 999px; }
-.hud-prog-num { font-size: 0.54rem; color: #556; font-weight: 800; white-space: nowrap; }
-.hud-card-go { flex: none; align-self: center; width: 26px; height: 26px; border-radius: 8px; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.05rem; font-weight: 700; box-shadow: 0 3px 8px rgba(50,74,120,0.25); }
+.hud-prog-num { font-size: 0.64rem; color: #4a5578; font-weight: 800; white-space: nowrap; }
+.hud-card-go { flex: none; align-self: center; width: 30px; height: 30px; border-radius: 9px; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 700; box-shadow: 0 3px 8px rgba(50,74,120,0.25); }
 
-.hud-catalog { border-radius: 12px; padding: 10px; font-weight: 800; font-size: 0.78rem; color: #1f2a44; cursor: pointer; }
+.hud-catalog { border-radius: 12px; padding: 12px; font-weight: 800; font-size: 0.92rem; color: #1f2a44; cursor: pointer; }
 .hud-catalog:active { transform: scale(0.98); }
 
 /* 今日のチャレンジ */
@@ -188,17 +188,17 @@ button, .btn-primary, .btn-ghost, .catalog-link { font-family: inherit; }
 .hud-challenge:active { transform: scale(0.99); }
 .hud-ch-flag { font-size: 1.15rem; }
 .hud-ch-main { flex: 1; display: flex; flex-direction: column; gap: 1px; }
-.hud-ch-main b { font-size: 0.84rem; color: #ff4f81; font-weight: 900; }
-.hud-ch-main small { font-size: 0.62rem; color: #6b779a; }
-.hud-ch-go { font-size: 1.25rem; color: #ff4f81; font-weight: 700; }
+.hud-ch-main b { font-size: 0.98rem; color: #ff4f81; font-weight: 900; }
+.hud-ch-main small { font-size: 0.74rem; color: #6b779a; }
+.hud-ch-go { font-size: 1.4rem; color: #ff4f81; font-weight: 700; }
 
 /* 下タブバー */
 .hud-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; display: flex; justify-content: space-around; align-items: stretch;
   padding: 7px 6px calc(7px + env(safe-area-inset-bottom)); border-radius: 20px 20px 0 0; border-top: 1px solid rgba(255,255,255,0.72);
   background: rgba(255,255,255,0.6); backdrop-filter: blur(16px) saturate(1.3); -webkit-backdrop-filter: blur(16px) saturate(1.3);
   box-shadow: 0 -6px 20px rgba(50,74,120,0.14); }
-.hud-tab { background: none; border: none; cursor: pointer; flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 1.1rem; padding: 4px 0; color: #8894b4; }
-.hud-tab span { font-size: 0.52rem; font-weight: 800; }
+.hud-tab { background: none; border: none; cursor: pointer; flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 1.28rem; padding: 4px 0; color: #8894b4; }
+.hud-tab span { font-size: 0.62rem; font-weight: 800; }
 .hud-tab.active { color: #ff4f81; }
 .hud-tab:not(.active) { opacity: 0.72; }
 
