@@ -353,7 +353,6 @@ function renderHome() {
       `<span class="hud-card-icon"><img src="assets/ui/pict-${p.pict}.png" alt=""></span>` +
       `<span class="hud-card-body">` +
         `<b class="hud-card-title">${p.short || p.title}</b>` +
-        `<span class="hud-card-sub">${p.desc}</span>` +
         `<span class="hud-card-prog"><span class="hud-prog-bar"><i style="width:${pct}%"></i></span>` +
           `<span class="hud-prog-num">${done}/${goal}</span></span>` +
       `</span>` +
