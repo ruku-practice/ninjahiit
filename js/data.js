@@ -19,7 +19,7 @@ const EXERCISES = {
 const PRESETS = [
   {
     id: "tabata_full",
-    title: "全身タバタ（4分）",
+    title: "全身タバタ（4分）", short: "全身タバタ",
     icon: "🔥", tint: "orange", pict: "dance",
     badge: "人気No.1", desc: "全身をまんべんなく・脂肪燃焼",
     workSec: 20, restSec: 10, rounds: 2, setRestSec: 0,
@@ -27,7 +27,7 @@ const PRESETS = [
   },
   {
     id: "abs",
-    title: "腹筋ワークアウト",
+    title: "腹筋ワークアウト", short: "腹筋",
     icon: "💪", tint: "purple", pict: "dumbbell",
     badge: "腹筋集中", desc: "お腹まわり集中・体幹強化",
     workSec: 20, restSec: 10, rounds: 2, setRestSec: 0,
@@ -35,7 +35,7 @@ const PRESETS = [
   },
   {
     id: "lower",
-    title: "下半身",
+    title: "下半身", short: "下半身",
     icon: "🦵", tint: "blue", pict: "yoga",
     badge: "下半身", desc: "脚とお尻・下半身デイ",
     workSec: 20, restSec: 10, rounds: 2, setRestSec: 0,
@@ -43,7 +43,7 @@ const PRESETS = [
   },
   {
     id: "beginner",
-    title: "はじめての忍びHIIT（ゆるめ）",
+    title: "はじめての忍びHIIT（ゆるめ）", short: "はじめて",
     icon: "🌱", tint: "pink", pict: "stretch",
     badge: "初心者おすすめ", desc: "ゆるめ・まずはここから",
     workSec: 20, restSec: 20, rounds: 2, setRestSec: 0,
@@ -51,7 +51,7 @@ const PRESETS = [
   },
   {
     id: "cardio_boost",
-    title: "有酸素ブースト",
+    title: "有酸素ブースト", short: "有酸素",
     icon: "⚡", tint: "teal", pict: "run",
     badge: "脂肪燃焼ゾーン", desc: "心拍を上げる・有酸素",
     workSec: 20, restSec: 10, rounds: 2, setRestSec: 0,

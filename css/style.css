@@ -123,7 +123,7 @@ button, .btn-primary, .btn-ghost, .catalog-link { font-family: inherit; }
 .hud-m-ico { font-size: 0.92rem; }
 .hud-metric b { display: block; font-size: 1.34rem; font-weight: 900; color: #1f2a44; line-height: 1.15; }
 .hud-metric small { font-size: 0.6rem; color: #8492b5; font-weight: 800; }
-.hud-metric-rank b { font-size: 1.02rem; color: #ff4f81; margin-top: 1px; }
+.hud-metric-rank b { font-size: 0.9rem; color: #ff4f81; margin-top: 1px; white-space: nowrap; }
 .hud-rank-cap { display: block; letter-spacing: 0.02em; font-size: 0.58rem; }
 .hud-rank-exp { display: block; height: 5px; border-radius: 999px; background: rgba(120,150,190,0.28); margin: 3px 3px 2px; overflow: hidden; }
 .hud-rank-exp i { display: block; height: 100%; background: var(--grad-cta); border-radius: 999px; }
@@ -170,10 +170,9 @@ button, .btn-primary, .btn-ghost, .catalog-link { font-family: inherit; }
 .hud-card.tint-blue::before, .hud-card.tint-blue .hud-prog-bar i, .hud-card.tint-blue .hud-card-go { background: var(--grad-blue); }
 .hud-card.tint-orange::before, .hud-card.tint-orange .hud-prog-bar i, .hud-card.tint-orange .hud-card-go { background: var(--grad-orange); }
 .hud-card-body { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-.hud-card-title { font-size: 1rem; font-weight: 900; color: #1f2a44; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.hud-card-desc { font-size: 0.66rem; color: #6b779a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.hud-card-meta { display: flex; gap: 11px; font-size: 0.72rem; color: #4a5578; font-weight: 700; white-space: nowrap; }
-.hud-card-prog { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
+.hud-card-title { font-size: 1.12rem; font-weight: 900; color: #1f2a44; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hud-card-sub { font-size: 0.7rem; color: #6b779a; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hud-card-prog { display: flex; align-items: center; gap: 6px; margin-top: 3px; }
 .hud-prog-bar { flex: 1; height: 6px; border-radius: 999px; background: rgba(120,150,190,0.28); overflow: hidden; }
 .hud-prog-bar i { display: block; height: 100%; border-radius: 999px; }
 .hud-prog-num { font-size: 0.64rem; color: #4a5578; font-weight: 800; white-space: nowrap; }
