@@ -465,6 +465,75 @@ button, .btn-primary, .btn-ghost, .catalog-link { font-family: inherit; }
   100% { transform: translateY(115vh) rotate(540deg); opacity: 0.3; }
 }
 
+/* =========================================================
+   HUD統一：一覧・実行・完了をトップ（近未来HUD）と同じ空気に
+   ========================================================= */
+/* 各画面：hud-env(fixed)を最背面に固定し、中身を前面へ */
+#screen-catalog.hud, #screen-run.hud, #screen-done.hud { background: #aabfe0; color: #1f2a44; }
+#screen-catalog.hud .hud-env, #screen-run.hud .hud-env, #screen-done.hud .hud-env { z-index: 0; }
+#screen-catalog.hud > *:not(.hud-env),
+#screen-run.hud > *:not(.hud-env),
+#screen-done.hud > *:not(.hud-env) { position: relative; z-index: 1; }
+
+/* ---- 一覧 ---- */
+#screen-catalog.hud { padding: 16px 14px calc(30px + env(safe-area-inset-bottom)); gap: 12px; }
+#screen-catalog.hud .catalog-header h2 { color: #1f2a44; }
+#screen-catalog.hud .catalog-card {
+  background: rgba(255,255,255,0.5);
+  backdrop-filter: blur(14px) saturate(1.3); -webkit-backdrop-filter: blur(14px) saturate(1.3);
+  border: 1px solid rgba(255,255,255,0.72);
+  box-shadow: 0 10px 26px rgba(50,74,120,0.18), inset 0 1px 0 rgba(255,255,255,0.85);
+  border-radius: 18px; clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 0 100%);
+}
+#screen-catalog.hud .catalog-title { color: #1f2a44; }
+#screen-catalog.hud .catalog-meta { color: #6b779a; }
+#screen-catalog.hud .catalog-thumb { background: rgba(255,255,255,0.4); border-color: rgba(255,255,255,0.6); }
+#screen-catalog.hud .catalog-ex-name { color: #4a5578; }
+
+/* ---- 実行 ---- */
+#screen-run.hud { text-align: center; overflow: hidden; }
+/* フェーズ色は「上からの色ウォッシュ」で残す（全画面ベタ塗りはやめて環境背景を活かす） */
+#screen-run.hud::after {
+  content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.58; transition: background 0.5s;
+}
+#screen-run.hud.phase-prepare::after { background: radial-gradient(125% 75% at 50% -8%, rgba(79,155,240,0.55), transparent 62%); }
+#screen-run.hud.phase-work::after    { background: radial-gradient(125% 75% at 50% -8%, rgba(255,79,110,0.6), transparent 62%); }
+#screen-run.hud.phase-rest::after    { background: radial-gradient(125% 75% at 50% -8%, rgba(23,198,176,0.55), transparent 62%); }
+#screen-run.hud .run-header .hbtn {
+  background: rgba(255,255,255,0.55); color: #1f2a44;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.7), 0 4px 12px rgba(50,74,120,0.16);
+}
+#screen-run.hud #run-title { color: #1f2a44; }
+#screen-run.hud #run-progress { color: #4a5578; opacity: 1; }
+#screen-run.hud #run-phase {
+  display: inline-block; margin: 16px auto 0; padding: 6px 20px; border-radius: 999px;
+  font-size: 1.35rem; letter-spacing: 0.08em; text-shadow: 0 2px 8px rgba(255,255,255,0.5);
+  background: rgba(255,255,255,0.55); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.7), 0 6px 16px rgba(50,74,120,0.18);
+}
+#screen-run.hud.phase-prepare #run-phase { color: #2f6fd0; }
+#screen-run.hud.phase-work    #run-phase { color: #e23a5e; }
+#screen-run.hud.phase-rest    #run-phase { color: #0f9f8c; }
+#screen-run.hud #run-quote { color: #29304a; opacity: 1; font-weight: 700; }
+#screen-run.hud #gauge-bg { stroke: rgba(31,42,68,0.14); }
+#screen-run.hud.phase-prepare #gauge-arc { stroke: #4f9bf0; }
+#screen-run.hud.phase-work    #gauge-arc { stroke: #ff4f6e; }
+#screen-run.hud.phase-rest    #gauge-arc { stroke: #17c6b0; }
+#screen-run.hud #run-count { color: #1f2a44; text-shadow: 0 2px 12px rgba(255,255,255,0.7); }
+#screen-run.hud #btn-pause {
+  background: rgba(255,255,255,0.55); color: #1f2a44;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.7), 0 8px 20px rgba(50,74,120,0.2);
+}
+#screen-run.hud #run-next { color: #4a5578; opacity: 1; }
+
+/* ---- 完了 ---- */
+#screen-done.hud { padding: 40px 24px calc(40px + env(safe-area-inset-bottom)); gap: 18px; justify-content: center; }
+#screen-done.hud #done-stats { color: #1f2a44; }
+#screen-done.hud .btn-ghost {
+  background: rgba(255,255,255,0.45); color: #1f2a44; border: 1px solid rgba(255,255,255,0.75);
+  box-shadow: 0 6px 16px rgba(50,74,120,0.14);
+}
+
 /* ---- プレースホルダー（画像未配置時） ---- */
 .chara-ph { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .ph-emoji { font-size: 5.5rem; display: block; transition: transform 0.25s; }

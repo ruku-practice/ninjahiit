@@ -437,7 +437,7 @@ function startWorkout(workout) {
       const label = { prepare: "準備して！", work: EXERCISES[seg.exercise].name, rest: "休憩" }[seg.type];
       $("#run-phase").textContent = label;
       $("#run-progress").textContent = `エクササイズ ${seg.slot}/${seg.total}`;
-      $("#screen-run").className = `screen active phase-${seg.type}`;
+      $("#screen-run").className = `screen hud active phase-${seg.type}`;
       $("#run-next").textContent = next
         ? `次のエクササイズ：${EXERCISES[next.exercise].name}`
         : "次：トレーニング終了";

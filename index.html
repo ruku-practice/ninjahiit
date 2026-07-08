@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=32">
+  <link rel="stylesheet" href="css/style.css?v=33">
 </head>
 <body>
 
@@ -75,7 +75,8 @@
   </section>
 
   <!-- ワークアウト一覧 -->
-  <section id="screen-catalog" class="screen">
+  <section id="screen-catalog" class="screen hud">
+    <div class="hud-env"></div>
     <header class="catalog-header">
       <button id="btn-catalog-back" class="hbtn-dark" aria-label="戻る">←</button>
       <h2>ワークアウト一覧</h2>
@@ -84,7 +85,8 @@
   </section>
 
   <!-- 実行 -->
-  <section id="screen-run" class="screen phase-prepare">
+  <section id="screen-run" class="screen hud phase-prepare">
+      <div class="hud-env"></div>
       <header class="run-header">
         <button id="btn-quit" class="hbtn" aria-label="中断">←</button>
         <div class="run-titles">
@@ -118,7 +120,8 @@
   </section>
 
   <!-- 完了 -->
-  <section id="screen-done" class="screen">
+  <section id="screen-done" class="screen hud">
+    <div class="hud-env"></div>
     <div id="confetti-layer" class="confetti-layer"></div>
     <div class="chara-stage chara-stage-done"><div id="done-chara" class="chara-box"></div></div>
     <p id="done-quote" class="quote-bubble" style="color: var(--ink)"></p>
@@ -131,9 +134,9 @@
     </div>
   </section>
 
-  <script src="js/data.js?v=32"></script>
-  <script src="js/audio.js?v=32"></script>
-  <script src="js/timer.js?v=32"></script>
-  <script src="js/app.js?v=32"></script>
+  <script src="js/data.js?v=33"></script>
+  <script src="js/audio.js?v=33"></script>
+  <script src="js/timer.js?v=33"></script>
+  <script src="js/app.js?v=33"></script>
 </body>
 </html>
