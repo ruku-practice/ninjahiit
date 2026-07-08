@@ -352,13 +352,11 @@ function renderHome() {
     li.innerHTML =
       `<span class="hud-card-icon">${p.icon}</span>` +
       `<span class="hud-card-body">` +
-        `<span class="hud-card-top"><b class="hud-card-title">${p.title}</b>` +
-          `<span class="hud-card-badge">${p.badge}</span></span>` +
-        `<span class="hud-card-desc">${p.desc}</span>` +
-        `<span class="hud-card-meta"><span>⏱️ 約${Math.ceil(totalSec / 60)}分</span>` +
-          `<span>🔥 ${kcal}kcal</span></span>` +
-        `<span class="hud-card-prog"><span class="hud-prog-lbl">完了度</span>` +
-          `<span class="hud-prog-bar"><i style="width:${pct}%"></i></span>` +
+        `<b class="hud-card-title">${p.title}</b>` +
+        `<span class="hud-card-desc">${p.badge}・${p.desc}</span>` +
+        `<span class="hud-card-meta"><span>⏱️約${Math.ceil(totalSec / 60)}分</span>` +
+          `<span>🔥${kcal}kcal</span></span>` +
+        `<span class="hud-card-prog"><span class="hud-prog-bar"><i style="width:${pct}%"></i></span>` +
           `<span class="hud-prog-num">${done}/${goal}</span></span>` +
       `</span>` +
       `<span class="hud-card-go">›</span>`;
