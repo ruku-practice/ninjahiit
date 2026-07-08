@@ -132,7 +132,7 @@ button, .btn-primary, .btn-ghost, .catalog-link { font-family: inherit; }
 .hud-companion { flex: 0 0 52%; position: sticky; top: 6px; align-self: flex-start; display: flex; flex-direction: column; align-items: center; }
 .hud-companion .chara-box { min-height: 0; width: 100%; }
 .hud-companion .chara-box img {
-  max-width: 150%; max-height: 760px; margin-left: -16%;
+  width: 100%; max-width: 116%; max-height: 640px; margin-left: -8%;
   filter: drop-shadow(0 16px 14px rgba(30,50,90,0.30));
   -webkit-box-reflect: below 0 linear-gradient(transparent 62%, rgba(255,255,255,0.28));
   animation: none; /* ふわふわ停止：床にどっしり立たせる */
