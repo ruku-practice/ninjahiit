@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
-  <title>NinjaHIIT — 忍びと一緒にHIIT</title>
-  <meta name="description" content="クリプトニンジャのキャラと一緒に頑張るHIIT・タバタタイマー（ファンメイドアプリ）">
+  <title>サクヤといっしょに4分HIIT</title>
+  <meta name="description" content="忍びのサクヤと毎日4分。クリプトニンジャのキャラと一緒に頑張るHIIT・タバタタイマー（ファンメイドアプリ）">
   <meta name="theme-color" content="#2b3a67">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=15">
+  <link rel="stylesheet" href="css/style.css?v=17">
 </head>
 <body>
 
@@ -21,10 +21,13 @@
   <section id="screen-home" class="screen active">
     <div class="home-blob home-blob-a"></div>
     <div class="home-blob home-blob-b"></div>
-    <h1 class="app-title">NinjaHIIT <span class="app-title-emoji">🥷</span>
-      <small>忍びと一緒に、4分だけ。</small>
-    </h1>
-    <div class="chara-stage"><div id="home-chara" class="chara-box"></div></div>
+    <div class="hero">
+      <div class="hero-deco hero-deco-1"></div>
+      <div class="hero-deco hero-deco-2"></div>
+      <h1 class="hero-title">サクヤといっしょに<b>4分HIIT</b></h1>
+      <p class="hero-sub">忍びと一緒に、4分だけ。 🥷</p>
+      <div id="home-chara" class="chara-box hero-chara"></div>
+    </div>
     <p id="home-quote" class="quote-bubble"></p>
     <p id="home-streak" class="streak"></p>
 
@@ -99,9 +102,9 @@
     </div>
   </section>
 
-  <script src="js/data.js?v=15"></script>
-  <script src="js/audio.js?v=15"></script>
-  <script src="js/timer.js?v=15"></script>
-  <script src="js/app.js?v=15"></script>
+  <script src="js/data.js?v=17"></script>
+  <script src="js/audio.js?v=17"></script>
+  <script src="js/timer.js?v=17"></script>
+  <script src="js/app.js?v=17"></script>
 </body>
 </html>

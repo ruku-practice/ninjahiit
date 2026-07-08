@@ -254,7 +254,8 @@ function releaseWakeLock() {
 // ---- ホーム画面 ----
 function renderHome() {
   stopCatalog();
-  showPose($("#home-chara"), "standing", trainer().name);
+  // ヒーローカードでは「迎えてくれる」joyポーズ（いいね）を表示
+  showPose($("#home-chara"), "joy_2", trainer().name);
   $("#home-quote").textContent = quote("home");
   const s = streakDays();
   $("#home-streak").textContent = s > 0 ? `🔥 ${s}日連続で修行中` : "今日から修行を始めよう";
@@ -413,7 +414,7 @@ function renderDone(workout, totalWorkSec) {
     `<li>運動時間 ${Math.round(totalWorkSec / 60 * 10) / 10}分 ・ 約${estimateKcal(totalWorkSec)}kcal</li>` +
     `<li>${s > 0 ? `🔥 ${s}日連続` : "また明日も待ってるよ"}</li>`;
   const text = encodeURIComponent(
-    `${trainer().name}と一緒に「${workout.title}」完走した！🥷 #NinjaHIIT #CryptoNinja`);
+    `${trainer().name}と一緒に「${workout.title}」完走した！🥷 #サクヤ4分HIIT #CryptoNinja`);
   $("#btn-share").href = `https://twitter.com/intent/tweet?text=${text}`;
   show("screen-done");
 }

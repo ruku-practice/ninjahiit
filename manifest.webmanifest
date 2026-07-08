@@ -1,7 +1,7 @@
 {
-  "name": "NinjaHIIT — 忍びと一緒にHIIT",
-  "short_name": "NinjaHIIT",
-  "description": "クリプトニンジャのキャラと一緒に頑張るHIIT・タバタタイマー（ファンメイドアプリ）",
+  "name": "サクヤといっしょに4分HIIT",
+  "short_name": "サクヤ4分HIIT",
+  "description": "忍びのサクヤと毎日4分。クリプトニンジャのキャラと一緒に頑張るHIIT・タバタタイマー（ファンメイドアプリ）",
   "lang": "ja",
   "start_url": "./",
   "scope": "./",
