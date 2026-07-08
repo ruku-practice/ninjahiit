@@ -299,27 +299,35 @@ function homeGreeting() {
   return quote("home");
 }
 
+function presetCompletions(id) {
+  return state.history.filter(h => h.completed && h.workoutId === id).length;
+}
+
 function renderStatusCard() {
-  const r = rankInfo(totalExp());
+  const exp = totalExp();
+  const r = rankInfo(exp);
   const ts = todayStats();
   const wr = weekRecord();
   const pct = Math.round(r.progress * 100);
+  const m = Math.floor(ts.workSec / 60), sc = Math.round(ts.workSec % 60);
+  const timeStr = `${String(m).padStart(2, "0")}:${String(sc).padStart(2, "0")}`;
   const strip = wr.days.map(d =>
-    `<div class="sc-day${d.done ? " done" : ""}${d.isToday ? " today" : ""}">` +
-    `<span class="sc-dot"></span><span class="sc-dlabel">${d.label}</span></div>`).join("");
+    `<span class="hud-wd${d.done ? " done" : ""}${d.isToday ? " today" : ""}">${d.label}</span>`).join("");
   $("#status-card").innerHTML =
-    `<div class="sc-rank-row">` +
-      `<span class="sc-rank">🥷 ${r.name}</span>` +
-      `<span class="sc-next">${r.next ? `昇格まで あと ${r.remain}` : "最高位！"}</span>` +
+    `<div class="hud-metrics">` +
+      `<div class="hud-metric"><span class="hud-m-ico">🔥</span><b>${ts.kcal}</b><small>消費kcal</small></div>` +
+      `<div class="hud-metric"><span class="hud-m-ico">⏱️</span><b>${timeStr}</b><small>運動時間</small></div>` +
+      `<div class="hud-metric"><span class="hud-m-ico">⭐</span><b>${exp}</b><small>修行値</small></div>` +
+      `<div class="hud-metric hud-metric-rank">` +
+        `<small class="hud-rank-cap">忍びランク</small><b>${r.name}</b>` +
+        `<span class="hud-rank-exp"><i style="width:${pct}%"></i></span>` +
+        `<small class="hud-rank-next">${r.next ? `あと ${r.remain}` : "最高位！"}</small>` +
+      `</div>` +
     `</div>` +
-    `<div class="sc-exp"><div class="sc-exp-fill" style="width:${pct}%"></div></div>` +
-    `<div class="sc-stats">` +
-      `<div class="sc-stat"><b>${ts.count}</b><span>今日の完走</span></div>` +
-      `<div class="sc-stat"><b>${Math.round(ts.workSec / 60 * 10) / 10}</b><span>分</span></div>` +
-      `<div class="sc-stat"><b>${ts.kcal}</b><span>kcal</span></div>` +
-    `</div>` +
-    `<div class="sc-week-head">今週の修行 <b>${wr.count}/${wr.goal}日</b></div>` +
-    `<div class="sc-week">${strip}</div>`;
+    `<div class="hud-week"><span class="hud-week-lbl">今週 <b>${wr.count}/${wr.goal}日</b></span>` +
+    `<span class="hud-wd-row">${strip}</span></div>`;
+  const en = $("#hud-energy");
+  if (en) en.innerHTML = `⚡ <b>${wr.count}/${wr.goal}</b>`;
 }
 
 // ---- ホーム画面 ----
@@ -334,20 +342,31 @@ function renderHome() {
   PRESETS.forEach((p, i) => {
     const seq = p.exercises.length * p.rounds;
     const totalSec = seq * p.workSec + (seq - 1) * p.restSec + state.settings.prepareSec;
+    const kcal = estimateKcal(seq * p.workSec);
+    const done = presetCompletions(p.id);
+    const goal = 10;
+    const pct = Math.min(100, Math.round(done / goal * 100));
     const li = document.createElement("button");
-    li.className = "preset-item";
+    li.className = `hud-card tint-${p.tint}`;
     li.style.animationDelay = `${i * 0.05}s`;
     li.innerHTML =
-      `<span class="preset-icon tint-${p.tint}">${p.icon}</span>` +
-      `<span class="preset-body">` +
-      `<span class="preset-title">${p.title}</span>` +
-      `<span class="preset-meta">${seq}本 ・ 約${Math.ceil(totalSec / 60)}分 ・ ${p.workSec}秒/${p.restSec}秒</span>` +
+      `<span class="hud-card-icon">${p.icon}</span>` +
+      `<span class="hud-card-body">` +
+        `<span class="hud-card-top"><b class="hud-card-title">${p.title}</b>` +
+          `<span class="hud-card-badge">${p.badge}</span></span>` +
+        `<span class="hud-card-desc">${p.desc}</span>` +
+        `<span class="hud-card-meta"><span>⏱️ 約${Math.ceil(totalSec / 60)}分</span>` +
+          `<span>🔥 ${kcal}kcal</span></span>` +
+        `<span class="hud-card-prog"><span class="hud-prog-lbl">完了度</span>` +
+          `<span class="hud-prog-bar"><i style="width:${pct}%"></i></span>` +
+          `<span class="hud-prog-num">${done}/${goal}</span></span>` +
       `</span>` +
-      `<span class="preset-arrow">›</span>`;
+      `<span class="hud-card-go">›</span>`;
     li.onclick = () => startWorkout(p);
     list.appendChild(li);
   });
-  renderHistory();
+  const tc = todayStats().count;
+  $("#hud-ch-desc").textContent = tc >= 1 ? `今日はクリア済み！ ✓` : "1回やってみよう！";
   show("screen-home");
 }
 
@@ -500,6 +519,17 @@ function renderDone(workout, totalWorkSec) {
   show("screen-done");
 }
 
+// ---- トースト（準備中の案内など） ----
+let toastTimer = null;
+function showToast(msg) {
+  const t = $("#toast");
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 2200);
+}
+
 // ---- 初期化 ----
 document.addEventListener("DOMContentLoaded", () => {
   $("#btn-pause").onclick = togglePause;
@@ -507,6 +537,11 @@ document.addEventListener("DOMContentLoaded", () => {
   $("#btn-done-home").onclick = renderHome;
   $("#btn-catalog").onclick = renderCatalog;
   $("#btn-catalog-back").onclick = renderHome;
+  document.querySelectorAll(".hud-tab[data-soon]").forEach(b => {
+    b.onclick = () => showToast(`${b.dataset.soon} はただいま準備中だよ 🥷`);
+  });
+  $("#hud-challenge").onclick = () =>
+    showToast("メニューを1つ選んで、今日の4分をはじめよう！");
   $("#btn-sound").onclick = () => {
     state.settings.sound = !state.settings.sound;
     Sound.enabled = state.settings.sound;

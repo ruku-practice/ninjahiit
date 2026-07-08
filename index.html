@@ -13,42 +13,52 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=19">
+  <link rel="stylesheet" href="css/style.css?v=20">
 </head>
 <body>
 
-  <!-- ホーム -->
-  <section id="screen-home" class="screen active">
-    <div class="home-blob home-blob-a"></div>
-    <div class="home-blob home-blob-b"></div>
+  <!-- ホーム（HUDダッシュボード） -->
+  <section id="screen-home" class="screen active hud">
+    <div class="hud-env"></div>
+    <div class="hud-scroll">
+      <header class="hud-topbar glass">
+        <div class="hud-title">今日のサマリー<span>TODAY'S&nbsp;SUMMARY</span></div>
+        <div class="hud-energy" id="hud-energy"></div>
+      </header>
 
-    <header class="home-topbar">
-      <span class="home-appname">サクヤといっしょに<b>4分HIIT</b><span class="home-appname-emoji">🥷</span></span>
-    </header>
+      <div id="status-card" class="hud-summary glass"></div>
 
-    <p class="section-label">今日のサマリー</p>
-    <div id="status-card" class="status-card"></div>
+      <div class="hud-body">
+        <aside class="hud-companion">
+          <div id="home-chara" class="chara-box"></div>
+          <p id="home-quote" class="hud-bubble"></p>
+        </aside>
+        <div class="hud-menu-col">
+          <div class="hud-sec">ワークアウトメニュー<i class="hud-slash"></i></div>
+          <div id="preset-list"></div>
+          <button id="btn-catalog" class="hud-catalog glass"><span>📜</span> 種目のうごきを見る</button>
+        </div>
+      </div>
 
-    <div class="home-split">
-      <aside class="home-companion">
-        <div id="home-chara" class="chara-box"></div>
-        <p id="home-quote" class="companion-bubble"></p>
-      </aside>
-      <main class="home-main">
-        <p class="section-label">今日の修行メニュー</p>
-        <div id="preset-list"></div>
-        <button id="btn-catalog" class="catalog-link"><span>📜</span> 種目のうごきを見る</button>
-      </main>
+      <button id="hud-challenge" class="hud-challenge glass">
+        <span class="hud-ch-flag">🚩</span>
+        <span class="hud-ch-main"><b>今日のチャレンジ</b><small id="hud-ch-desc"></small></span>
+        <span class="hud-ch-go">›</span>
+      </button>
+
+      <p class="fan-note">本アプリはCryptoNinjaのファンメイド（二次創作）アプリです。公式・公認アプリではありません。</p>
     </div>
 
-    <p class="section-label">修行の巻物（記録）</p>
-    <div class="history-box">
-      <p id="history-total"></p>
-      <ul id="history-list"></ul>
-    </div>
-
-    <p class="fan-note">本アプリはCryptoNinjaのファンメイド（二次創作）アプリです。<br>公式・公認アプリではありません。</p>
+    <nav class="hud-nav glass">
+      <button class="hud-tab active">🏠<span>ホーム</span></button>
+      <button class="hud-tab" data-soon="スケジュール">📅<span>スケジュール</span></button>
+      <button class="hud-tab" data-soon="ミッション">🏆<span>ミッション</span></button>
+      <button class="hud-tab" data-soon="プレゼント">🎁<span>プレゼント</span></button>
+      <button class="hud-tab" data-soon="マイページ">👤<span>マイページ</span></button>
+    </nav>
   </section>
+
+  <div id="toast" class="toast"></div>
 
   <!-- ワークアウト一覧 -->
   <section id="screen-catalog" class="screen">
@@ -107,9 +117,9 @@
     </div>
   </section>
 
-  <script src="js/data.js?v=19"></script>
-  <script src="js/audio.js?v=19"></script>
-  <script src="js/timer.js?v=19"></script>
-  <script src="js/app.js?v=19"></script>
+  <script src="js/data.js?v=20"></script>
+  <script src="js/audio.js?v=20"></script>
+  <script src="js/timer.js?v=20"></script>
+  <script src="js/app.js?v=20"></script>
 </body>
 </html>
