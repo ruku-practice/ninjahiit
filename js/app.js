@@ -328,8 +328,6 @@ function renderHome() {
   // ヒーローカードでは「迎えてくれる」joyポーズ（いいね）を表示
   showPose($("#home-chara"), "joy_2", trainer().name);
   $("#home-quote").textContent = homeGreeting();
-  const s = streakDays();
-  $("#home-streak").textContent = s >= 2 ? `🔥 ${s}日連続` : "";
   renderStatusCard();
   const list = $("#preset-list");
   list.innerHTML = "";
