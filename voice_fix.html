@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>サクヤ音声 NG直し・候補選び</title>
+<style>
+  :root{ --bg:#0f1420; --panel:#1a2233; --panel2:#212c42; --line:#2c3a55;
+    --ink:#eaf0fb; --sub:#9fb0d0; --accent:#ff4f81; --ok:#25c281; }
+  @media (prefers-color-scheme: light){
+    :root{ --bg:#eef2fa; --panel:#fff; --panel2:#f2f5fc; --line:#dde4f2; --ink:#1f2a44; --sub:#6b779a; } }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:"Zen Maru Gothic",-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN",sans-serif;
+    background:var(--bg); color:var(--ink); line-height:1.5; padding:0 0 110px; -webkit-text-size-adjust:100%; }
+  header{ position:sticky; top:0; z-index:10; background:var(--panel); border-bottom:1px solid var(--line);
+    padding:max(12px,env(safe-area-inset-top)) 14px 12px; box-shadow:0 4px 16px rgba(0,0,0,.18); }
+  h1{ font-size:1.05rem; margin:0 0 6px; }
+  .stat{ font-size:.82rem; color:var(--sub); } .stat b{ color:var(--ink); }
+  .wrap{ max-width:680px; margin:0 auto; padding:14px; }
+  .card{ background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:14px; margin-bottom:14px; }
+  .card h2{ margin:0 0 3px; font-size:1.05rem; }
+  .card .lbl{ font-size:.7rem; color:var(--sub); font-weight:700; }
+  .card .cur{ font-size:.78rem; color:var(--sub); margin:2px 0 10px; }
+  .opt{ display:flex; align-items:center; gap:10px; padding:9px 10px; border:1px solid var(--line);
+    border-radius:11px; margin-bottom:8px; cursor:pointer; background:var(--panel2); transition:border-color .15s,background .15s; }
+  .opt.sel{ border-color:var(--ok); box-shadow:0 0 0 2px rgba(37,194,129,.25); }
+  .opt.playing{ border-color:var(--accent); }
+  .opt .play{ flex:none; width:40px; height:40px; border-radius:50%; border:none; cursor:pointer;
+    background:var(--panel); color:var(--ink); font-size:1.05rem; box-shadow:inset 0 0 0 1px var(--line); }
+  .opt .play:active{ transform:scale(.94); }
+  .opt .body{ flex:1; min-width:0; }
+  .opt .tag{ font-size:.7rem; color:var(--sub); font-weight:800; }
+  .opt .txt{ font-size:.95rem; font-weight:700; word-break:break-word; }
+  .opt .pick{ flex:none; width:26px; height:26px; border-radius:50%; border:2px solid var(--line); position:relative; }
+  .opt.sel .pick{ border-color:var(--ok); }
+  .opt.sel .pick::after{ content:""; position:absolute; inset:4px; border-radius:50%; background:var(--ok); }
+  .footbar{ position:fixed; left:0; right:0; bottom:0; z-index:10; background:var(--panel); border-top:1px solid var(--line);
+    padding:10px 14px calc(10px + env(safe-area-inset-bottom)); display:flex; gap:8px; box-shadow:0 -4px 16px rgba(0,0,0,.18); }
+  .btn{ flex:1; border:none; border-radius:12px; padding:13px; font-weight:900; font-size:.92rem; cursor:pointer; font-family:inherit;
+    background:linear-gradient(135deg,var(--accent),#ff8a4f); color:#fff; }
+  .btn:active{ transform:scale(.97); }
+  dialog{ border:none; border-radius:16px; padding:0; max-width:92vw; width:520px; background:var(--panel); color:var(--ink); }
+  dialog::backdrop{ background:rgba(0,0,0,.55); }
+  .dlg{ padding:16px; } .dlg h2{ margin:0 0 8px; font-size:1rem; }
+  .dlg textarea{ width:100%; height:200px; border:1px solid var(--line); border-radius:10px; background:var(--panel2);
+    color:var(--ink); font:inherit; font-size:.85rem; padding:10px; }
+  .dlg .drow{ display:flex; gap:8px; margin-top:10px; }
+  .dlg .b2{ flex:1; border:none; border-radius:10px; padding:12px; font-weight:800; cursor:pointer; font-family:inherit; }
+  .dlg .b2.g{ background:var(--panel2); color:var(--ink); border:1px solid var(--line); }
+  .hint{ font-size:.72rem; color:var(--sub); margin-top:6px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap" style="padding:0;">
+    <h1>🔧 NG音声の候補選び</h1>
+    <div class="stat">選択 <b id="st-done">0</b>/<b id="st-total">6</b> ・ 各セリフで「現状のまま or 候補A/B/C」を選んでください</div>
+  </div>
+</header>
+<div class="wrap" id="list"></div>
+<div class="footbar"><button class="btn" id="btn-export">選んだ結果をコピー / 共有</button></div>
+
+<dialog id="dlg"><div class="dlg">
+  <h2>採用する音声</h2>
+  <div class="hint">この内容をコピーして、チャットに貼り付けてください。私が反映します。</div>
+  <textarea id="dlg-text" readonly></textarea>
+  <div class="drow">
+    <button class="b2" id="dlg-copy" style="background:linear-gradient(135deg,var(--accent),#ff8a4f);color:#fff">コピー</button>
+    <button class="b2 g" id="dlg-close">閉じる</button>
+  </div>
+</div></dialog>
+
+<script>
+// label: {text(現状の意図), cur(現状の言い回し), cands:[{tag,txt}]}
+const DATA = [
+  { label:"count_2", title:"カウント「2」", cur:"にっ", note:"濁って聞こえる",
+    cands:[{tag:"A",txt:"に！"},{tag:"B",txt:"にっ！"},{tag:"C",txt:"に。"}] },
+  { label:"go_1", title:"ワーク開始の掛け声", cur:"いくよっ！", note:"NG",
+    cands:[{tag:"A",txt:"いくよっ！(1)"},{tag:"B",txt:"いくよっ！(2)"},{tag:"C",txt:"いくよー！"}] },
+  { label:"mid_2", title:"応援（フォーム）", cur:"フォーム、きれいだよ。", note:"後ろに変な語が入る",
+    cands:[{tag:"A",txt:"フォーム、きれい！"},{tag:"B",txt:"フォーム、きれいだね！"},{tag:"C",txt:"フォーム、きれいだよ。"}] },
+  { label:"mid_3", title:"応援（呼吸）", cur:"呼吸を止めないでね。", note:"トーンが違う",
+    cands:[{tag:"A",txt:"息を止めないで！"},{tag:"B",txt:"呼吸を止めないで！"},{tag:"C",txt:"呼吸、続けてね！"}] },
+  { label:"first_squat", title:"最初は、スクワット！", cur:"最初は、スクワット！", note:"語尾が切れる",
+    cands:[{tag:"A",txt:"最初は、スクワット！(1)"},{tag:"B",txt:"最初は、スクワット！(2)"},{tag:"C",txt:"最初は、スクワット！(3)"}] },
+  { label:"first_kickback_right", title:"最初は、右足キックバック！", cur:"最初は、右足キックバック！", note:"語尾が切れる",
+    cands:[{tag:"A",txt:"…右足キックバック！(1)"},{tag:"B",txt:"…右足キックバック！(2)"},{tag:"C",txt:"…右足キックバック！(3)"}] },
+];
+const CUR_BASE = "assets/audio/sakuya/";
+const FIX_BASE = "assets/audio/sakuya_fix/";
+const LSKEY = "sakuya_voice_fix_v35";
+let choice = JSON.parse(localStorage.getItem(LSKEY) || "{}"); // {label:'cur'|'A'|'B'|'C'}
+
+const audio = new Audio(); let playingKey=null;
+audio.addEventListener("ended", ()=>setPlaying(null));
+function setPlaying(k){ playingKey=k; document.querySelectorAll(".opt").forEach(o=>o.classList.toggle("playing", o.dataset.key===k)); }
+function play(src, key){
+  if(playingKey===key && !audio.paused){ audio.pause(); setPlaying(null); return; }
+  audio.src = src + "?" + Date.now(); audio.play().then(()=>setPlaying(key)).catch(()=>setPlaying(null));
+}
+function save(){ localStorage.setItem(LSKEY, JSON.stringify(choice)); }
+function pick(label, tag){ choice[label]=tag; save(); render(); stats(); }
+function stats(){ document.getElementById("st-done").textContent = Object.keys(choice).length; }
+
+function optRow(label, tag, txt, src){
+  const key = label+"__"+tag;
+  const sel = choice[label]===tag;
+  return `<div class="opt ${sel?'sel':''} ${playingKey===key?'playing':''}" data-key="${key}" data-label="${label}" data-tag="${tag}" data-src="${src}">`+
+    `<button class="play">▶</button>`+
+    `<div class="body"><div class="tag">${tag==='cur'?'現状のまま':'候補 '+tag}</div><div class="txt">${txt}</div></div>`+
+    `<div class="pick"></div></div>`;
+}
+function render(){
+  const list = document.getElementById("list"); list.innerHTML="";
+  for(const d of DATA){
+    let html = `<div class="card"><div class="lbl">${d.label}</div><h2>${d.title}</h2>`+
+      `<div class="cur">現状：「${d.cur}」（${d.note}）</div>`;
+    html += optRow(d.label, "cur", "「"+d.cur+"」", CUR_BASE+d.label+".mp3");
+    for(const c of d.cands) html += optRow(d.label, c.tag, "「"+c.txt+"」", FIX_BASE+d.label+"__"+c.tag+".mp3");
+    html += `</div>`;
+    list.insertAdjacentHTML("beforeend", html);
+  }
+  document.querySelectorAll(".opt").forEach(o=>{
+    o.querySelector(".play").onclick = (e)=>{ e.stopPropagation(); play(o.dataset.src, o.dataset.key); };
+    o.onclick = ()=> pick(o.dataset.label, o.dataset.tag);
+  });
+}
+function report(){
+  let out = "【サクヤ音声 NG直し・採用結果】\n";
+  for(const d of DATA){
+    const c = choice[d.label];
+    let label = !c ? "未選択" : c==="cur" ? "現状のまま" : ("候補"+c+"（"+(d.cands.find(x=>x.tag===c)?.txt||"")+"）");
+    out += `・${d.label}：${label}\n`;
+  }
+  return out;
+}
+const dlg=document.getElementById("dlg");
+document.getElementById("btn-export").onclick=()=>{ document.getElementById("dlg-text").value=report(); dlg.showModal(); };
+document.getElementById("dlg-close").onclick=()=>dlg.close();
+document.getElementById("dlg-copy").onclick=async()=>{
+  const t=document.getElementById("dlg-text"); t.select();
+  try{ await navigator.clipboard.writeText(t.value); }catch(e){ document.execCommand("copy"); }
+  document.getElementById("dlg-copy").textContent="コピーしました ✓";
+  setTimeout(()=>document.getElementById("dlg-copy").textContent="コピー",1500);
+};
+render(); stats();
+</script>
+</body>
+</html>
