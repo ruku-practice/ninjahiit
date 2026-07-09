@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>サクヤ音声レビュー</title>
+<style>
+  :root{
+    --bg:#0f1420; --panel:#1a2233; --panel2:#212c42; --line:#2c3a55;
+    --ink:#eaf0fb; --sub:#9fb0d0; --accent:#ff4f81; --ok:#25c281; --ng:#ff5a6a;
+  }
+  @media (prefers-color-scheme: light){
+    :root{ --bg:#eef2fa; --panel:#ffffff; --panel2:#f2f5fc; --line:#dde4f2;
+      --ink:#1f2a44; --sub:#6b779a; }
+  }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:"Zen Maru Gothic",-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN",sans-serif;
+    background:var(--bg); color:var(--ink); line-height:1.5;
+    padding:0 0 120px; -webkit-text-size-adjust:100%; }
+  header{ position:sticky; top:0; z-index:10; background:var(--panel);
+    border-bottom:1px solid var(--line); padding:12px 14px calc(10px + env(safe-area-inset-top));
+    padding-top:max(12px,env(safe-area-inset-top)); box-shadow:0 4px 16px rgba(0,0,0,.18); }
+  h1{ font-size:1.1rem; margin:0 0 8px; display:flex; align-items:center; gap:8px; }
+  h1 .dot{ font-size:1.3rem; }
+  .stats{ display:flex; gap:10px; flex-wrap:wrap; font-size:.82rem; color:var(--sub); align-items:center; }
+  .stats b{ color:var(--ink); }
+  .pill{ padding:2px 9px; border-radius:999px; font-weight:800; font-size:.78rem; }
+  .pill.ok{ background:rgba(37,194,129,.16); color:var(--ok); }
+  .pill.ng{ background:rgba(255,90,106,.16); color:var(--ng); }
+  .bar{ height:6px; border-radius:999px; background:var(--line); overflow:hidden; margin-top:8px; }
+  .bar i{ display:block; height:100%; background:linear-gradient(90deg,var(--accent),#ff8a4f); width:0; transition:width .2s; }
+  .wrap{ max-width:680px; margin:0 auto; padding:14px; }
+  .sec{ margin:18px 0 8px; font-weight:900; font-size:.95rem; color:var(--accent); letter-spacing:.03em;
+    display:flex; align-items:center; gap:8px; }
+  .sec small{ color:var(--sub); font-weight:700; font-size:.72rem; }
+  .row{ background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:10px 12px;
+    margin-bottom:9px; display:flex; align-items:center; gap:11px; transition:border-color .15s, background .15s; }
+  .row.playing{ border-color:var(--accent); box-shadow:0 0 0 2px rgba(255,79,129,.25); }
+  .row.ok{ background:linear-gradient(90deg,rgba(37,194,129,.10),transparent 60%); }
+  .row.ng{ background:linear-gradient(90deg,rgba(255,90,106,.10),transparent 60%); }
+  .play{ flex:none; width:44px; height:44px; border-radius:50%; border:none; cursor:pointer;
+    background:var(--panel2); color:var(--ink); font-size:1.15rem; display:flex; align-items:center; justify-content:center;
+    box-shadow:inset 0 0 0 1px var(--line); }
+  .play:active{ transform:scale(.94); }
+  .info{ flex:1; min-width:0; }
+  .info .lbl{ font-size:.7rem; color:var(--sub); font-weight:700; }
+  .info .txt{ font-size:1rem; font-weight:700; word-break:break-word; }
+  .judge{ flex:none; display:flex; gap:6px; }
+  .jb{ border:1px solid var(--line); background:var(--panel2); color:var(--sub); cursor:pointer;
+    width:44px; height:38px; border-radius:10px; font-weight:900; font-size:.9rem; }
+  .jb:active{ transform:scale(.94); }
+  .jb.ok.on{ background:var(--ok); color:#fff; border-color:var(--ok); }
+  .jb.ng.on{ background:var(--ng); color:#fff; border-color:var(--ng); }
+  .memo{ width:100%; margin-top:8px; display:none; }
+  .row.ng .memo{ display:block; }
+  .memo input{ width:100%; border:1px dashed var(--line); background:var(--panel2); color:var(--ink);
+    border-radius:9px; padding:7px 10px; font:inherit; font-size:.85rem; }
+  .footbar{ position:fixed; left:0; right:0; bottom:0; z-index:10; background:var(--panel);
+    border-top:1px solid var(--line); padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+    display:flex; gap:8px; box-shadow:0 -4px 16px rgba(0,0,0,.18); }
+  .btn{ flex:1; border:none; border-radius:12px; padding:13px; font-weight:900; font-size:.92rem; cursor:pointer;
+    font-family:inherit; }
+  .btn.primary{ background:linear-gradient(135deg,var(--accent),#ff8a4f); color:#fff; }
+  .btn.ghost{ background:var(--panel2); color:var(--ink); border:1px solid var(--line); flex:none; padding:13px 16px; }
+  .btn:active{ transform:scale(.97); }
+  .filters{ display:flex; gap:6px; margin-top:10px; }
+  .chip{ border:1px solid var(--line); background:var(--panel2); color:var(--sub); border-radius:999px;
+    padding:5px 12px; font-size:.78rem; font-weight:800; cursor:pointer; }
+  .chip.on{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  dialog{ border:none; border-radius:16px; padding:0; max-width:92vw; width:520px; background:var(--panel); color:var(--ink); }
+  dialog::backdrop{ background:rgba(0,0,0,.55); }
+  .dlg{ padding:16px; }
+  .dlg h2{ margin:0 0 8px; font-size:1rem; }
+  .dlg textarea{ width:100%; height:230px; border:1px solid var(--line); border-radius:10px; background:var(--panel2);
+    color:var(--ink); font:inherit; font-size:.82rem; padding:10px; resize:vertical; }
+  .dlg .drow{ display:flex; gap:8px; margin-top:10px; }
+  .hint{ font-size:.72rem; color:var(--sub); margin-top:6px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap" style="padding:0;">
+    <h1><span class="dot">🎧</span> サクヤ音声レビュー <small style="font-weight:700;color:var(--sub);font-size:.7rem">体育会系ボイス v35</small></h1>
+    <div class="stats">
+      <span>レビュー <b id="st-done">0</b>/<b id="st-total">0</b></span>
+      <span class="pill ok">OK <span id="st-ok">0</span></span>
+      <span class="pill ng">NG <span id="st-ng">0</span></span>
+      <span id="st-auto" style="color:var(--sub)"></span>
+    </div>
+    <div class="bar"><i id="bar"></i></div>
+    <div class="filters">
+      <button class="chip on" data-f="all">すべて</button>
+      <button class="chip" data-f="todo">未評価</button>
+      <button class="chip" data-f="ng">NGのみ</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap" id="list"></div>
+
+<div class="footbar">
+  <button class="btn ghost" id="btn-reset" title="評価をリセット">↺</button>
+  <button class="btn primary" id="btn-export">結果をコピー / 共有</button>
+</div>
+
+<dialog id="dlg">
+  <div class="dlg">
+    <h2>レビュー結果</h2>
+    <div class="hint">この内容をコピーして、チャットに貼り付けてください（NGだけ直します）。</div>
+    <textarea id="dlg-text" readonly></textarea>
+    <div class="drow">
+      <button class="btn primary" id="dlg-copy">コピー</button>
+      <button class="btn ghost" id="dlg-close" style="flex:1">閉じる</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+const EX = {
+  squat:"スクワット",squat_jump:"スクワットジャンプ",side_lunge:"サイドランジ",
+  burpee:"バーピー",mountain_climber:"マウンテンクライマー",crunch:"クランチ",
+  bicycle:"バイシクル",leg_raise:"ライイングレッグレイズ",pushup:"プッシュアップ",
+  high_knees:"ハイニー",jumping_jack:"ジャンピングジャック",kickback_right:"右足キックバック",
+  kickback_left:"左足キックバック",butt_bridge:"バットブリッジ",forward_lunge:"フォワードランジ",
+  backward_lunge:"バックワードランジ",narrow_pushup:"ナロープッシュアップ",
+  wide_pushup:"ワイドプッシュアップ",plank:"プランク",
+};
+// 定型セリフ
+const CUES = [
+  ["count_3","さん（カウント3）"],["count_2","にっ（カウント2）"],["count_1","いち（カウント1）"],
+  ["go_1","いくよっ！"],["go_2","はじめっ！"],
+  ["mid_1","いい調子！"],["mid_2","フォーム、きれいだよ。"],["mid_3","呼吸を止めないでね。"],
+  ["last10_1","あと10秒！"],["last10_2","あとちょっと、がんばって！"],
+  ["rest_1","ふぅ。お水飲んでね。"],["rest_2","よく動けてるよ。次もいこう。"],
+  ["finish_1","お疲れさま！ 今日もよく頑張ったね。"],["finish_2","完走、お見事！ ゆっくり休んでね。"],
+];
+const groups = [
+  { title:"カウント & 掛け声・応援", items: CUES },
+  { title:"種目アナウンス（最初は…）", items: Object.entries(EX).map(([k,n])=>["first_"+k, "最初は、"+n+"！"]) },
+  { title:"種目アナウンス（つぎは…）", items: Object.entries(EX).map(([k,n])=>["next_"+k, "つぎは、"+n+"！"]) },
+];
+const ALL = groups.flatMap(g=>g.items);
+const TOTAL = ALL.length;
+const BASE = "assets/audio/sakuya/";
+const LSKEY = "sakuya_voice_review_v35";
+let state = JSON.parse(localStorage.getItem(LSKEY) || "{}"); // {label:{v:'ok'|'ng', memo:''}}
+let filter = "all";
+
+const audio = new Audio();
+let playingLabel = null;
+audio.addEventListener("ended", ()=>{ setPlaying(null); });
+
+function save(){ localStorage.setItem(LSKEY, JSON.stringify(state)); }
+function setPlaying(label){
+  playingLabel = label;
+  document.querySelectorAll(".row").forEach(r=>r.classList.toggle("playing", r.dataset.label===label));
+}
+function play(label){
+  if(playingLabel===label && !audio.paused){ audio.pause(); setPlaying(null); return; }
+  audio.src = BASE + label + ".mp3?" + Date.now();
+  audio.play().then(()=>setPlaying(label)).catch(()=>setPlaying(null));
+}
+function judge(label, v){
+  const cur = state[label]?.v;
+  if(cur===v){ delete state[label]; }               // 同じボタンで取り消し
+  else { state[label] = { v, memo: state[label]?.memo || "" }; }
+  save(); render(); updateStats();
+}
+function setMemo(label, memo){
+  if(!state[label]) state[label]={v:'ng',memo:''};
+  state[label].memo = memo; save(); updateStats();
+}
+function updateStats(){
+  let ok=0,ng=0;
+  for(const k in state){ if(state[k].v==='ok')ok++; else if(state[k].v==='ng')ng++; }
+  document.getElementById("st-done").textContent = ok+ng;
+  document.getElementById("st-total").textContent = TOTAL;
+  document.getElementById("st-ok").textContent = ok;
+  document.getElementById("st-ng").textContent = ng;
+  document.getElementById("bar").style.width = Math.round((ok+ng)/TOTAL*100)+"%";
+}
+function visible(label){
+  if(filter==="all") return true;
+  if(filter==="todo") return !state[label];
+  if(filter==="ng") return state[label]?.v==="ng";
+}
+function render(){
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+  for(const g of groups){
+    const shown = g.items.filter(([l])=>visible(l));
+    if(!shown.length) continue;
+    const h = document.createElement("div");
+    h.className="sec"; h.innerHTML = g.title + ` <small>(${shown.length})</small>`;
+    list.appendChild(h);
+    for(const [label,text] of shown){
+      const st = state[label]?.v;
+      const row = document.createElement("div");
+      row.className = "row" + (st?(" "+st):"") + (label===playingLabel?" playing":"");
+      row.dataset.label = label;
+      row.innerHTML =
+        `<button class="play" aria-label="再生">▶</button>`+
+        `<div class="info"><div class="lbl">${label}</div><div class="txt">${text}</div>`+
+          `<div class="memo"><input placeholder="NGの理由・こう直したい（任意）" value="${(state[label]?.memo||"").replace(/"/g,'&quot;')}"></div>`+
+        `</div>`+
+        `<div class="judge">`+
+          `<button class="jb ok ${st==='ok'?'on':''}">OK</button>`+
+          `<button class="jb ng ${st==='ng'?'on':''}">NG</button>`+
+        `</div>`;
+      row.querySelector(".play").onclick = ()=>play(label);
+      const btns = row.querySelectorAll(".jb");
+      btns[0].onclick = ()=>judge(label,"ok");
+      btns[1].onclick = ()=>judge(label,"ng");
+      const memo = row.querySelector(".memo input");
+      if(memo) memo.oninput = (e)=>setMemo(label, e.target.value);
+      list.appendChild(row);
+    }
+  }
+}
+function buildReport(){
+  const map = Object.fromEntries(ALL);
+  const ng = [], ok = [], todo = [];
+  for(const [label] of ALL){
+    const s = state[label];
+    if(!s) todo.push(label);
+    else if(s.v==='ng') ng.push(label);
+    else ok.push(label);
+  }
+  let out = `【サクヤ音声レビュー結果 v35】\n`;
+  out += `OK ${ok.length} / NG ${ng.length} / 未評価 ${todo.length}（全${TOTAL}）\n\n`;
+  out += `■ NG（直してほしい）:\n`;
+  if(!ng.length) out += "（なし）\n";
+  for(const l of ng){
+    const memo = state[l].memo?.trim();
+    out += `・${l}「${map[l]}」${memo?" → "+memo:""}\n`;
+  }
+  if(todo.length){ out += `\n■ 未評価:\n・` + todo.join(", ") + "\n"; }
+  return out;
+}
+
+document.querySelectorAll(".chip").forEach(c=>{
+  c.onclick = ()=>{ filter=c.dataset.f;
+    document.querySelectorAll(".chip").forEach(x=>x.classList.toggle("on",x===c)); render(); };
+});
+document.getElementById("btn-reset").onclick = ()=>{
+  if(confirm("評価をすべてリセットしますか？")){ state={}; save(); render(); updateStats(); }
+};
+const dlg = document.getElementById("dlg");
+document.getElementById("btn-export").onclick = ()=>{
+  document.getElementById("dlg-text").value = buildReport();
+  dlg.showModal();
+};
+document.getElementById("dlg-close").onclick = ()=>dlg.close();
+document.getElementById("dlg-copy").onclick = async ()=>{
+  const t = document.getElementById("dlg-text");
+  t.select();
+  try{ await navigator.clipboard.writeText(t.value); }catch(e){ document.execCommand("copy"); }
+  document.getElementById("dlg-copy").textContent = "コピーしました ✓";
+  setTimeout(()=>document.getElementById("dlg-copy").textContent="コピー",1500);
+};
+
+document.getElementById("st-total").textContent = TOTAL;
+render(); updateStats();
+</script>
+</body>
+</html>
