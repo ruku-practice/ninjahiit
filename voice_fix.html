@@ -86,6 +86,15 @@ const DATA = [
   { label:"first_kickback_right", title:"最初は、右足キックバック！", cur:"最初は、右足キックバック！", note:"語尾が切れる",
     cands:[{tag:"A",txt:"…右足キックバック！(1)"},{tag:"B",txt:"…右足キックバック！(2)"},{tag:"C",txt:"…右足キックバック！(3)"}] },
 ];
+// 比較用：OKを出した声のお手本（再生のみ）
+const REF = [
+  { label:"count_3", txt:"さん！（カウント3）" },
+  { label:"count_1", txt:"いち！（カウント1）" },
+  { label:"go_2", txt:"はじめっ！" },
+  { label:"mid_1", txt:"いい調子！" },
+  { label:"first_squat_jump", txt:"最初は、スクワットジャンプ！" },
+  { label:"finish_2", txt:"完走、お見事！ ゆっくり休んでね。" },
+];
 const CUR_BASE = "assets/audio/sakuya/";
 const FIX_BASE = "assets/audio/sakuya_fix/";
 const LSKEY = "sakuya_voice_fix_v35";
@@ -112,6 +121,18 @@ function optRow(label, tag, txt, src){
 }
 function render(){
   const list = document.getElementById("list"); list.innerHTML="";
+  // 比較用リファレンス（OK済みの声・再生のみ）
+  let ref = `<div class="card" style="border-style:dashed;">`+
+    `<div class="lbl" style="color:var(--ok)">OK済みの声（比較用・再生のみ）</div>`+
+    `<h2 style="font-size:.98rem">この声を基準に、下の候補と聴き比べてください</h2>`;
+  for(const r of REF){
+    const key="ref__"+r.label;
+    ref += `<div class="opt ${playingKey===key?'playing':''}" data-key="${key}" data-src="${CUR_BASE+r.label+'.mp3'}" data-ref="1">`+
+      `<button class="play">▶</button>`+
+      `<div class="body"><div class="tag">${r.label}</div><div class="txt">「${r.txt}」</div></div></div>`;
+  }
+  ref += `</div>`;
+  list.insertAdjacentHTML("beforeend", ref);
   for(const d of DATA){
     let html = `<div class="card"><div class="lbl">${d.label}</div><h2>${d.title}</h2>`+
       `<div class="cur">現状：「${d.cur}」（${d.note}）</div>`;
@@ -122,7 +143,7 @@ function render(){
   }
   document.querySelectorAll(".opt").forEach(o=>{
     o.querySelector(".play").onclick = (e)=>{ e.stopPropagation(); play(o.dataset.src, o.dataset.key); };
-    o.onclick = ()=> pick(o.dataset.label, o.dataset.tag);
+    if(!o.dataset.ref) o.onclick = ()=> pick(o.dataset.label, o.dataset.tag);
   });
 }
 function report(){
