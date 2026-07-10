@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>サクヤ音声 OK一覧（試聴）</title>
+<style>
+  :root{ --bg:#0f1420; --panel:#1a2233; --panel2:#212c42; --line:#2c3a55;
+    --ink:#eaf0fb; --sub:#9fb0d0; --accent:#ff4f81; --ok:#25c281; }
+  @media (prefers-color-scheme: light){
+    :root{ --bg:#eef2fa; --panel:#fff; --panel2:#f2f5fc; --line:#dde4f2; --ink:#1f2a44; --sub:#6b779a; } }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:"Zen Maru Gothic",-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN",sans-serif;
+    background:var(--bg); color:var(--ink); line-height:1.5; padding:0 0 110px; -webkit-text-size-adjust:100%; }
+  header{ position:sticky; top:0; z-index:10; background:var(--panel); border-bottom:1px solid var(--line);
+    padding:max(12px,env(safe-area-inset-top)) 14px 12px; box-shadow:0 4px 16px rgba(0,0,0,.18); }
+  h1{ font-size:1.05rem; margin:0 0 6px; }
+  .stat{ font-size:.82rem; color:var(--sub); } .stat b{ color:var(--ink); }
+  .wrap{ max-width:680px; margin:0 auto; padding:14px; }
+  .sec{ margin:20px 0 8px; font-weight:900; font-size:.95rem; color:var(--accent); letter-spacing:.03em; display:flex; align-items:center; gap:8px; }
+  .sec small{ color:var(--sub); font-weight:700; font-size:.72rem; }
+  .row{ background:var(--panel); border:1px solid var(--line); border-radius:13px; padding:9px 12px; margin-bottom:8px;
+    display:flex; align-items:center; gap:11px; transition:border-color .15s, background .15s; }
+  .row.playing{ border-color:var(--accent); background:linear-gradient(90deg,rgba(255,79,129,.10),transparent 60%); box-shadow:0 0 0 2px rgba(255,79,129,.22); }
+  .play{ flex:none; width:42px; height:42px; border-radius:50%; border:none; cursor:pointer; background:var(--panel2);
+    color:var(--ink); font-size:1.1rem; box-shadow:inset 0 0 0 1px var(--line); }
+  .play:active{ transform:scale(.94); }
+  .info{ flex:1; min-width:0; }
+  .info .lbl{ font-size:.68rem; color:var(--sub); font-weight:700; }
+  .info .txt{ font-size:1rem; font-weight:700; word-break:break-word; }
+  .num{ flex:none; font-size:.72rem; color:var(--sub); font-weight:800; width:34px; text-align:right; }
+  .footbar{ position:fixed; left:0; right:0; bottom:0; z-index:10; background:var(--panel); border-top:1px solid var(--line);
+    padding:10px 14px calc(10px + env(safe-area-inset-bottom)); display:flex; gap:8px; align-items:center; box-shadow:0 -4px 16px rgba(0,0,0,.18); }
+  .btn{ flex:1; border:none; border-radius:12px; padding:13px; font-weight:900; font-size:.95rem; cursor:pointer; font-family:inherit;
+    background:linear-gradient(135deg,var(--accent),#ff8a4f); color:#fff; }
+  .btn:active{ transform:scale(.97); }
+  .btn.g{ flex:none; background:var(--panel2); color:var(--ink); border:1px solid var(--line); padding:13px 15px; }
+  .now{ font-size:.78rem; color:var(--sub); flex:none; max-width:38%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  a.link{ color:var(--accent); font-size:.8rem; }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap" style="padding:0;">
+    <h1>🎧 サクヤ音声・採用中の声（試聴）</h1>
+    <div class="stat">NG以外の <b id="cnt">0</b> 本。「▶ 全部を順番に再生」で通して聴けます。<br>
+      NGの選び直しは <a class="link" href="voice_fix.html">こちら（候補選び）</a></div>
+  </div>
+</header>
+<div class="wrap" id="list"></div>
+<div class="footbar">
+  <span class="now" id="now">停止中</span>
+  <button class="btn g" id="btn-prevnext" title="現在を停止">■</button>
+  <button class="btn" id="btn-all">▶ 全部を順番に再生</button>
+</div>
+
+<script>
+const EX = {
+  squat:"スクワット",squat_jump:"スクワットジャンプ",side_lunge:"サイドランジ",
+  burpee:"バーピー",mountain_climber:"マウンテンクライマー",crunch:"クランチ",
+  bicycle:"バイシクル",leg_raise:"ライイングレッグレイズ",pushup:"プッシュアップ",
+  high_knees:"ハイニー",jumping_jack:"ジャンピングジャック",kickback_right:"右足キックバック",
+  kickback_left:"左足キックバック",butt_bridge:"バットブリッジ",forward_lunge:"フォワードランジ",
+  backward_lunge:"バックワードランジ",narrow_pushup:"ナロープッシュアップ",
+  wide_pushup:"ワイドプッシュアップ",plank:"プランク",
+};
+const CUES = [
+  ["count_3","さん（カウント3）"],["count_2","にっ（カウント2）"],["count_1","いち（カウント1）"],
+  ["go_1","いくよっ！"],["go_2","はじめっ！"],
+  ["mid_1","いい調子！"],["mid_2","フォーム、きれいだよ。"],["mid_3","呼吸を止めないでね。"],
+  ["last10_1","あと10秒！"],["last10_2","あとちょっと、がんばって！"],
+  ["rest_1","ふぅ。お水飲んでね。"],["rest_2","よく動けてるよ。次もいこう。"],
+  ["finish_1","お疲れさま！ 今日もよく頑張ったね。"],["finish_2","完走、お見事！ ゆっくり休んでね。"],
+];
+// レビューでNGだった8本は除外（rest_1/2 はアプリ未使用でもあり除外）
+const NG = new Set(["count_2","go_1","mid_2","mid_3","rest_1","rest_2","first_squat","first_kickback_right"]);
+const groups = [
+  { title:"カウント & 掛け声・応援", items: CUES },
+  { title:"種目アナウンス（最初は…）", items: Object.entries(EX).map(([k,n])=>["first_"+k,"最初は、"+n+"！"]) },
+  { title:"種目アナウンス（つぎは…）", items: Object.entries(EX).map(([k,n])=>["next_"+k,"つぎは、"+n+"！"]) },
+].map(g=>({ title:g.title, items:g.items.filter(([l])=>!NG.has(l)) }));
+const ALL = groups.flatMap(g=>g.items);
+const BASE = "assets/audio/sakuya/";
+document.getElementById("cnt").textContent = ALL.length;
+
+const audio = new Audio();
+let playing = null;   // label
+let seq = false;      // 連続再生中か
+let order = [];        // 連続再生の順序
+let idx = -1;
+
+function mark(label){
+  playing = label;
+  document.querySelectorAll(".row").forEach(r=>r.classList.toggle("playing", r.dataset.label===label));
+  const map = Object.fromEntries(ALL);
+  document.getElementById("now").textContent = label ? ("▶ "+ (map[label]||label)) : "停止中";
+  if(label){ const el=document.querySelector('.row[data-label="'+label+'"]'); if(el) el.scrollIntoView({block:"center",behavior:"smooth"}); }
+}
+function playOne(label){
+  audio.src = BASE + label + ".mp3?" + Date.now();
+  audio.play().then(()=>mark(label)).catch(()=>mark(null));
+}
+function stopAll(){ seq=false; idx=-1; audio.pause(); mark(null); document.getElementById("btn-all").textContent="▶ 全部を順番に再生"; }
+audio.addEventListener("ended", ()=>{
+  if(seq){ idx++; if(idx<order.length){ setTimeout(()=>playOne(order[idx]), 380); } else { stopAll(); } }
+  else mark(null);
+});
+
+function render(){
+  const list=document.getElementById("list"); list.innerHTML="";
+  let n=0;
+  for(const g of groups){
+    const h=document.createElement("div"); h.className="sec"; h.innerHTML=g.title+` <small>(${g.items.length})</small>`; list.appendChild(h);
+    for(const [label,text] of g.items){
+      n++;
+      const row=document.createElement("div"); row.className="row"; row.dataset.label=label;
+      row.innerHTML=`<button class="play">▶</button><div class="info"><div class="lbl">${label}</div><div class="txt">${text}</div></div><div class="num">${n}</div>`;
+      row.querySelector(".play").onclick=()=>{
+        if(playing===label && !audio.paused){ audio.pause(); mark(null); return; }
+        seq=false; document.getElementById("btn-all").textContent="▶ 全部を順番に再生"; playOne(label);
+      };
+      list.appendChild(row);
+    }
+  }
+}
+document.getElementById("btn-all").onclick=()=>{
+  if(seq){ stopAll(); return; }
+  seq=true; order=ALL.map(([l])=>l); idx=0;
+  document.getElementById("btn-all").textContent="⏸ 停止";
+  playOne(order[0]);
+};
+document.getElementById("btn-prevnext").onclick=stopAll;
+render();
+</script>
+</body>
+</html>
