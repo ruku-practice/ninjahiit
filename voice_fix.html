@@ -73,10 +73,8 @@
 <script>
 // label: {text(現状の意図), cur(現状の言い回し), cands:[{tag,txt}]}
 const DATA = [
-  { label:"mid_2", title:"応援（フォーム）※変な語をカット", cur:"フォーム、きれいだよ。（後ろに変な語）", note:"本体だけにカット",
-    cands:[{tag:"A",txt:"短め（〜だよ。で止め・1.64s）"},{tag:"B",txt:"中くらい（1.79s）"},{tag:"C",txt:"長め・余韻あり（1.94s）"}] },
-  { label:"first_kickback_right", title:"最初は、右足キックバック！", cur:"現状は語尾が切れる（惜しい）", note:"現状の声で語尾までフル生成した別テイク",
-    cands:[{tag:"A",txt:"テイク1（語尾フル）"},{tag:"B",txt:"テイク2（語尾フル）"},{tag:"C",txt:"テイク3（語尾フル）"}] },
+  { label:"first_kickback_right", title:"最初は、右足キックバック！", cur:"現状＝語尾が切れる版（比較用）", note:"候補は「最初は、」＋OK済み「右足キックバック！」のつなぎ合わせ",
+    cands:[{tag:"A",txt:"つなぎ・ふつう（2.84s）"},{tag:"B",txt:"つなぎ・詰め気味（2.78s）"},{tag:"C",txt:"つなぎ・ポーズ長め（2.94s）"}] },
 ];
 // 比較用：OKを出した声のお手本（再生のみ）
 const REF = [
@@ -86,7 +84,7 @@ const REF = [
 ];
 const CUR_BASE = "assets/audio/sakuya/";
 const FIX_BASE = "assets/audio/sakuya_fix/";
-const LSKEY = "sakuya_voice_fix_v35_r2";
+const LSKEY = "sakuya_voice_fix_v35_r3";
 let choice = JSON.parse(localStorage.getItem(LSKEY) || "{}"); // {label:'cur'|'A'|'B'|'C'}
 
 const audio = new Audio(); let playingKey=null;
