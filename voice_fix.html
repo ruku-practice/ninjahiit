@@ -73,8 +73,8 @@
 <script>
 // label: {text(現状の意図), cur(現状の言い回し), cands:[{tag,txt}]}
 const DATA = [
-  { label:"first_kickback_right", title:"最初は、右足キックバック！", cur:"現状＝語尾が切れる版（比較用）", note:"候補は「最初は、」＋OK済み「右足キックバック！」のつなぎ合わせ",
-    cands:[{tag:"A",txt:"つなぎ・ふつう（2.84s）"},{tag:"B",txt:"つなぎ・詰め気味（2.78s）"},{tag:"C",txt:"つなぎ・ポーズ長め（2.94s）"}] },
+  { label:"first_kickback_right", title:"最初は、右足キックバック！", cur:"現状＝語尾が切れる版（比較用）", note:"「最初は、」と「右足キックバック！」の間隔を3段階で",
+    cands:[{tag:"A",txt:"間 0.30秒（狭め）"},{tag:"B",txt:"間 0.45秒（ふつう）"},{tag:"C",txt:"間 0.60秒（広め）"}] },
 ];
 // 比較用：OKを出した声のお手本（再生のみ）
 const REF = [
@@ -84,7 +84,7 @@ const REF = [
 ];
 const CUR_BASE = "assets/audio/sakuya/";
 const FIX_BASE = "assets/audio/sakuya_fix/";
-const LSKEY = "sakuya_voice_fix_v35_r3";
+const LSKEY = "sakuya_voice_fix_v35_r4";
 let choice = JSON.parse(localStorage.getItem(LSKEY) || "{}"); // {label:'cur'|'A'|'B'|'C'}
 
 const audio = new Audio(); let playingKey=null;
