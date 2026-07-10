@@ -73,31 +73,20 @@
 <script>
 // label: {text(現状の意図), cur(現状の言い回し), cands:[{tag,txt}]}
 const DATA = [
-  { label:"count_2", title:"カウント「2」", cur:"にっ", note:"濁って聞こえる",
-    cands:[{tag:"A",txt:"に！"},{tag:"B",txt:"にっ！"},{tag:"C",txt:"に。"}] },
-  { label:"go_1", title:"ワーク開始の掛け声", cur:"いくよっ！", note:"NG",
-    cands:[{tag:"A",txt:"いくよっ！(1)"},{tag:"B",txt:"いくよっ！(2)"},{tag:"C",txt:"いくよー！"}] },
-  { label:"mid_2", title:"応援（フォーム）", cur:"フォーム、きれいだよ。", note:"後ろに変な語が入る",
-    cands:[{tag:"A",txt:"フォーム、きれい！"},{tag:"B",txt:"フォーム、きれいだね！"},{tag:"C",txt:"フォーム、きれいだよ。"}] },
-  { label:"mid_3", title:"応援（呼吸）", cur:"呼吸を止めないでね。", note:"トーンが違う",
-    cands:[{tag:"A",txt:"息を止めないで！"},{tag:"B",txt:"呼吸を止めないで！"},{tag:"C",txt:"呼吸、続けてね！"}] },
-  { label:"first_squat", title:"最初は、スクワット！", cur:"最初は、スクワット！", note:"語尾が切れる",
-    cands:[{tag:"A",txt:"最初は、スクワット！(1)"},{tag:"B",txt:"最初は、スクワット！(2)"},{tag:"C",txt:"最初は、スクワット！(3)"}] },
-  { label:"first_kickback_right", title:"最初は、右足キックバック！", cur:"最初は、右足キックバック！", note:"語尾が切れる",
-    cands:[{tag:"A",txt:"…右足キックバック！(1)"},{tag:"B",txt:"…右足キックバック！(2)"},{tag:"C",txt:"…右足キックバック！(3)"}] },
+  { label:"mid_2", title:"応援（フォーム）※変な語をカット", cur:"フォーム、きれいだよ。（後ろに変な語）", note:"本体だけにカット",
+    cands:[{tag:"A",txt:"短め（〜だよ。で止め・1.64s）"},{tag:"B",txt:"中くらい（1.79s）"},{tag:"C",txt:"長め・余韻あり（1.94s）"}] },
+  { label:"first_kickback_right", title:"最初は、右足キックバック！", cur:"現状は語尾が切れる（惜しい）", note:"現状の声で語尾までフル生成した別テイク",
+    cands:[{tag:"A",txt:"テイク1（語尾フル）"},{tag:"B",txt:"テイク2（語尾フル）"},{tag:"C",txt:"テイク3（語尾フル）"}] },
 ];
 // 比較用：OKを出した声のお手本（再生のみ）
 const REF = [
-  { label:"count_3", txt:"さん！（カウント3）" },
-  { label:"count_1", txt:"いち！（カウント1）" },
-  { label:"go_2", txt:"はじめっ！" },
-  { label:"mid_1", txt:"いい調子！" },
-  { label:"first_squat_jump", txt:"最初は、スクワットジャンプ！" },
-  { label:"finish_2", txt:"完走、お見事！ ゆっくり休んでね。" },
+  { label:"mid_1", txt:"いい調子！（応援トーンの基準）" },
+  { label:"next_kickback_right", txt:"つぎは、右足キックバック！（OK・語尾の基準）" },
+  { label:"first_squat", txt:"最初は、スクワット！（採用済み・語尾フル）" },
 ];
 const CUR_BASE = "assets/audio/sakuya/";
 const FIX_BASE = "assets/audio/sakuya_fix/";
-const LSKEY = "sakuya_voice_fix_v35";
+const LSKEY = "sakuya_voice_fix_v35_r2";
 let choice = JSON.parse(localStorage.getItem(LSKEY) || "{}"); // {label:'cur'|'A'|'B'|'C'}
 
 const audio = new Audio(); let playingKey=null;
@@ -164,6 +153,7 @@ document.getElementById("dlg-copy").onclick=async()=>{
   document.getElementById("dlg-copy").textContent="コピーしました ✓";
   setTimeout(()=>document.getElementById("dlg-copy").textContent="コピー",1500);
 };
+document.getElementById("st-total").textContent = DATA.length;
 render(); stats();
 </script>
 </body>
