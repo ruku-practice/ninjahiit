@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>フォワードランジ比較</title>
+<style>
+  :root{ --bg:#0f1420; --panel:#1a2233; --panel2:#212c42; --line:#2c3a55;
+    --ink:#eaf0fb; --sub:#9fb0d0; --accent:#ff4f81; --ok:#25c281; }
+  @media (prefers-color-scheme: light){
+    :root{ --bg:#eef2fa; --panel:#fff; --panel2:#f2f5fc; --line:#dde4f2; --ink:#1f2a44; --sub:#6b779a; } }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:"Zen Maru Gothic",-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN",sans-serif;
+    background:var(--bg); color:var(--ink); line-height:1.5; padding:0 0 110px; -webkit-text-size-adjust:100%; }
+  header{ position:sticky; top:0; z-index:10; background:var(--panel); border-bottom:1px solid var(--line);
+    padding:max(12px,env(safe-area-inset-top)) 14px 10px; box-shadow:0 4px 16px rgba(0,0,0,.18); }
+  h1{ font-size:1.05rem; margin:0 0 4px; }
+  .stat{ font-size:.8rem; color:var(--sub); }
+  .wrap{ max-width:680px; margin:0 auto; padding:14px; }
+  .card{ background:var(--panel); border:2px solid var(--line); border-radius:16px; overflow:hidden; margin-bottom:16px; }
+  .card.sel{ border-color:var(--ok); box-shadow:0 0 0 3px rgba(37,194,129,.25); }
+  .vwrap{ background:#f2f0ee; aspect-ratio:1; max-height:420px; display:flex; justify-content:center; position:relative; }
+  .vwrap video{ width:100%; height:100%; object-fit:contain; display:block; }
+  .tag{ position:absolute; top:10px; left:10px; background:var(--accent); color:#fff; font-size:.72rem;
+    font-weight:900; padding:4px 12px; border-radius:999px; box-shadow:0 2px 8px rgba(0,0,0,.25); }
+  .meta{ padding:12px 14px; display:flex; align-items:center; gap:12px; }
+  .info{ flex:1; }
+  .info .t{ font-size:1.02rem; font-weight:900; }
+  .info .d{ font-size:.76rem; color:var(--sub); }
+  .pickbtn{ flex:none; border:1px solid var(--line); background:var(--panel2); color:var(--sub); cursor:pointer;
+    padding:11px 18px; border-radius:11px; font-weight:900; font-size:.9rem; font-family:inherit; }
+  .card.sel .pickbtn{ background:var(--ok); color:#fff; border-color:var(--ok); }
+  .memo{ padding:0 14px 13px; }
+  .memo input{ width:100%; border:1px dashed var(--line); background:var(--panel2); color:var(--ink);
+    border-radius:9px; padding:8px 10px; font:inherit; font-size:.85rem; }
+  .footbar{ position:fixed; left:0; right:0; bottom:0; z-index:10; background:var(--panel); border-top:1px solid var(--line);
+    padding:10px 14px calc(10px + env(safe-area-inset-bottom)); display:flex; gap:8px; box-shadow:0 -4px 16px rgba(0,0,0,.18); }
+  .btn{ flex:1; border:none; border-radius:12px; padding:13px; font-weight:900; font-size:.92rem; cursor:pointer;
+    font-family:inherit; background:linear-gradient(135deg,var(--accent),#ff8a4f); color:#fff; }
+  .btn:active{ transform:scale(.97); }
+  dialog{ border:none; border-radius:16px; padding:0; max-width:92vw; width:520px; background:var(--panel); color:var(--ink); }
+  dialog::backdrop{ background:rgba(0,0,0,.55); }
+  .dlg{ padding:16px; } .dlg h2{ margin:0 0 8px; font-size:1rem; }
+  .dlg textarea{ width:100%; height:170px; border:1px solid var(--line); border-radius:10px; background:var(--panel2);
+    color:var(--ink); font:inherit; font-size:.85rem; padding:10px; }
+  .dlg .drow{ display:flex; gap:8px; margin-top:10px; }
+  .dlg .b2{ flex:1; border:none; border-radius:10px; padding:12px; font-weight:800; cursor:pointer; font-family:inherit; }
+  .dlg .b2.g{ background:var(--panel2); color:var(--ink); border:1px solid var(--line); }
+  .hint{ font-size:.72rem; color:var(--sub); margin-top:6px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap" style="padding:0;">
+    <h1>🔍 フォワードランジ 3世代比較</h1>
+    <div class="stat">一番マシなもの（または全部ダメ）を選んで、下のボタンで結果を送ってください</div>
+  </div>
+</header>
+<div class="wrap" id="list"></div>
+<div class="footbar"><button class="btn" id="btn-export">選んだ結果をコピー / 共有</button></div>
+
+<dialog id="dlg"><div class="dlg">
+  <h2>比較結果</h2>
+  <div class="hint">コピーしてチャットに貼り付けてください。</div>
+  <textarea id="dlg-text" readonly></textarea>
+  <div class="drow">
+    <button class="b2" id="dlg-copy" style="background:linear-gradient(135deg,var(--accent),#ff8a4f);color:#fff">コピー</button>
+    <button class="b2 g" id="dlg-close">閉じる</button>
+  </div>
+</div></dialog>
+
+<script>
+const VERS = [
+  { id:"v42", title:"今回版（v42）", desc:"片足ずつ生成×深いランジ指定→右→左を連結（7.1秒）", file:"assets/videos/compare/forward_lunge_v42.mp4" },
+  { id:"v41", title:"前回版（v41）", desc:"片足ずつ生成→右→左を連結（6.3秒）", file:"assets/videos/compare/forward_lunge_v41.mp4" },
+  { id:"v40", title:"前々回版（v40）", desc:"左右交互を1本で生成（5.8秒）", file:"assets/videos/compare/forward_lunge_v40.mp4" },
+];
+const LSKEY="lunge_compare_v42";
+let state=JSON.parse(localStorage.getItem(LSKEY)||"{}"); // {pick:'v42'|'none', memo:{v42:'',...}}
+state.memo=state.memo||{};
+function save(){ localStorage.setItem(LSKEY, JSON.stringify(state)); }
+function render(){
+  const list=document.getElementById("list"); list.innerHTML="";
+  for(const v of VERS){
+    const card=document.createElement("div");
+    card.className="card"+(state.pick===v.id?" sel":"");
+    card.innerHTML=
+      `<div class="vwrap"><span class="tag">${v.title}</span>`+
+      `<video muted loop playsinline autoplay src="${v.file}?fresh=${Date.now()}"></video></div>`+
+      `<div class="meta"><div class="info"><div class="t">${v.title}</div><div class="d">${v.desc}</div></div>`+
+      `<button class="pickbtn">${state.pick===v.id?"採用 ✓":"これにする"}</button></div>`+
+      `<div class="memo"><input placeholder="この版への気になる点メモ（任意）" value="${(state.memo[v.id]||"").replace(/"/g,'&quot;')}"></div>`;
+    card.querySelector(".pickbtn").onclick=()=>{ state.pick=(state.pick===v.id?undefined:v.id); save(); render(); };
+    card.querySelector(".memo input").oninput=(e)=>{ state.memo[v.id]=e.target.value; save(); };
+    const vid=card.querySelector("video");
+    vid.onclick=()=>{ if(vid.paused) vid.play().catch(()=>{}); else vid.pause(); };
+    list.appendChild(card);
+  }
+  // 全部ダメ ボタン
+  const noneCard=document.createElement("div");
+  noneCard.className="card"+(state.pick==="none"?" sel":"");
+  noneCard.innerHTML=`<div class="meta"><div class="info"><div class="t">どれもダメ（作り直し希望）</div>`+
+    `<div class="d">下のメモにどう直したいかを書いてください</div></div>`+
+    `<button class="pickbtn">${state.pick==="none"?"選択中 ✓":"これにする"}</button></div>`+
+    `<div class="memo" style="display:block"><input placeholder="どう直したいか（例：2歩目も必ず前に踏み込む）" value="${(state.memo.none||"").replace(/"/g,'&quot;')}"></div>`;
+  noneCard.querySelector(".pickbtn").onclick=()=>{ state.pick=(state.pick==="none"?undefined:"none"); save(); render(); };
+  noneCard.querySelector(".memo input").oninput=(e)=>{ state.memo.none=e.target.value; save(); };
+  list.appendChild(noneCard);
+}
+document.getElementById("btn-export").onclick=()=>{
+  let out="【フォワードランジ比較結果】\n";
+  out+="採用: "+(state.pick==="none"?"どれもダメ（作り直し）":(state.pick||"未選択"))+"\n";
+  for(const v of [...VERS.map(x=>x.id),"none"]){
+    const m=(state.memo[v]||"").trim();
+    if(m) out+=`・${v}メモ: ${m}\n`;
+  }
+  document.getElementById("dlg-text").value=out;
+  document.getElementById("dlg").showModal();
+};
+document.getElementById("dlg-close").onclick=()=>document.getElementById("dlg").close();
+document.getElementById("dlg-copy").onclick=async()=>{
+  const t=document.getElementById("dlg-text"); t.select();
+  try{ await navigator.clipboard.writeText(t.value); }catch(e){ document.execCommand("copy"); }
+  document.getElementById("dlg-copy").textContent="コピーしました ✓";
+  setTimeout(()=>document.getElementById("dlg-copy").textContent="コピー",1500);
+};
+render();
+</script>
+</body>
+</html>
