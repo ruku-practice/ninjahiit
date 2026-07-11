@@ -60,11 +60,23 @@ const Voice = {
   // 使う分をまとめて先読み（キャッシュから即返る）
   preload(names) { if (this.ctx) names.forEach((n) => this._load(n)); },
 
-  // name を再生。無ければ黙って読み込むだけ（次回用）。interrupt=trueで前の声を止める
+  // name を再生。未ロードならロード完了後に再生する（ただし3秒以内かつ最新の要求のみ。
+  // 古い要求が後から鳴る事故を防ぐ）。interrupt=trueで前の声を止める
   play(name, interrupt = true) {
     if (!this.enabled || !this.ctx || !name) return;
+    this._want = name;
+    this._wantAt = performance.now();
     const buf = this.buffers[name];
-    if (!buf) { this._load(name); return; }
+    if (buf) { this._startBuf(buf, interrupt); return; }
+    this._load(name).then(() => {
+      if (this._want !== name) return;                       // もっと新しいセリフ要求が出た
+      if (performance.now() - this._wantAt > 3000) return;   // 遅すぎる（場面が変わった）
+      const b = this.buffers[name];
+      if (b) this._startBuf(b, interrupt);
+    });
+  },
+
+  _startBuf(buf, interrupt) {
     if (interrupt) this.stop();
     const src = this.ctx.createBufferSource();
     src.buffer = buf;

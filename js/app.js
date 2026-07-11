@@ -500,9 +500,7 @@ function startWorkout(workout) {
       const sec = Math.ceil(remain);
       $("#run-count").textContent = sec;
       $("#run-count").classList.toggle("urgent", seg.type === "work" && sec <= 3 && sec >= 1);
-      const circle = $("#gauge-arc");
-      const C = 2 * Math.PI * 45;
-      circle.style.strokeDashoffset = C * ratio;
+      $("#hbar-fill").style.width = `${Math.max(0, (1 - ratio) * 100)}%`; // 残り時間ぶんが縮む
 
       if (sec !== lastTickSec) {
         lastTickSec = sec;
@@ -511,11 +509,13 @@ function startWorkout(workout) {
           Sound.countTick();
           Voice.play(`count_${sec}`);
         }
-        if (seg.type === "work" && sec === 10) {                // ラスト10秒（旧ラスト5秒を置換）
+        if (seg.type === "work" && sec === 10 && seg.sec > 12) { // ラスト10秒（旧ラスト5秒を置換）
           Voice.playOne(["last10_1", "last10_2"]);
           $("#run-quote").textContent = "あと10秒、あとちょっと！";
         }
-        if (seg.type === "work" && sec === Math.ceil(seg.sec / 2)) {
+        // 中盤の応援。20秒ワークでは中間=10秒＝ラスト10秒と衝突するため14秒地点で言う
+        const midSec = seg.sec >= 25 ? Math.ceil(seg.sec / 2) : 14;
+        if (seg.type === "work" && sec === midSec && sec !== 10 && seg.sec > 15) {
           Voice.playOne(["mid_1", "mid_2", "mid_3"]);
           $("#run-quote").textContent = quote("work_mid");
         }

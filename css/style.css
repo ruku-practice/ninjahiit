@@ -537,11 +537,19 @@ button, .btn-primary, .btn-ghost, .catalog-link { font-family: inherit; }
 #screen-run.hud.phase-work    #run-phase { color: #e23a5e; }
 #screen-run.hud.phase-rest    #run-phase { color: #0f9f8c; }
 #screen-run.hud #run-quote { color: #29304a; opacity: 1; font-weight: 700; }
-#screen-run.hud #gauge-bg { stroke: rgba(31,42,68,0.14); }
-#screen-run.hud.phase-prepare #gauge-arc { stroke: #4f9bf0; }
-#screen-run.hud.phase-work    #gauge-arc { stroke: #ff4f6e; }
-#screen-run.hud.phase-rest    #gauge-arc { stroke: #17c6b0; }
 #screen-run.hud #run-count { color: #1f2a44; text-shadow: 0 2px 12px rgba(255,255,255,0.7); }
+
+/* 横ゲージ（円ゲージ廃止・お手本動画を大きく） */
+.hbar-wrap { display: flex; align-items: center; gap: 13px; width: min(88vw, 430px); margin: 12px auto 0; }
+.hbar-wrap #run-count { position: static; display: block; font-size: 3rem; font-weight: 900; min-width: 2.1ch; text-align: center; line-height: 1; }
+.hbar { flex: 1; height: 14px; border-radius: 999px; background: rgba(31,42,68,0.14); overflow: hidden;
+  box-shadow: inset 0 1px 3px rgba(31,42,68,0.12); }
+.hbar i { display: block; height: 100%; border-radius: 999px; width: 100%; transition: width 0.12s linear; }
+#screen-run.hud.phase-prepare .hbar i { background: linear-gradient(90deg, #4f9bf0, #74baf6); }
+#screen-run.hud.phase-work    .hbar i { background: linear-gradient(90deg, #ff4f6e, #ff8a4f); }
+#screen-run.hud.phase-rest    .hbar i { background: linear-gradient(90deg, #17c6b0, #45d69a); }
+#screen-run .chara-box video { width: min(88vw, 400px); }
+#screen-run #run-chara img { max-height: 300px; }
 #screen-run.hud #btn-pause {
   background: rgba(255,255,255,0.55); color: #1f2a44;
   box-shadow: inset 0 0 0 1px rgba(255,255,255,0.7), 0 8px 20px rgba(50,74,120,0.2);

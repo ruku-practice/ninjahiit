@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=44">
+  <link rel="stylesheet" href="css/style.css?v=45">
 </head>
 <body>
 
@@ -137,19 +137,9 @@
       <div class="chara-stage chara-stage-run"><div id="run-chara" class="chara-box"></div></div>
       <p id="run-quote"></p>
 
-      <div class="gauge-wrap">
-        <svg viewBox="0 0 100 100">
-          <defs>
-            <linearGradient id="gauge-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#fff"></stop>
-              <stop offset="100%" stop-color="#ffd9e6"></stop>
-            </linearGradient>
-          </defs>
-          <circle id="gauge-bg" cx="50" cy="50" r="45"></circle>
-          <circle id="gauge-arc" cx="50" cy="50" r="45"
-                  stroke-dasharray="282.74" stroke-dashoffset="0"></circle>
-        </svg>
+      <div class="hbar-wrap">
         <div id="run-count"></div>
+        <div class="hbar"><i id="hbar-fill"></i></div>
       </div>
 
       <button id="btn-pause" aria-label="一時停止">⏸</button>
@@ -171,9 +161,9 @@
     </div>
   </section>
 
-  <script src="js/data.js?v=44"></script>
-  <script src="js/audio.js?v=44"></script>
-  <script src="js/timer.js?v=44"></script>
-  <script src="js/app.js?v=44"></script>
+  <script src="js/data.js?v=45"></script>
+  <script src="js/audio.js?v=45"></script>
+  <script src="js/timer.js?v=45"></script>
+  <script src="js/app.js?v=45"></script>
 </body>
 </html>
