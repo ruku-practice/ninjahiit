@@ -170,3 +170,24 @@ function rankInfo(totalExp) {
 
 // やさしい週目標（今週この回数やれたら花丸、くらいのゆるさ）
 const WEEKLY_GOAL = 3;
+
+// ---- 今日の任務（デイリー目標）----
+// 日付文字列から決定的に選ぶ（同じ日は誰でも・何度開いても同じ任務）。クリアでボーナス修行値
+const MISSION_BONUS_EXP = 50;
+const DAILY_MISSIONS = [
+  { id: "any",           label: "どれか1つ、完走する" },
+  { id: "beginner_hiit", label: "「初めてのHIIT」を完走する" },
+  { id: "abs",           label: "「腹筋」を完走する" },
+  { id: "lower",         label: "「下半身」を完走する" },
+  { id: "fat_burn",      label: "「脂肪バーニング」を完走する" },
+  { id: "any",           label: "どれか1つ、完走する" },
+  { id: "body_make",     label: "「ボディメイキング」を完走する" },
+  { id: "serious_hiit",  label: "「本気のHIIT」を完走する" },
+  { id: "super_ninja",   label: "「スーパーニンジャ」を完走する" },
+  { id: "any2",          label: "2回完走する（休みながらでOK）" },
+];
+function missionForDate(dateStr) {
+  let h = 0;
+  for (const c of dateStr) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return DAILY_MISSIONS[h % DAILY_MISSIONS.length];
+}

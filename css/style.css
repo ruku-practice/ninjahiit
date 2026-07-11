@@ -180,6 +180,8 @@ button, .btn-primary, .btn-ghost, .catalog-link { font-family: inherit; }
 .hud-ch-main b { font-size: 0.98rem; color: #ff4f81; font-weight: 900; }
 .hud-ch-main small { font-size: 0.74rem; color: #6b779a; }
 .hud-ch-go { font-size: 1.4rem; color: #ff4f81; font-weight: 700; }
+.hud-challenge.cleared .hud-ch-main b { color: #17b39e; }
+.hud-challenge.cleared .hud-ch-flag::after { content: " ✅"; font-size: 0.85rem; }
 
 /* 下タブバー：モック由来のデザイン画像＋透明タップ領域 */
 .hud-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; display: flex; align-items: stretch;

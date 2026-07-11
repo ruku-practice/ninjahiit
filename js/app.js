@@ -310,11 +310,27 @@ function streakDays() {
   return streak;
 }
 
+// ---- 今日の任務 ----
+function missionStatus() {
+  const m = missionForDate(todayStr());
+  const todays = state.history.filter((h) => h.date === todayStr() && h.completed);
+  let done = false;
+  if (m.id === "any") done = todays.length >= 1;
+  else if (m.id === "any2") done = todays.length >= 2;
+  else done = todays.some((h) => h.workoutId === m.id);
+  return { mission: m, done, count: todays.length };
+}
+
 function saveResult(workout, totalWorkSec) {
-  state.history.push({
+  const beforeDone = missionStatus().done;
+  const entry = {
     date: todayStr(), workoutId: workout.id, title: workout.title,
     totalWorkSec, completed: true, ts: Date.now(),
-  });
+  };
+  state.history.push(entry);
+  // この完走で「今日の任務」を初めて達成したら、ボーナス修行値をこの記録に付与
+  state.lastMissionCleared = !beforeDone && missionStatus().done;
+  if (state.lastMissionCleared) entry.bonusExp = MISSION_BONUS_EXP;
   store.set("history", state.history);
   Native.backup();                                              // ネイティブ: 記録をPreferencesへ複製
   Native.syncReminder(state.settings.reminderTime, true);       // 完走した日の通知はスキップ→明日に予約し直し
@@ -337,7 +353,7 @@ function releaseWakeLock() {
 function totalExp() {
   return state.history
     .filter(h => h.completed)
-    .reduce((sum, h) => sum + expForResult(h.totalWorkSec), 0);
+    .reduce((sum, h) => sum + expForResult(h.totalWorkSec) + (h.bonusExp || 0), 0);
 }
 
 function todayStats() {
@@ -443,7 +459,11 @@ function renderHome() {
     list.appendChild(li);
   });
   const tc = todayStats().count;
-  $("#hud-ch-desc").textContent = tc >= 1 ? `今日はクリア済み！ ✓` : "1回やってみよう！";
+  const ms = missionStatus();
+  $("#hud-ch-desc").textContent = ms.done
+    ? `${ms.mission.label} ── クリア！ ✓`
+    : `${ms.mission.label}（＋${MISSION_BONUS_EXP}修行値）`;
+  $("#hud-challenge").classList.toggle("cleared", ms.done);
   show("screen-home");
 }
 
@@ -604,7 +624,8 @@ function renderDone(workout, totalWorkSec) {
   const s = streakDays();
 
   // 修行値と昇格判定（saveResultで履歴に追加済みなので、今回分を引いて前後比較）
-  const gained = expForResult(totalWorkSec);
+  const missionCleared = !!state.lastMissionCleared;
+  const gained = expForResult(totalWorkSec) + (missionCleared ? MISSION_BONUS_EXP : 0);
   const expAfter = totalExp();
   const rankBefore = rankInfo(expAfter - gained);
   const rankAfter = rankInfo(expAfter);
@@ -617,6 +638,7 @@ function renderDone(workout, totalWorkSec) {
     `<li>${workout.title} 完走 🎉</li>` +
     `<li>運動時間 ${Math.round(totalWorkSec / 60 * 10) / 10}分 ・ 約${estimateKcal(totalWorkSec)}kcal</li>` +
     `<li>🥷 ${rankAfter.name} ・ +${gained} 修行値</li>` +
+    (missionCleared ? `<li>🚩 今日の任務クリア！（＋${MISSION_BONUS_EXP}修行値込み）</li>` : "") +
     `<li>${s > 0 ? `🔥 ${s}日連続` : "また明日も待ってるよ"}</li>`;
   const text = encodeURIComponent(
     `${trainer().name}と一緒に「${workout.title}」完走した！🥷 #サクヤ4分HIIT #CryptoNinja`);
@@ -674,8 +696,13 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".hud-tab[data-soon]").forEach(b => {
     b.onclick = () => showToast(`${b.dataset.soon} はただいま準備中だよ 🥷`);
   });
-  $("#hud-challenge").onclick = () =>
-    showToast("メニューを1つ選んで、今日の4分をはじめよう！");
+  $("#hud-challenge").onclick = () => {
+    const ms = missionStatus();
+    if (ms.done) { showToast("今日の任務はクリア済み！おかわりも歓迎だよ 🥷"); return; }
+    const preset = PRESETS.find((p) => p.id === ms.mission.id);
+    if (preset) openDetail(preset, "home");
+    else showToast("メニューを1つ選んで、今日の4分をはじめよう！");
+  };
   $("#btn-sound").onclick = () => {
     state.settings.sound = !state.settings.sound;
     Sound.enabled = state.settings.sound;
