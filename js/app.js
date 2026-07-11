@@ -251,6 +251,10 @@ function renderMypage() {
   const st = $("#set-sound");
   st.classList.toggle("on", !!state.settings.sound);
   st.textContent = state.settings.sound ? "ON" : "OFF";
+  $("#set-reminder").value = state.settings.reminderTime || "";
+  if (!Native.isNative) {
+    $("#reminder-note").textContent = "通知はアプリ版（準備中）で届きます。時刻は保存されます";
+  }
   show("screen-mypage");
 }
 
@@ -312,15 +316,19 @@ function saveResult(workout, totalWorkSec) {
     totalWorkSec, completed: true, ts: Date.now(),
   });
   store.set("history", state.history);
+  Native.backup();                                              // ネイティブ: 記録をPreferencesへ複製
+  Native.syncReminder(state.settings.reminderTime, true);       // 完走した日の通知はスキップ→明日に予約し直し
 }
 
 // ---- Wake Lock ----
 async function acquireWakeLock() {
+  Native.keepAwake(true);
   try {
     if ("wakeLock" in navigator) state.wakeLock = await navigator.wakeLock.request("screen");
   } catch { /* 非対応・省電力モードでは黙って諦める */ }
 }
 function releaseWakeLock() {
+  Native.keepAwake(false);
   state.wakeLock?.release().catch(() => {});
   state.wakeLock = null;
 }
@@ -508,6 +516,7 @@ function startWorkout(workout) {
         if ((seg.type === "work" || seg.type === "rest") && sec <= 3 && sec >= 1) {
           Sound.countTick();
           Voice.play(`count_${sec}`);
+          Native.tick();                                        // ネイティブ: 軽い振動
         }
         if (seg.type === "work" && sec === 10 && seg.sec > 12) { // ラスト10秒（旧ラスト5秒を置換）
           Voice.playOne(["last10_1", "last10_2"]);
@@ -525,6 +534,7 @@ function startWorkout(workout) {
     onFinish() {
       Sound.finish();
       Voice.playOne(["finish_1", "finish_2"]);
+      Native.finishBuzz();
       stopSprite();
       $("#run-chara video")?.pause();
       releaseWakeLock();
@@ -653,6 +663,14 @@ document.addEventListener("DOMContentLoaded", () => {
     store.set("settings", state.settings);
     renderMypage();
   };
+  $("#set-reminder").onchange = async (e) => {
+    state.settings.reminderTime = e.target.value || "";
+    store.set("settings", state.settings);
+    const r = await Native.syncReminder(state.settings.reminderTime, todayStats().count > 0);
+    if (r === "denied") showToast("通知が許可されていません。端末の設定から許可してね");
+    else if (state.settings.reminderTime) showToast(`毎日 ${state.settings.reminderTime} にサクヤが誘いに来るよ 🔔`);
+    else showToast("リマインダーをオフにしたよ");
+  };
   document.querySelectorAll(".hud-tab[data-soon]").forEach(b => {
     b.onclick = () => showToast(`${b.dataset.soon} はただいま準備中だよ 🥷`);
   });
@@ -677,4 +695,12 @@ document.addEventListener("DOMContentLoaded", () => {
     navigator.serviceWorker.register("sw.js");
   }
   renderHome();
+
+  // ネイティブ: localStorageが消えていたらPreferencesのバックアップから復元→リマインダーを予約し直す
+  if (Native.isNative) {
+    Native.restoreIfEmpty().then((restored) => {
+      if (restored) { location.reload(); return; }
+      Native.syncReminder(state.settings.reminderTime, todayStats().count > 0);
+    });
+  }
 });

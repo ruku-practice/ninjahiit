@@ -248,6 +248,8 @@ button, .btn-primary, .btn-ghost, .catalog-link { font-family: inherit; }
   font-family: inherit; font-weight: 900; font-size: 0.85rem;
   background: rgba(120,150,190,0.3); color: #fff; }
 .set-toggle.on { background: var(--grad-teal); box-shadow: 0 4px 12px rgba(23,198,176,0.35); }
+.set-time { flex: none; border: 1px solid rgba(120,150,190,0.35); background: rgba(255,255,255,0.55);
+  color: #1f2a44; border-radius: 11px; padding: 9px 10px; font-family: inherit; font-weight: 900; font-size: 0.95rem; }
 .set-link { display: block; text-decoration: none; color: inherit; }
 .set-link:active { transform: scale(0.99); }
 .set-arrow { flex: none; font-size: 1.4rem; color: #8492b5; font-weight: 700; }
