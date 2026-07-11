@@ -177,7 +177,7 @@ function visible(label, isNew){
 const io = new IntersectionObserver((es)=>{
   es.forEach(e=>{
     const v=e.target;
-    if(e.isIntersecting){ if(v.dataset.src && !v.src){ v.src=v.dataset.src; } v.play().catch(()=>{}); }
+    if(e.isIntersecting){ if(v.dataset.src && !v.src){ v.src=v.dataset.src+"?fresh="+Date.now(); } v.play().catch(()=>{}); }
     else v.pause();
   });
 },{threshold:0.3});
