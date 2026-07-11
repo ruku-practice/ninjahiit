@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>サクヤ動画レビュー</title>
+<style>
+  :root{
+    --bg:#0f1420; --panel:#1a2233; --panel2:#212c42; --line:#2c3a55;
+    --ink:#eaf0fb; --sub:#9fb0d0; --accent:#ff4f81; --ok:#25c281; --ng:#ff5a6a;
+  }
+  @media (prefers-color-scheme: light){
+    :root{ --bg:#eef2fa; --panel:#ffffff; --panel2:#f2f5fc; --line:#dde4f2;
+      --ink:#1f2a44; --sub:#6b779a; }
+  }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:"Zen Maru Gothic",-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN",sans-serif;
+    background:var(--bg); color:var(--ink); line-height:1.5;
+    padding:0 0 120px; -webkit-text-size-adjust:100%; }
+  header{ position:sticky; top:0; z-index:10; background:var(--panel);
+    border-bottom:1px solid var(--line);
+    padding:max(12px,env(safe-area-inset-top)) 14px 10px; box-shadow:0 4px 16px rgba(0,0,0,.18); }
+  h1{ font-size:1.1rem; margin:0 0 8px; display:flex; align-items:center; gap:8px; }
+  .stats{ display:flex; gap:10px; flex-wrap:wrap; font-size:.82rem; color:var(--sub); align-items:center; }
+  .stats b{ color:var(--ink); }
+  .pill{ padding:2px 9px; border-radius:999px; font-weight:800; font-size:.78rem; }
+  .pill.ok{ background:rgba(37,194,129,.16); color:var(--ok); }
+  .pill.ng{ background:rgba(255,90,106,.16); color:var(--ng); }
+  .bar{ height:6px; border-radius:999px; background:var(--line); overflow:hidden; margin-top:8px; }
+  .bar i{ display:block; height:100%; background:linear-gradient(90deg,var(--accent),#ff8a4f); width:0; transition:width .2s; }
+  .filters{ display:flex; gap:6px; margin-top:10px; }
+  .chip{ border:1px solid var(--line); background:var(--panel2); color:var(--sub); border-radius:999px;
+    padding:5px 12px; font-size:.78rem; font-weight:800; cursor:pointer; }
+  .chip.on{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .wrap{ max-width:680px; margin:0 auto; padding:14px; }
+  .sec{ margin:18px 0 8px; font-weight:900; font-size:.95rem; color:var(--accent); letter-spacing:.03em;
+    display:flex; align-items:center; gap:8px; }
+  .sec small{ color:var(--sub); font-weight:700; font-size:.72rem; }
+  .card{ background:var(--panel); border:1px solid var(--line); border-radius:16px; overflow:hidden;
+    margin-bottom:14px; }
+  .card.ok{ border-color:rgba(37,194,129,.55); }
+  .card.ng{ border-color:rgba(255,90,106,.6); }
+  .vwrap{ position:relative; background:#f2f0ee; aspect-ratio:1; max-height:420px; display:flex; justify-content:center; }
+  .vwrap video{ width:100%; height:100%; object-fit:contain; display:block; }
+  .badge-new{ position:absolute; top:10px; left:10px; background:var(--accent); color:#fff; font-size:.66rem;
+    font-weight:900; padding:3px 10px; border-radius:999px; box-shadow:0 2px 8px rgba(0,0,0,.25); }
+  .meta{ padding:11px 13px; display:flex; align-items:center; gap:11px; }
+  .info{ flex:1; min-width:0; }
+  .info .lbl{ font-size:.68rem; color:var(--sub); font-weight:700; }
+  .info .txt{ font-size:1.02rem; font-weight:800; }
+  .judge{ flex:none; display:flex; gap:6px; }
+  .jb{ border:1px solid var(--line); background:var(--panel2); color:var(--sub); cursor:pointer;
+    width:52px; height:42px; border-radius:11px; font-weight:900; font-size:.92rem; }
+  .jb:active{ transform:scale(.94); }
+  .jb.ok.on{ background:var(--ok); color:#fff; border-color:var(--ok); }
+  .jb.ng.on{ background:var(--ng); color:#fff; border-color:var(--ng); }
+  .memo{ padding:0 13px 12px; display:none; }
+  .card.ng .memo{ display:block; }
+  .memo input{ width:100%; border:1px dashed var(--line); background:var(--panel2); color:var(--ink);
+    border-radius:9px; padding:8px 10px; font:inherit; font-size:.85rem; }
+  .footbar{ position:fixed; left:0; right:0; bottom:0; z-index:10; background:var(--panel);
+    border-top:1px solid var(--line); padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+    display:flex; gap:8px; box-shadow:0 -4px 16px rgba(0,0,0,.18); }
+  .btn{ flex:1; border:none; border-radius:12px; padding:13px; font-weight:900; font-size:.92rem; cursor:pointer;
+    font-family:inherit; background:linear-gradient(135deg,var(--accent),#ff8a4f); color:#fff; }
+  .btn.ghost{ background:var(--panel2); color:var(--ink); border:1px solid var(--line); flex:none; padding:13px 16px; }
+  .btn:active{ transform:scale(.97); }
+  dialog{ border:none; border-radius:16px; padding:0; max-width:92vw; width:520px; background:var(--panel); color:var(--ink); }
+  dialog::backdrop{ background:rgba(0,0,0,.55); }
+  .dlg{ padding:16px; } .dlg h2{ margin:0 0 8px; font-size:1rem; }
+  .dlg textarea{ width:100%; height:230px; border:1px solid var(--line); border-radius:10px; background:var(--panel2);
+    color:var(--ink); font:inherit; font-size:.82rem; padding:10px; resize:vertical; }
+  .dlg .drow{ display:flex; gap:8px; margin-top:10px; }
+  .hint{ font-size:.72rem; color:var(--sub); margin-top:6px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap" style="padding:0;">
+    <h1>🎬 サクヤ動画レビュー <small style="font-weight:700;color:var(--sub);font-size:.7rem">全19種目 v39</small></h1>
+    <div class="stats">
+      <span>レビュー <b id="st-done">0</b>/<b id="st-total">0</b></span>
+      <span class="pill ok">OK <span id="st-ok">0</span></span>
+      <span class="pill ng">NG <span id="st-ng">0</span></span>
+    </div>
+    <div class="bar"><i id="bar"></i></div>
+    <div class="filters">
+      <button class="chip on" data-f="all">すべて</button>
+      <button class="chip" data-f="new">今回の新作</button>
+      <button class="chip" data-f="todo">未評価</button>
+      <button class="chip" data-f="ng">NGのみ</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap" id="list"></div>
+
+<div class="footbar">
+  <button class="btn ghost" id="btn-reset" title="評価をリセット">↺</button>
+  <button class="btn" id="btn-export">結果をコピー / 共有</button>
+</div>
+
+<dialog id="dlg">
+  <div class="dlg">
+    <h2>レビュー結果</h2>
+    <div class="hint">この内容をコピーして、チャットに貼り付けてください（NGだけ直します）。</div>
+    <textarea id="dlg-text" readonly></textarea>
+    <div class="drow">
+      <button class="btn" id="dlg-copy" style="flex:1">コピー</button>
+      <button class="btn ghost" id="dlg-close" style="flex:1">閉じる</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+// name, 表示名, new(今回生成)
+const GROUPS = [
+  { title:"今回の新作（9本）", items:[
+    ["jumping_jack","ジャンピングジャック",1],
+    ["kickback_right","右足キックバック",1],
+    ["kickback_left","左足キックバック",1],
+    ["butt_bridge","バットブリッジ",1],
+    ["forward_lunge","フォワードランジ（ピンポン往復）",1],
+    ["backward_lunge","バックワードランジ（ピンポン往復）",1],
+    ["narrow_pushup","ナロープッシュアップ",1],
+    ["wide_pushup","ワイドプッシュアップ",1],
+    ["plank","プランク（キープ）",1],
+  ]},
+  { title:"既存（10本・参考）", items:[
+    ["squat","スクワット",0],
+    ["squat_jump","スクワットジャンプ",0],
+    ["side_lunge","サイドランジ",0],
+    ["burpee","バーピー",0],
+    ["mountain_climber","マウンテンクライマー",0],
+    ["crunch","クランチ",0],
+    ["bicycle","バイシクル",0],
+    ["leg_raise","ライイングレッグレイズ",0],
+    ["pushup","プッシュアップ",0],
+    ["high_knees","ハイニー",0],
+  ]},
+];
+const ALL = GROUPS.flatMap(g=>g.items);
+const TOTAL = ALL.length;
+const BASE = "assets/videos/sakuya/";
+const LSKEY = "sakuya_video_review_v39";
+let state = JSON.parse(localStorage.getItem(LSKEY) || "{}");
+let filter = "all";
+
+function save(){ localStorage.setItem(LSKEY, JSON.stringify(state)); }
+function judge(label, v){
+  const cur = state[label]?.v;
+  if(cur===v){ delete state[label]; }
+  else { state[label] = { v, memo: state[label]?.memo || "" }; }
+  save(); render(); updateStats();
+}
+function setMemo(label, memo){
+  if(!state[label]) state[label]={v:'ng',memo:''};
+  state[label].memo = memo; save();
+}
+function updateStats(){
+  let ok=0,ng=0;
+  for(const k in state){ if(state[k].v==='ok')ok++; else if(state[k].v==='ng')ng++; }
+  document.getElementById("st-done").textContent = ok+ng;
+  document.getElementById("st-total").textContent = TOTAL;
+  document.getElementById("st-ok").textContent = ok;
+  document.getElementById("st-ng").textContent = ng;
+  document.getElementById("bar").style.width = Math.round((ok+ng)/TOTAL*100)+"%";
+}
+function visible(label, isNew){
+  if(filter==="new") return !!isNew;
+  if(filter==="todo") return !state[label];
+  if(filter==="ng") return state[label]?.v==="ng";
+  return true;
+}
+
+// 可視範囲だけ再生（省電力・自動再生対策）
+const io = new IntersectionObserver((es)=>{
+  es.forEach(e=>{
+    const v=e.target;
+    if(e.isIntersecting){ if(v.dataset.src && !v.src){ v.src=v.dataset.src; } v.play().catch(()=>{}); }
+    else v.pause();
+  });
+},{threshold:0.3});
+
+function render(){
+  document.querySelectorAll("#list video").forEach(v=>io.unobserve(v));
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+  for(const g of GROUPS){
+    const shown = g.items.filter(([l,,n])=>visible(l,n));
+    if(!shown.length) continue;
+    const h = document.createElement("div");
+    h.className="sec"; h.innerHTML = g.title + ` <small>(${shown.length})</small>`;
+    list.appendChild(h);
+    for(const [label,name,isNew] of shown){
+      const st = state[label]?.v;
+      const card = document.createElement("div");
+      card.className = "card" + (st?(" "+st):"");
+      card.innerHTML =
+        `<div class="vwrap">`+
+          (isNew?`<span class="badge-new">NEW</span>`:``)+
+          `<video muted loop playsinline preload="none" data-src="${BASE}${label}.mp4"></video>`+
+        `</div>`+
+        `<div class="meta">`+
+          `<div class="info"><div class="lbl">${label}.mp4</div><div class="txt">${name}</div></div>`+
+          `<div class="judge">`+
+            `<button class="jb ok ${st==='ok'?'on':''}">OK</button>`+
+            `<button class="jb ng ${st==='ng'?'on':''}">NG</button>`+
+          `</div>`+
+        `</div>`+
+        `<div class="memo"><input placeholder="NGの理由・直したいところ（任意）" value="${(state[label]?.memo||"").replace(/"/g,'&quot;')}"></div>`;
+      const btns = card.querySelectorAll(".jb");
+      btns[0].onclick = ()=>judge(label,"ok");
+      btns[1].onclick = ()=>judge(label,"ng");
+      card.querySelector(".memo input").oninput = (e)=>setMemo(label, e.target.value);
+      const vid = card.querySelector("video");
+      vid.onclick = ()=>{ if(vid.paused) vid.play().catch(()=>{}); else vid.pause(); };
+      list.appendChild(card);
+      io.observe(vid);
+    }
+  }
+}
+function buildReport(){
+  const map = Object.fromEntries(ALL.map(([l,n])=>[l,n]));
+  const ng=[], ok=[], todo=[];
+  for(const [label] of ALL){
+    const s = state[label];
+    if(!s) todo.push(label);
+    else if(s.v==='ng') ng.push(label);
+    else ok.push(label);
+  }
+  let out = `【サクヤ動画レビュー結果 v39】\n`;
+  out += `OK ${ok.length} / NG ${ng.length} / 未評価 ${todo.length}（全${TOTAL}）\n\n`;
+  out += `■ NG（直してほしい）:\n`;
+  if(!ng.length) out += "（なし）\n";
+  for(const l of ng){
+    const memo = state[l].memo?.trim();
+    out += `・${l}「${map[l]}」${memo?" → "+memo:""}\n`;
+  }
+  if(todo.length){ out += `\n■ 未評価:\n・` + todo.join(", ") + "\n"; }
+  return out;
+}
+
+document.querySelectorAll(".chip").forEach(c=>{
+  c.onclick = ()=>{ filter=c.dataset.f;
+    document.querySelectorAll(".chip").forEach(x=>x.classList.toggle("on",x===c)); render(); };
+});
+document.getElementById("btn-reset").onclick = ()=>{
+  if(confirm("評価をすべてリセットしますか？")){ state={}; save(); render(); updateStats(); }
+};
+const dlg = document.getElementById("dlg");
+document.getElementById("btn-export").onclick = ()=>{
+  document.getElementById("dlg-text").value = buildReport();
+  dlg.showModal();
+};
+document.getElementById("dlg-close").onclick = ()=>dlg.close();
+document.getElementById("dlg-copy").onclick = async ()=>{
+  const t = document.getElementById("dlg-text");
+  t.select();
+  try{ await navigator.clipboard.writeText(t.value); }catch(e){ document.execCommand("copy"); }
+  document.getElementById("dlg-copy").textContent = "コピーしました ✓";
+  setTimeout(()=>document.getElementById("dlg-copy").textContent="コピー",1500);
+};
+render(); updateStats();
+</script>
+</body>
+</html>
