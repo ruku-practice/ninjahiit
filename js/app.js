@@ -9,7 +9,8 @@ const store = {
 };
 
 const state = {
-  settings: store.get("settings", DEFAULT_SETTINGS),
+  // 既存ユーザーの保存値に新しい設定キー（plankSec等）のデフォルトを補う
+  settings: { ...DEFAULT_SETTINGS, ...store.get("settings", {}) },
   history: store.get("history", []),
   engine: null,
   spriteTimer: null,
@@ -185,10 +186,12 @@ function openDetail(workout, from) {
   stopCatalog();
   const p = workout;
   state.detailFrom = from || "home";
-  const seq = p.exercises.length * p.rounds;
-  const totalSec = seq * p.workSec + (seq - 1) * p.restSec + state.settings.prepareSec;
+  const plankSec = state.settings.plankSec || 0;
+  const seq = p.exercises.length * p.rounds + (plankSec > 0 ? 1 : 0);
+  const workTotal = p.exercises.length * p.rounds * p.workSec + plankSec;
+  const totalSec = workTotal + (seq - 1) * p.restSec + state.settings.prepareSec;
   const min = Math.max(1, Math.round(totalSec / 60));
-  const kcal = estimateKcal(seq * p.workSec);
+  const kcal = estimateKcal(workTotal);
   $("#detail-title").textContent = p.short || p.title;
   $("#detail-hero").className = `detail-hero glass tint-${p.tint}`;
   $("#detail-hero").innerHTML =
@@ -216,6 +219,18 @@ function openDetail(workout, from) {
     wrap.appendChild(row);
     startThumb(row.querySelector(".detail-ex-thumb"), key);
   });
+  if (plankSec > 0) {
+    const row = document.createElement("div");
+    row.className = "detail-ex-row glass detail-ex-finisher";
+    row.style.animationDelay = `${p.exercises.length * 0.04}s`;
+    row.innerHTML =
+      `<span class="detail-ex-no">仕</span>` +
+      `<div class="detail-ex-thumb"></div>` +
+      `<span class="detail-ex-name">仕上げプランク</span>` +
+      `<span class="detail-ex-sec">${plankSec}秒</span>`;
+    wrap.appendChild(row);
+    startThumb(row.querySelector(".detail-ex-thumb"), "plank");
+  }
   $("#btn-detail-start").onclick = () => { stopCatalog(); startWorkout(p); };
   $("#detail-hero").onclick = null;
   $(".detail-scroll").scrollTop = 0;
@@ -226,6 +241,17 @@ function detailBack() {
   stopCatalog();
   if (state.detailFrom === "catalog") renderCatalog();
   else renderHome();
+}
+
+// ---- マイページ（設定） ----
+function renderMypage() {
+  const ps = state.settings.plankSec || 0;
+  document.querySelectorAll("#seg-plank button").forEach((b) =>
+    b.classList.toggle("on", Number(b.dataset.v) === ps));
+  const st = $("#set-sound");
+  st.classList.toggle("on", !!state.settings.sound);
+  st.textContent = state.settings.sound ? "ON" : "OFF";
+  show("screen-mypage");
 }
 
 function renderCatalog() {
@@ -430,7 +456,8 @@ function startWorkout(workout) {
   Voice.useCtx(Sound.ctx);
   Voice.enabled = state.settings.sound;
   // この修行で使う声を先読み（定型＋登場種目の「最初は/つぎは」）
-  const exKeys = [...new Set(workout.exercises)];
+  const plankSec = state.settings.plankSec || 0;
+  const exKeys = [...new Set([...workout.exercises, ...(plankSec > 0 ? ["plank"] : [])])];
   Voice.preload([
     "count_3", "count_2", "count_1", "go_1", "go_2",
     "mid_1", "mid_2", "mid_3", "last10_1", "last10_2", "finish_1", "finish_2",
@@ -504,7 +531,7 @@ function startWorkout(workout) {
       saveResult(workout, engine.totalWorkSec);
       renderDone(workout, engine.totalWorkSec);
     },
-  });
+  }, plankSec);
 
   state.engine = engine;
   $("#run-title").textContent = workout.title;
@@ -606,6 +633,26 @@ document.addEventListener("DOMContentLoaded", () => {
   $("#btn-catalog").onclick = renderCatalog;
   $("#btn-catalog-back").onclick = renderHome;
   $("#btn-detail-back").onclick = detailBack;
+  $("#tab-mypage").onclick = renderMypage;
+  $("#btn-mypage-back").onclick = renderHome;
+  document.querySelectorAll("#seg-plank button").forEach((b) => {
+    b.onclick = () => {
+      state.settings.plankSec = Number(b.dataset.v);
+      store.set("settings", state.settings);
+      renderMypage();
+      showToast(state.settings.plankSec > 0
+        ? `仕上げプランク ${state.settings.plankSec}秒 をセット！ 🥷`
+        : "仕上げプランクをオフにしたよ");
+    };
+  });
+  $("#set-sound").onclick = () => {
+    state.settings.sound = !state.settings.sound;
+    Sound.enabled = state.settings.sound;
+    Voice.enabled = state.settings.sound;
+    if (!state.settings.sound) Voice.stop();
+    store.set("settings", state.settings);
+    renderMypage();
+  };
   document.querySelectorAll(".hud-tab[data-soon]").forEach(b => {
     b.onclick = () => showToast(`${b.dataset.soon} はただいま準備中だよ 🥷`);
   });

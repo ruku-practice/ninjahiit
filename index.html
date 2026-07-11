@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=43">
+  <link rel="stylesheet" href="css/style.css?v=44">
 </head>
 <body>
 
@@ -49,8 +49,45 @@
       <button class="hud-tab" data-soon="スケジュール" aria-label="スケジュール"></button>
       <button class="hud-tab" data-soon="ミッション" aria-label="ミッション"></button>
       <button class="hud-tab" data-soon="プレゼント" aria-label="プレゼント"></button>
-      <button class="hud-tab" data-soon="マイページ" aria-label="マイページ"></button>
+      <button class="hud-tab" id="tab-mypage" aria-label="マイページ"></button>
     </nav>
+  </section>
+
+  <!-- マイページ（設定） -->
+  <section id="screen-mypage" class="screen hud">
+    <div class="hud-env"></div>
+    <div class="hud-scroll detail-scroll">
+      <header class="detail-top">
+        <button id="btn-mypage-back" class="hbtn-dark" aria-label="戻る">←</button>
+        <h2>マイページ</h2>
+      </header>
+
+      <div class="hud-sec">ワークアウト設定<i class="hud-slash"></i></div>
+      <div class="set-card glass">
+        <div class="set-row">
+          <div class="set-info">
+            <b>仕上げプランク</b>
+            <small>すべてのワークアウトの最後にプランクを追加します</small>
+          </div>
+        </div>
+        <div class="seg" id="seg-plank">
+          <button data-v="0">なし</button>
+          <button data-v="30">30秒</button>
+          <button data-v="60">60秒</button>
+        </div>
+      </div>
+      <div class="set-card glass">
+        <div class="set-row">
+          <div class="set-info">
+            <b>サウンド</b>
+            <small>効果音とサクヤの声</small>
+          </div>
+          <button id="set-sound" class="set-toggle"></button>
+        </div>
+      </div>
+
+      <p class="fan-note">本アプリはCryptoNinjaのファンメイド（二次創作）アプリです。</p>
+    </div>
   </section>
 
   <div id="toast" class="toast"></div>
@@ -134,9 +171,9 @@
     </div>
   </section>
 
-  <script src="js/data.js?v=43"></script>
-  <script src="js/audio.js?v=43"></script>
-  <script src="js/timer.js?v=43"></script>
-  <script src="js/app.js?v=43"></script>
+  <script src="js/data.js?v=44"></script>
+  <script src="js/audio.js?v=44"></script>
+  <script src="js/timer.js?v=44"></script>
+  <script src="js/app.js?v=44"></script>
 </body>
 </html>

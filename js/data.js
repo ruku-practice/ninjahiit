@@ -131,7 +131,8 @@ const TRAINERS = {
   },
 };
 
-const DEFAULT_SETTINGS = { trainer: "sakuya", sound: true, prepareSec: 10 };
+// plankSec: 仕上げプランク（全ワークアウト末尾に追加）0=なし / 30 / 60
+const DEFAULT_SETTINGS = { trainer: "sakuya", sound: true, prepareSec: 10, plankSec: 0 };
 
 // カロリー概算（METs 8.0 × 体重60kg 想定のざっくり値）
 function estimateKcal(totalWorkSec) {
