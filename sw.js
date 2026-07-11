@@ -1,5 +1,5 @@
 // NinjaHIIT Service Worker — キャッシュファーストでオフライン動作
-const CACHE = "ninjahiit-v45";
+const CACHE = "ninjahiit-v46";
 const CORE = [
   "./",
   "index.html",

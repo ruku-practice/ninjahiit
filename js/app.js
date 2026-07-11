@@ -672,7 +672,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (document.visibilityState === "visible" && state.engine && !state.engine.finished) acquireWakeLock();
   });
 
-  if ("serviceWorker" in navigator && location.protocol === "https:") {
+  // ネイティブ(Capacitor)ではアセット同梱のためSW不要（capacitor://で動くので条件的にも登録されない）
+  if ("serviceWorker" in navigator && location.protocol === "https:" && !window.Capacitor) {
     navigator.serviceWorker.register("sw.js");
   }
   renderHome();
