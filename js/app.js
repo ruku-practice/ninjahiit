@@ -87,6 +87,7 @@ function playSprite(el, exerciseKey) {
   if (video.dataset.src !== src) {
     video.dataset.src = src;
     video.src = src;
+    video.load(); // iOS WKWebView対策：src差し替え後はload()を明示
   }
   // src差し替え直後は読み込み中でplay()が拒否されるため、まず即時に試し、
   // 失敗したら再生可能になった時点でもう一度再生する
@@ -127,7 +128,8 @@ function ensureCatalogObserver() {
     entries.forEach((entry) => {
       const v = entry.target;
       if (entry.isIntersecting) {
-        if (v.dataset.src && !v.src) v.src = v.dataset.src; // 初回のみ遅延ロード
+        // 初回のみ遅延ロード。iOS WKWebViewは src 代入だけでは読み込まないため load() を明示的に呼ぶ
+        if (v.dataset.src && !v.src) { v.src = v.dataset.src; v.load(); }
         const tryPlay = () => v.play().catch(() => {});
         tryPlay();
         v.addEventListener("canplay", tryPlay, { once: true });
@@ -148,7 +150,7 @@ function startThumb(el, key) {
   video.muted = true;
   video.loop = true;
   video.playsInline = true;
-  video.preload = "none";
+  video.preload = "metadata";
   video.setAttribute("muted", "");
   video.setAttribute("playsinline", "");
   video.dataset.src = src;
