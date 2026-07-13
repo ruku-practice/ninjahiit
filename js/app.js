@@ -159,7 +159,7 @@ function openDetail(workout, from) {
   $("#detail-title").textContent = p.short || p.title;
   $("#detail-hero").className = `detail-hero glass tint-${p.tint}`;
   $("#detail-hero").innerHTML =
-    `<span class="detail-hero-ico"><img src="assets/ui/pict-${p.pict}.png" alt=""></span>` +
+    `<span class="detail-hero-ico"><img src="assets/ui/icons/preset-${p.id}.jpg" alt=""></span>` +
     `<span class="detail-hero-info">` +
       `<span class="detail-badge">${p.badge}</span>` +
       `<b class="detail-hero-title">${p.title}</b>` +
@@ -212,6 +212,9 @@ function renderMypage() {
   const ps = state.settings.plankSec || 0;
   document.querySelectorAll("#seg-plank button").forEach((b) =>
     b.classList.toggle("on", Number(b.dataset.v) === ps));
+  const cheer = state.settings.cheer || "normal";
+  document.querySelectorAll("#seg-cheer button").forEach((b) =>
+    b.classList.toggle("on", b.dataset.v === cheer));
   const st = $("#set-sound");
   st.classList.toggle("on", !!state.settings.sound);
   st.textContent = state.settings.sound ? "ON" : "OFF";
@@ -234,7 +237,7 @@ function renderCatalog() {
     card.style.animationDelay = `${i * 0.05}s`;
     card.innerHTML =
       `<div class="catalog-card-header">` +
-      `<span class="preset-icon tint-${p.tint}">${p.icon}</span>` +
+      `<span class="preset-icon tint-${p.tint}"><img src="assets/ui/icons/preset-${p.id}.jpg" alt=""></span>` +
       `<div><div class="catalog-title">${p.title}</div>` +
       `<div class="catalog-meta">${seq}本 ・ 約${Math.ceil(totalSec / 60)}分 ・ ` +
       `ワーク${p.workSec}秒／休憩${p.restSec}秒 ・ ${p.exercises.length}種目×${p.rounds}周</div></div>` +
@@ -412,7 +415,7 @@ function renderHome() {
     li.className = `hud-card tint-${p.tint}`;
     li.style.animationDelay = `${i * 0.05}s`;
     li.innerHTML =
-      `<span class="hud-card-icon"><img src="assets/ui/pict-${p.pict}.png" alt=""></span>` +
+      `<span class="hud-card-icon"><img class="hud-card-icon-rich" src="assets/ui/icons/preset-${p.id}.jpg" alt=""></span>` +
       `<span class="hud-card-body">` +
         `<b class="hud-card-title">${p.short || p.title}</b>` +
         `<span class="hud-card-prog"><span class="hud-prog-bar"><i style="width:${pct}%"></i></span>` +
@@ -446,14 +449,26 @@ function startWorkout(workout) {
   Sound.init();
   Sound.enabled = state.settings.sound;
   Voice.useCtx(Sound.ctx);
+  Voice.setBase(trainer().voiceDir);
   Voice.enabled = state.settings.sound;
+  // 応援ボイスの量：many=多め（従来どおり全部） / normal=あと10秒＋3-2-1のみ / few=3-2-1のみ
+  const cheer = state.settings.cheer || "normal";
+  const cheerMany = cheer === "many";
+  const cheerFew = cheer === "few";
+  // 声を出す時は必ず同じセリフを画面にも出す（音声と表示のズレをなくす）
+  const say = (names) => {
+    const name = Voice.playOne(Array.isArray(names) ? names : [names]);
+    $("#run-quote").textContent = VOICE_LINES[name] || "";
+    return name;
+  };
   // この修行で使う声を先読み（定型＋登場種目の「最初は/つぎは」）
   const plankSec = state.settings.plankSec || 0;
   const exKeys = [...new Set([...workout.exercises, ...(plankSec > 0 ? ["plank"] : [])])];
   Voice.preload([
-    "count_3", "count_2", "count_1", "go_1", "go_2",
-    "mid_1", "mid_2", "mid_3", "last10_1", "last10_2", "finish_1", "finish_2",
-    ...exKeys.map((k) => `first_${k}`), ...exKeys.map((k) => `next_${k}`),
+    "count_3", "count_2", "count_1",
+    ...(cheerFew ? [] : ["last10_1", "last10_2", "finish_1", "finish_2",
+      ...exKeys.map((k) => `first_${k}`), ...exKeys.map((k) => `next_${k}`)]),
+    ...(cheerMany ? ["go_1", "go_2", "mid_1", "mid_2", "mid_3"] : []),
   ]);
   acquireWakeLock();
   state.currentWorkout = workout;
@@ -465,8 +480,8 @@ function startWorkout(workout) {
       // 「休憩」の単調な表示をやめ、次に何が来るかが分かるリッチな表示にする
       const restLabel = next ? `つぎは、${EXERCISES[next.exercise].name}` : "お疲れさま！";
       const label = { prepare: "準備して！", work: EXERCISES[seg.exercise].name, rest: restLabel }[seg.type];
-      const icon = { prepare: "🥋", work: "🔥", rest: "💧" }[seg.type];
-      $("#run-phase").innerHTML = `<span class="run-phase-ico">${icon}</span>${label}`;
+      $("#run-phase").innerHTML =
+        `<img class="run-phase-ico" src="assets/ui/icons/phase-${seg.type}.jpg" alt="">${label}`;
       $("#run-progress").textContent = `エクササイズ ${seg.slot}/${seg.total}`;
       $("#screen-run").className = `screen hud active phase-${seg.type}`;
       $("#run-next").textContent = next
@@ -476,17 +491,21 @@ function startWorkout(workout) {
       // 準備・休憩中は次にやる種目のお手本を先に見せる（タバタ方式）
       playSprite($("#run-chara"), seg.exercise);
 
+      $("#run-quote").textContent = "";
       if (seg.type === "work") {
         Sound.workStart();
-        Voice.playOne(["go_1", "go_2"]);                       // 「はじめっ！」（種目名は直前に予告済み）
-        $("#run-quote").textContent = quote("work_start", { exercise: EXERCISES[seg.exercise].name });
+        if (cheerMany) say(["go_1", "go_2"]);                   // 「いくよっ！」（種目名は直前に予告済み）
       } else if (seg.type === "rest") {
         Sound.restStart();
-        if (next) Voice.play(`next_${next.exercise}`);          // 休憩中に次の種目を予告「つぎは、〇〇！」
-        $("#run-quote").textContent = quote("rest");
+        if (next && !cheerFew) {
+          Voice.play(`next_${next.exercise}`);                  // 休憩中に次の種目を予告
+          $("#run-quote").textContent = voiceLineNext(next.exercise);
+        }
       } else {
-        Voice.play(`first_${seg.exercise}`);                    // 開始「最初は、〇〇！」
-        $("#run-quote").textContent = quote("prepare", { exercise: EXERCISES[seg.exercise].name });
+        if (!cheerFew) {
+          Voice.play(`first_${seg.exercise}`);                  // 開始「最初は、〇〇！」
+          $("#run-quote").textContent = voiceLineFirst(seg.exercise);
+        }
       }
       lastTickSec = null;
     },
@@ -499,28 +518,27 @@ function startWorkout(workout) {
 
       if (sec !== lastTickSec) {
         lastTickSec = sec;
-        // ワーク・休憩・準備の終わる瞬間、カウントに合わせて「さん・に・いち」
+        // ワーク・休憩・準備の終わる瞬間、カウントに合わせて「さん・に・いち」（全モード共通）
         if (sec <= 3 && sec >= 1) {
           Sound.countTick();
           Voice.play(`count_${sec}`);
           Native.tick();                                        // ネイティブ: 軽い振動
         }
-        if (seg.type === "work" && sec === 10 && seg.sec > 12) { // ラスト10秒（旧ラスト5秒を置換）
-          Voice.playOne(["last10_1", "last10_2"]);
-          $("#run-quote").textContent = "あと10秒、あとちょっと！";
+        if (seg.type === "work" && sec === 10 && seg.sec > 12 && !cheerFew) {
+          say(["last10_1", "last10_2"]);                        // ラスト10秒（多め・普通で言う）
         }
-        // 中盤の応援。20秒ワークでは中間=10秒＝ラスト10秒と衝突するため14秒地点で言う
+        // 中盤の応援は「多め」のときだけ。20秒ワークでは中間=10秒＝ラスト10秒と衝突するため14秒地点で言う
         const midSec = seg.sec >= 25 ? Math.ceil(seg.sec / 2) : 14;
-        if (seg.type === "work" && sec === midSec && sec !== 10 && seg.sec > 15) {
-          Voice.playOne(["mid_1", "mid_2", "mid_3"]);
-          $("#run-quote").textContent = quote("work_mid");
+        if (seg.type === "work" && sec === midSec && sec !== 10 && seg.sec > 15 && cheerMany) {
+          say(["mid_1", "mid_2", "mid_3"]);
         }
       }
     },
 
     onFinish() {
       Sound.finish();
-      Voice.playOne(["finish_1", "finish_2"]);
+      // 完走セリフも音声と表示を一致させる（少なめモードは3-2-1のみなので声なし）
+      state.lastFinishLine = cheerFew ? null : VOICE_LINES[Voice.playOne(["finish_1", "finish_2"])];
       Native.finishBuzz();
       $("#run-chara video")?.pause();
       releaseWakeLock();
@@ -595,9 +613,10 @@ function renderDone(workout, totalWorkSec) {
   const rankAfter = rankInfo(expAfter);
   const leveledUp = rankAfter.index > rankBefore.index;
 
+  // 昇格＞連続記録＞完走セリフ（完走セリフは直前に鳴った声と同じ文言を出す）
   $("#done-quote").textContent = leveledUp
     ? `やった、${rankAfter.name}に昇格だね！おめでとう🎉`
-    : (s >= 2 ? quote("streak", { days: s }) : quote("finish"));
+    : (s >= 2 ? quote("streak", { days: s }) : (state.lastFinishLine || quote("finish")));
   $("#done-stats").innerHTML =
     `<li>${workout.title} 完走 🎉</li>` +
     `<li>運動時間 ${Math.round(totalWorkSec / 60 * 10) / 10}分 ・ 約${estimateKcal(totalWorkSec)}kcal</li>` +
@@ -639,6 +658,16 @@ document.addEventListener("DOMContentLoaded", () => {
       showToast(state.settings.plankSec > 0
         ? `仕上げプランク ${state.settings.plankSec}秒 をセット！ 🥷`
         : "仕上げプランクをオフにしたよ");
+    };
+  });
+  document.querySelectorAll("#seg-cheer button").forEach((b) => {
+    b.onclick = () => {
+      state.settings.cheer = b.dataset.v;
+      store.set("settings", state.settings);
+      renderMypage();
+      showToast({ few: "応援少なめ：3・2・1だけ言うね",
+                  normal: "応援普通：あと10秒とカウントだけ言うね",
+                  many: "応援多め：たくさん話しかけるね！" }[b.dataset.v]);
     };
   });
   $("#set-sound").onclick = () => {

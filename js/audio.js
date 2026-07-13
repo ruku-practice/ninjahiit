@@ -36,7 +36,7 @@ const Sound = {
 // iOSは開始タップで解錠済みのContextを使い回すので確実に鳴る。
 const Voice = {
   ctx: null,
-  base: "assets/audio/sakuya/",
+  base: "assets/audio/sakuya/", // 既定。キャラ追加に備え、ワークアウト開始時に trainer().voiceDir で上書きされる
   buffers: {},        // name -> AudioBuffer（decode済み）
   pending: {},        // name -> Promise（多重fetch防止）
   missing: {},        // name -> true（無い/失敗）
@@ -44,6 +44,12 @@ const Voice = {
   enabled: true,
 
   useCtx(ctx) { this.ctx = ctx; },
+
+  // キャラ（トレーナー）ごとの音声フォルダを設定。切り替え時は旧キャラのキャッシュを破棄
+  setBase(dir) {
+    const b = dir.endsWith("/") ? dir : dir + "/";
+    if (b !== this.base) { this.base = b; this.buffers = {}; this.missing = {}; this.pending = {}; }
+  },
 
   _load(name) {
     if (this.buffers[name] || this.missing[name] || !this.ctx) return this.pending[name] || Promise.resolve();
@@ -88,10 +94,13 @@ const Voice = {
     this.current = src;
   },
 
-  // 候補配列からランダムに1つ再生
+  // 候補配列からランダムに1つ再生し、選んだクリップ名を返す
+  // （呼び出し側が VOICE_LINES で同じセリフを画面にも表示できるように）
   playOne(names, interrupt = true) {
-    if (!names || !names.length) return;
-    this.play(names[Math.floor(Math.random() * names.length)], interrupt);
+    if (!names || !names.length) return null;
+    const name = names[Math.floor(Math.random() * names.length)];
+    this.play(name, interrupt);
+    return name;
   },
 
   stop() { if (this.current) { try { this.current.stop(); } catch (e) {} this.current = null; } },

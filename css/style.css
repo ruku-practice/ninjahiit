@@ -32,7 +32,8 @@
 html, body { height: 100%; }
 
 body {
-  font-family: "Zen Maru Gothic", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+  /* 丸ゴシックの中でもウェイト展開が広く力強い M PLUS Rounded 1c を主役に。数字は Baloo 2（#run-count 等） */
+  font-family: "M PLUS Rounded 1c", "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Hiragino Kaku Gothic ProN", sans-serif;
   background: var(--paper);
   color: var(--ink);
   -webkit-tap-highlight-color: transparent;
@@ -153,8 +154,9 @@ button, .btn-primary, .btn-ghost, .catalog-link { font-family: inherit; }
   animation: pop-in 0.35s cubic-bezier(.22,1,.36,1) backwards; }
 .hud-card:active { transform: scale(0.98); }
 .hud-card::before { content: ""; flex: none; width: 5px; align-self: stretch; border-radius: 0 4px 4px 0; }
-.hud-card-icon { flex: none; width: 32px; align-self: center; display: flex; align-items: center; justify-content: center; }
-.hud-card-icon img { max-width: 32px; max-height: 32px; filter: drop-shadow(0 3px 4px rgba(50,74,120,0.22)); }
+.hud-card-icon { flex: none; width: 34px; align-self: center; display: flex; align-items: center; justify-content: center; }
+.hud-card-icon img { width: 34px; height: 34px; object-fit: cover; border-radius: 10px;
+  box-shadow: 0 3px 8px rgba(50,74,120,0.28), inset 0 0 0 1px rgba(255,255,255,0.35); }
 .hud-card.tint-pink::before, .hud-card.tint-pink .hud-prog-bar i, .hud-card.tint-pink .hud-card-go { background: var(--grad-pink); }
 .hud-card.tint-teal::before, .hud-card.tint-teal .hud-prog-bar i, .hud-card.tint-teal .hud-card-go { background: var(--grad-teal); }
 .hud-card.tint-purple::before, .hud-card.tint-purple .hud-prog-bar i, .hud-card.tint-purple .hud-card-go { background: var(--grad-purple); }
@@ -213,7 +215,8 @@ button, .btn-primary, .btn-ghost, .catalog-link { font-family: inherit; }
 .detail-hero.tint-orange { --accent: var(--grad-orange); }
 .detail-hero-ico { flex: none; width: 66px; height: 66px; border-radius: 16px; display: flex; align-items: center; justify-content: center;
   background: rgba(255,255,255,0.55); box-shadow: inset 0 0 0 2px rgba(255,255,255,0.7); }
-.detail-hero-ico img { max-width: 46px; max-height: 46px; filter: drop-shadow(0 3px 5px rgba(50,74,120,0.25)); }
+.detail-hero-ico { overflow: hidden; }
+.detail-hero-ico img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
 .detail-hero-info { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .detail-badge { align-self: flex-start; font-size: 0.6rem; font-weight: 900; color: #fff; padding: 3px 9px; border-radius: 999px; background: var(--accent); letter-spacing: 0.02em; }
 .detail-hero-title { font-size: 1.28rem; font-weight: 900; color: #1f2a44; line-height: 1.15; }
@@ -314,10 +317,11 @@ button, .btn-primary, .btn-ghost, .catalog-link { font-family: inherit; }
 }
 .preset-item:active { transform: scale(0.97); box-shadow: 0 3px 8px rgba(43,58,103,0.10); }
 .preset-icon {
-  flex: none; width: 44px; height: 44px; border-radius: 14px;
+  flex: none; width: 44px; height: 44px; border-radius: 14px; overflow: hidden;
   display: flex; align-items: center; justify-content: center; font-size: 1.35rem;
-  box-shadow: inset 0 -2px 4px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 10px rgba(50,74,120,0.24), inset 0 -2px 4px rgba(0,0,0,0.08);
 }
+.preset-icon img { width: 100%; height: 100%; object-fit: cover; }
 .preset-icon.tint-pink      { background: var(--grad-pink); }
 .preset-icon.tint-indigo    { background: var(--grad-indigo); }
 .preset-icon.tint-forest    { background: var(--grad-forest); }
@@ -425,6 +429,7 @@ button, .btn-primary, .btn-ghost, .catalog-link { font-family: inherit; }
   text-shadow: 0 3px 10px rgba(0,0,0,0.18);
 }
 
+.chara-stage-run { margin-top: 20px; } /* フェーズバッジとお手本動画の間 */
 .chara-stage-run::before { background: radial-gradient(circle, rgba(255,255,255,0.22), transparent 72%); }
 #run-chara { min-height: 200px; }
 #run-chara img { max-height: 230px; max-width: 75vw; filter: drop-shadow(0 12px 16px rgba(0,0,0,0.22)); }
@@ -438,7 +443,8 @@ button, .btn-primary, .btn-ghost, .catalog-link { font-family: inherit; }
   background: #f4f2f0;
 }
 
-#run-quote { min-height: 1.4em; font-size: 0.95rem; opacity: 0.95; padding: 0 24px; font-weight: 500; }
+#run-quote { min-height: 1.5em; font-size: 1.12rem; opacity: 0.95; padding: 0 24px; font-weight: 700;
+  margin-top: 18px; } /* お手本動画とセリフの間 */
 
 .gauge-wrap { position: relative; width: min(58vw, 240px); margin: 12px auto 0; }
 .gauge-wrap svg { width: 100%; transform: rotate(-90deg); filter: drop-shadow(0 4px 10px rgba(0,0,0,0.18)); }
@@ -458,11 +464,13 @@ button, .btn-primary, .btn-ghost, .catalog-link { font-family: inherit; }
 #btn-pause {
   background: rgba(255,255,255,0.2); border: none; color: #fff; font-size: 1.7rem;
   width: 56px; height: 56px; border-radius: 50%;
-  margin: 10px auto 8px; cursor: pointer; backdrop-filter: blur(4px);
+  margin: 24px auto 0; cursor: pointer; backdrop-filter: blur(4px); /* ゲージと一時停止の間 */
   transition: transform 0.15s ease;
 }
 #btn-pause:active { transform: scale(0.9); }
-#run-next { font-size: 0.85rem; opacity: 0.8; padding-bottom: max(20px, env(safe-area-inset-bottom)); font-weight: 500; }
+#run-next { font-size: 1rem; opacity: 0.85; font-weight: 700;
+  margin-top: 16px; /* 一時停止と次のエクササイズの間 */
+  padding-bottom: max(20px, env(safe-area-inset-bottom)); }
 
 /* ---- 完了画面 ---- */
 #screen-done {
@@ -543,15 +551,16 @@ button, .btn-primary, .btn-ghost, .catalog-link { font-family: inherit; }
 #screen-run.hud #run-title { color: #1f2a44; }
 #screen-run.hud #run-progress { color: #4a5578; opacity: 1; }
 #screen-run.hud #run-phase {
-  display: inline-flex; align-items: center; gap: 8px; max-width: 88vw;
-  margin: 16px auto 0; padding: 8px 22px; border-radius: 14px;
-  font-size: 1.28rem; font-weight: 900; letter-spacing: 0.04em; text-shadow: 0 2px 8px rgba(255,255,255,0.5);
+  display: inline-flex; align-items: center; gap: 8px; max-width: 92vw;
+  margin: 16px auto 0; padding: 8px 26px; border-radius: 14px;
+  font-size: 1.14rem; font-weight: 900; letter-spacing: 0.03em; text-shadow: 0 2px 8px rgba(255,255,255,0.5);
   background: rgba(255,255,255,0.55); backdrop-filter: blur(10px) saturate(1.3); -webkit-backdrop-filter: blur(10px) saturate(1.3);
   box-shadow: inset 0 0 0 1px rgba(255,255,255,0.75), 0 8px 20px rgba(50,74,120,0.2);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 100%, 12px 100%);
 }
-.run-phase-ico { flex: none; font-size: 1.1rem; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.15)); }
+.run-phase-ico { flex: none; width: 24px; height: 24px; object-fit: cover; border-radius: 7px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.18), inset 0 0 0 1px rgba(255,255,255,0.4); }
 #screen-run.hud.phase-prepare #run-phase { color: #2f6fd0; box-shadow: inset 0 0 0 1px rgba(79,155,240,0.5), 0 8px 20px rgba(47,111,208,0.22); }
 #screen-run.hud.phase-work    #run-phase { color: #e23a5e; box-shadow: inset 0 0 0 1px rgba(255,79,110,0.5), 0 8px 20px rgba(226,58,94,0.22); }
 #screen-run.hud.phase-rest    #run-phase { color: #0f9f8c; box-shadow: inset 0 0 0 1px rgba(23,198,176,0.5), 0 8px 20px rgba(15,159,140,0.22); }
@@ -559,8 +568,10 @@ button, .btn-primary, .btn-ghost, .catalog-link { font-family: inherit; }
 #screen-run.hud #run-count { color: #1f2a44; text-shadow: 0 2px 12px rgba(255,255,255,0.7); }
 
 /* 横ゲージ（円ゲージ廃止・お手本動画を大きく） */
-.hbar-wrap { display: flex; align-items: center; gap: 13px; width: min(88vw, 430px); margin: 12px auto 0; }
-.hbar-wrap #run-count { position: static; display: block; font-size: 3rem; font-weight: 900; min-width: 2.1ch; text-align: center; line-height: 1; }
+.hbar-wrap { display: flex; align-items: center; gap: 13px; width: min(88vw, 430px);
+  margin: 22px auto 0; } /* セリフとタイムゲージの間 */
+.hbar-wrap #run-count { position: static; display: block; font-size: 3.2rem; font-weight: 800; min-width: 2.1ch; text-align: center; line-height: 1;
+  font-family: "Baloo 2", "M PLUS Rounded 1c", sans-serif; }
 .hbar { flex: 1; height: 14px; border-radius: 999px; background: rgba(31,42,68,0.14); overflow: hidden;
   box-shadow: inset 0 1px 3px rgba(31,42,68,0.12); }
 .hbar i { display: block; height: 100%; border-radius: 999px; width: 100%; transition: width 0.12s linear; }

@@ -103,6 +103,7 @@ const TRAINERS = {
     dir: "assets/characters/sakuya",
     videoDir: "assets/videos/sakuya",
     thumbDir: "assets/thumbs/sakuya",
+    voiceDir: "assets/audio/sakuya",
     quotes: {
       home: [
         "今日も一緒に忍ぼうね。",
@@ -141,9 +142,22 @@ const TRAINERS = {
   },
 };
 
+// 音声クリップ名 → 画面に出す文言（表示テキストと声のセリフを必ず一致させるための台本）
+// 新しいクリップを追加したら必ずここにも書く。first_/next_ は種目名入りのためテンプレートで持つ
+const VOICE_LINES = {
+  go_1: "いくよっ！", go_2: "はじめっ！",
+  mid_1: "いい調子！", mid_2: "フォーム、きれいだよ。", mid_3: "呼吸を止めないでね。",
+  last10_1: "あと10秒！", last10_2: "あとちょっと、がんばって！",
+  rest_1: "ふぅ。お水飲んでね。", rest_2: "よく動けてるよ。次もいこう。",
+  finish_1: "お疲れさま！ 今日もよく頑張ったね。", finish_2: "完走、お見事！ ゆっくり休んでね。",
+};
+const voiceLineFirst = (exKey) => `最初は、${EXERCISES[exKey].name}！`;
+const voiceLineNext = (exKey) => `つぎは、${EXERCISES[exKey].name}！`;
+
 // plankSec: 仕上げプランク（全ワークアウト末尾に追加）0=なし / 30 / 60
 // reminderTime: 毎日のリマインダー通知 "HH:MM"（空文字=オフ。通知はネイティブ版のみ）
-const DEFAULT_SETTINGS = { trainer: "sakuya", sound: true, prepareSec: 10, plankSec: 0, reminderTime: "" };
+// cheer: 応援ボイスの量 many=多め（従来） / normal=普通（あと10秒＋3-2-1のみ） / few=少なめ（3-2-1のみ）
+const DEFAULT_SETTINGS = { trainer: "sakuya", sound: true, prepareSec: 10, plankSec: 0, reminderTime: "", cheer: "normal" };
 
 // カロリー概算（METs 8.0 × 体重60kg 想定のざっくり値）
 function estimateKcal(totalWorkSec) {
