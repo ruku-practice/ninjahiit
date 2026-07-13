@@ -49,7 +49,9 @@ const Voice = {
     if (this.buffers[name] || this.missing[name] || !this.ctx) return this.pending[name] || Promise.resolve();
     if (this.pending[name]) return this.pending[name];
     this.pending[name] = fetch(this.base + name + ".mp3")
-      .then((r) => { if (!r.ok) throw new Error("404"); return r.arrayBuffer(); })
+      // Capacitor(capacitor://)のローカルリソースはfetchがstatus=0/ok=falseを返すことがあるが
+      // 中身は正常に読めるため、r.okでは判定しない。破損データならdecodeAudioDataが自然に失敗する
+      .then((r) => r.arrayBuffer())
       .then((buf) => new Promise((res, rej) => this.ctx.decodeAudioData(buf, res, rej)))
       .then((decoded) => { this.buffers[name] = decoded; })
       .catch(() => { this.missing[name] = true; })
