@@ -367,7 +367,8 @@ button, .btn-primary, .btn-ghost, .catalog-link { font-family: inherit; }
 .catalog-thumb img { max-width: 92%; max-height: 92%; }
 .catalog-thumb .chara-ph .ph-emoji { font-size: 1.8rem; }
 .catalog-thumb .ph-label { display: none; }
-.catalog-ex-name { font-size: 0.6rem; color: #77705f; text-align: center; line-height: 1.3; font-weight: 500; }
+.catalog-ex-name { font-size: 0.6rem; color: #77705f; text-align: center; line-height: 1.3; font-weight: 500;
+  word-break: keep-all; overflow-wrap: break-word; } /* 種目名内のU+200Bでのみ改行を許可（文字単位の乱雑な改行を防ぐ） */
 .catalog-start {
   margin-top: 14px; width: 100%; background: var(--grad-cta); color: #fff;
   border: none; border-radius: 999px; padding: 12px;
