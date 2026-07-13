@@ -102,6 +102,7 @@ const TRAINERS = {
     name: "サクヤ",
     dir: "assets/characters/sakuya",
     videoDir: "assets/videos/sakuya",
+    thumbDir: "assets/thumbs/sakuya",
     quotes: {
       home: [
         "今日も一緒に忍ぼうね。",

@@ -13,11 +13,8 @@ const state = {
   settings: { ...DEFAULT_SETTINGS, ...store.get("settings", {}) },
   history: store.get("history", []),
   engine: null,
-  spriteTimer: null,
-  catalogTimers: [],
   wakeLock: null,
   missingImages: new Set(),
-  missingVideos: new Set(),
 };
 
 const trainer = () => TRAINERS[state.settings.trainer];
@@ -58,16 +55,11 @@ function renderPlaceholder(el, label, frameIndex) {
     `<span class="ph-emoji">🥷</span><span class="ph-label">${label}</span></div>`;
 }
 
-// ---- お手本再生（ループ動画優先、なければコマ送りスプライト） ----
+// ---- お手本再生（ワークアウト実行画面のループ動画） ----
 // video要素はコンテナごとに1つだけ作って使い回す（自動再生ポリシー対策：
 // 開始タップで再生許可を得た要素なら、以後のsrc差し替え＋play()が許可される）
 function playSprite(el, exerciseKey) {
-  stopSprite();
   const src = `${trainer().videoDir}/${exerciseKey}.mp4`;
-  if (state.missingVideos.has(src)) {
-    playSpriteFrames(el, exerciseKey);
-    return;
-  }
   let video = el.querySelector("video");
   if (!video) {
     el.innerHTML = "";
@@ -81,8 +73,9 @@ function playSprite(el, exerciseKey) {
     el.appendChild(video);
   }
   video.onerror = () => {
-    state.missingVideos.add(src);
-    playSpriteFrames(el, exerciseKey);
+    // 一時的な読み込み失敗。この種目の間だけ静止画で代替し、次の種目では再び動画を試す
+    // （以前は一度の失敗を恒久的に記録していて、以後ずっと動画が出なくなることがあった）
+    el.innerHTML = `<img src="${trainer().thumbDir}/${exerciseKey}.jpg" alt="">`;
   };
   if (video.dataset.src !== src) {
     video.dataset.src = src;
@@ -96,118 +89,60 @@ function playSprite(el, exerciseKey) {
   video.addEventListener("canplay", tryPlay, { once: true });
 }
 
-function playSpriteFrames(el, exerciseKey) {
-  const ex = EXERCISES[exerciseKey];
-  const seq = ex.seq || Array.from({ length: ex.frames }, (_, i) => i + 1);
-  let i = 0;
-  const draw = () => {
-    setCharaImage(el, `${trainer().dir}/${exerciseKey}_${seq[i]}.png`, ex.name, seq[i]);
-    i = (i + 1) % seq.length;
-  };
-  draw();
-  state.spriteTimer = setInterval(draw, ex.frameMs);
-}
-
 function showPose(el, pose, label) {
-  stopSprite();
   setCharaImage(el, `${trainer().dir}/${pose}.png`, label, 1);
 }
 
-function stopSprite() {
-  if (state.spriteTimer) { clearInterval(state.spriteTimer); state.spriteTimer = null; }
+// ---- ワークアウト一覧のサムネイル ----
+// 一覧は静止画（動画から切り出した1コマ）で即表示し、タップした種目だけ
+// お手本ループ動画を再生する（常に最大1本）。iOSはハードウェア動画デコーダの
+// 同時使用数に上限があり、多数の<video>を並べると読み込みが詰まって
+// 出たり出なかったりする不具合の原因になるため、一覧に動画は並べない。
+let activeThumb = null; // 動画再生中のサムネ要素（常に最大1つ）
+
+function startThumb(el, key) {
+  el.innerHTML =
+    `<img src="${trainer().thumbDir}/${key}.jpg" alt="">` +
+    `<span class="thumb-play">▶</span>`;
+  el.onclick = (e) => { e.stopPropagation(); toggleThumbVideo(el, key); };
 }
 
-// ---- ワークアウト一覧（種目の動きを確認できるカタログ画面） ----
-// サムネイルもお手本ループ動画で見せる。一覧には最大56個の種目枠があり、
-// 全部に<video>要素を常設すると（一時停止中でも）iOSのハードウェアデコーダの
-// 同時使用上限に達して一部が読み込めなくなる（読み込みが詰まる／画像アニメへ
-// フォールバックする不具合の原因）。そのため画面内に入った時だけ<video>を生成し、
-// 外れたら完全に破棄（remove）してデコーダを解放する「仮想化」方式にする。
-let catalogObserver = null;
-let thumbLoadSeq = 0; // 一度に複数が視界に入った時、生成をわずかにずらして同時負荷を避ける
-
-function ensureCatalogObserver() {
-  if (catalogObserver) return;
-  catalogObserver = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      const el = entry.target;
-      if (entry.isIntersecting) mountThumbVideo(el);
-      else unmountThumbVideo(el);
-    });
-  }, { threshold: 0.2, rootMargin: "40px 0px" });
+function toggleThumbVideo(el, key) {
+  const wasPlaying = activeThumb === el;
+  stopThumbVideo();
+  if (wasPlaying) return; // 再生中のサムネを再タップ→静止画に戻すだけ
+  const video = document.createElement("video");
+  video.muted = true;
+  video.loop = true;
+  video.playsInline = true;
+  video.setAttribute("muted", "");
+  video.setAttribute("playsinline", "");
+  video.onerror = () => stopThumbVideo(); // 失敗したら静止画に戻す（失敗の記録はしない）
+  el.appendChild(video);
+  el.classList.add("playing");
+  activeThumb = el;
+  video.src = `${trainer().videoDir}/${key}.mp4`;
+  video.load();
+  const tryPlay = () => video.play().catch(() => {});
+  tryPlay();
+  video.addEventListener("canplay", tryPlay, { once: true });
 }
 
-function mountThumbVideo(el) {
-  if (el.querySelector("video") || el._thumbLoading) return;
-  const key = el.dataset.videoKey;
-  const src = `${trainer().videoDir}/${key}.mp4`;
-  if (state.missingVideos.has(src)) { startThumbFrames(el, key); return; }
-  el._thumbLoading = true;
-  const delay = (thumbLoadSeq++ % 4) * 90; // 同時生成をずらす
-  el._thumbTimer = setTimeout(() => {
-    el._thumbTimer = null;
-    if (!el.isConnected) return; // 遅延中に画面から消えていたら何もしない
-    const video = document.createElement("video");
-    video.muted = true;
-    video.loop = true;
-    video.playsInline = true;
-    video.preload = "auto";
-    video.setAttribute("muted", "");
-    video.setAttribute("playsinline", "");
-    video.onerror = () => {
-      video.remove();
-      state.missingVideos.add(src);
-      startThumbFrames(el, key);
-    };
-    el.appendChild(video);
-    video.src = src;
-    video.load();
-    const tryPlay = () => video.play().catch(() => {});
-    tryPlay();
-    video.addEventListener("canplay", tryPlay, { once: true });
-  }, delay);
-}
-
-function unmountThumbVideo(el) {
-  el._thumbLoading = false;
-  if (el._thumbTimer) { clearTimeout(el._thumbTimer); el._thumbTimer = null; }
-  const video = el.querySelector("video");
+function stopThumbVideo() {
+  if (!activeThumb) return;
+  const video = activeThumb.querySelector("video");
   if (video) {
     video.pause();
     video.removeAttribute("src");
     video.load(); // ロード中断＋デコーダ解放
     video.remove();
   }
-}
-
-function startThumb(el, key) {
-  const src = `${trainer().videoDir}/${key}.mp4`;
-  if (state.missingVideos.has(src)) {
-    startThumbFrames(el, key);
-    return;
-  }
-  el.dataset.videoKey = key;
-  ensureCatalogObserver();
-  catalogObserver.observe(el);
-}
-
-function startThumbFrames(el, key) {
-  const ex = EXERCISES[key];
-  const seq = ex.seq || Array.from({ length: ex.frames }, (_, i) => i + 1);
-  let i = 0;
-  const draw = () => {
-    setCharaImage(el, `${trainer().dir}/${key}_${seq[i]}.png`, ex.name, seq[i]);
-    i = (i + 1) % seq.length;
-  };
-  draw();
-  state.catalogTimers.push(setInterval(draw, ex.frameMs));
+  activeThumb.classList.remove("playing");
+  activeThumb = null;
 }
 
 function stopCatalog() {
-  state.catalogTimers.forEach(clearInterval);
-  state.catalogTimers = [];
-  if (catalogObserver) { catalogObserver.disconnect(); catalogObserver = null; }
-  document.querySelectorAll("#catalog-list video, #detail-ex video").forEach((v) => v.pause());
+  stopThumbVideo();
 }
 
 // ---- メニュー詳細（開始前に全体像を見せて確認） ----
@@ -587,7 +522,6 @@ function startWorkout(workout) {
       Sound.finish();
       Voice.playOne(["finish_1", "finish_2"]);
       Native.finishBuzz();
-      stopSprite();
       $("#run-chara video")?.pause();
       releaseWakeLock();
       saveResult(workout, engine.totalWorkSec);
@@ -607,7 +541,6 @@ function togglePause() {
   if (!e || e.finished) return;
   if (e.pausedAt === null) {
     e.pause();
-    stopSprite();
     Voice.stop();
     $("#run-chara video")?.pause();
     $("#btn-pause").textContent = "▶";
@@ -621,7 +554,6 @@ function togglePause() {
 function quitWorkout() {
   if (!confirm("修行を中断する？")) return;
   state.engine?.stop();
-  stopSprite();
   Voice.stop();
   $("#run-chara video")?.pause();
   releaseWakeLock();
