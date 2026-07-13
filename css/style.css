@@ -363,7 +363,8 @@ button, .btn-primary, .btn-ghost, .catalog-link { font-family: inherit; }
 .catalog-card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
 .catalog-title { font-weight: 700; font-size: 1.05rem; }
 .catalog-meta { font-size: 0.72rem; color: #99917f; margin-top: 2px; }
-.catalog-exercises { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+/* minmax(0,1fr): 改行できない長い種目名でも列幅を押し広げない（サムネの大きさを揃える） */
+.catalog-exercises { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 .catalog-ex { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .catalog-thumb {
   width: 100%; aspect-ratio: 1; background: #efeae3; border-radius: 14px;

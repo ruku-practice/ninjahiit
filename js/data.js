@@ -21,8 +21,8 @@ const EXERCISES = {
   butt_bridge:      { name: "バットブリッジ",          frames: 2, frameMs: 700 },
   forward_lunge:    { name: "フォワード​ランジ",  frames: 2, frameMs: 700 },
   backward_lunge:   { name: "バックワード​ランジ", frames: 2, frameMs: 700 },
-  narrow_pushup:    { name: "ナロープッシュアップ",    frames: 2, frameMs: 850 },
-  wide_pushup:      { name: "ワイドプッシュアップ",    frames: 2, frameMs: 850 },
+  narrow_pushup:    { name: "ナロー​プッシュアップ",    frames: 2, frameMs: 850 },
+  wide_pushup:      { name: "ワイド​プッシュアップ",    frames: 2, frameMs: 850 },
   plank:            { name: "プランク",               frames: 1, frameMs: 1000 },
 };
 
