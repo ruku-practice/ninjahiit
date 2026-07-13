@@ -706,6 +706,10 @@ document.addEventListener("DOMContentLoaded", () => {
   };
   $("#btn-sound").textContent = state.settings.sound ? "🔊" : "🔇";
 
+  // ホームのバージョン表示：キャッシュ更新用の ?v=NN から自動で拾う（更新漏れ防止）
+  const verMatch = (document.querySelector('script[src*="app.js"]')?.src || "").match(/v=(\d+)/);
+  if (verMatch) $("#app-version").textContent = `v0.${verMatch[1]}`;
+
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible" && state.engine && !state.engine.finished) acquireWakeLock();
   });

@@ -201,6 +201,7 @@ button, .btn-primary, .btn-ghost, .catalog-link { font-family: inherit; }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
 #screen-home.hud .fan-note { color: #6b779a; font-size: 0.56rem; margin-top: 2px; }
+#screen-home.hud .app-version { text-align: center; font-size: 0.62rem; font-weight: 700; color: #8492b5; opacity: 0.85; margin-top: 2px; }
 
 /* ===== メニュー詳細（開始確認）===== */
 .detail-scroll { padding-bottom: calc(96px + env(safe-area-inset-bottom)); gap: 12px; }
@@ -393,6 +394,8 @@ button, .btn-primary, .btn-ghost, .catalog-link { font-family: inherit; }
 #history-total { font-size: 0.85rem; font-weight: 700; margin-bottom: 6px; }
 #history-list { list-style: none; font-size: 0.8rem; color: #85806f; max-height: 130px; overflow-y: auto; }
 #history-list li { padding: 4px 0; border-bottom: 1px dashed #f0e9dc; }
+
+.app-version { text-align: center; font-size: 0.62rem; font-weight: 700; color: #8492b5; opacity: 0.85; margin-top: 2px; }
 
 .fan-note { font-size: 0.65rem; color: #b5ac9c; text-align: center; line-height: 1.6; z-index: 1; }
 
