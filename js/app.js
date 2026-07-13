@@ -118,26 +118,66 @@ function stopSprite() {
 }
 
 // ---- ワークアウト一覧（種目の動きを確認できるカタログ画面） ----
-// サムネイルもお手本ループ動画で見せる。20個同時再生は重いので、
-// IntersectionObserverで画面内のサムネイルだけ src をロード＋再生する
+// サムネイルもお手本ループ動画で見せる。一覧には最大56個の種目枠があり、
+// 全部に<video>要素を常設すると（一時停止中でも）iOSのハードウェアデコーダの
+// 同時使用上限に達して一部が読み込めなくなる（読み込みが詰まる／画像アニメへ
+// フォールバックする不具合の原因）。そのため画面内に入った時だけ<video>を生成し、
+// 外れたら完全に破棄（remove）してデコーダを解放する「仮想化」方式にする。
 let catalogObserver = null;
+let thumbLoadSeq = 0; // 一度に複数が視界に入った時、生成をわずかにずらして同時負荷を避ける
 
 function ensureCatalogObserver() {
   if (catalogObserver) return;
   catalogObserver = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
-      const v = entry.target;
-      if (entry.isIntersecting) {
-        // 初回のみ遅延ロード。iOS WKWebViewは src 代入だけでは読み込まないため load() を明示的に呼ぶ
-        if (v.dataset.src && !v.src) { v.src = v.dataset.src; v.load(); }
-        const tryPlay = () => v.play().catch(() => {});
-        tryPlay();
-        v.addEventListener("canplay", tryPlay, { once: true });
-      } else {
-        v.pause();
-      }
+      const el = entry.target;
+      if (entry.isIntersecting) mountThumbVideo(el);
+      else unmountThumbVideo(el);
     });
-  }, { threshold: 0.25 });
+  }, { threshold: 0.2, rootMargin: "40px 0px" });
+}
+
+function mountThumbVideo(el) {
+  if (el.querySelector("video") || el._thumbLoading) return;
+  const key = el.dataset.videoKey;
+  const src = `${trainer().videoDir}/${key}.mp4`;
+  if (state.missingVideos.has(src)) { startThumbFrames(el, key); return; }
+  el._thumbLoading = true;
+  const delay = (thumbLoadSeq++ % 4) * 90; // 同時生成をずらす
+  el._thumbTimer = setTimeout(() => {
+    el._thumbTimer = null;
+    if (!el.isConnected) return; // 遅延中に画面から消えていたら何もしない
+    const video = document.createElement("video");
+    video.muted = true;
+    video.loop = true;
+    video.playsInline = true;
+    video.preload = "auto";
+    video.setAttribute("muted", "");
+    video.setAttribute("playsinline", "");
+    video.onerror = () => {
+      video.remove();
+      state.missingVideos.add(src);
+      startThumbFrames(el, key);
+    };
+    el.appendChild(video);
+    video.src = src;
+    video.load();
+    const tryPlay = () => video.play().catch(() => {});
+    tryPlay();
+    video.addEventListener("canplay", tryPlay, { once: true });
+  }, delay);
+}
+
+function unmountThumbVideo(el) {
+  el._thumbLoading = false;
+  if (el._thumbTimer) { clearTimeout(el._thumbTimer); el._thumbTimer = null; }
+  const video = el.querySelector("video");
+  if (video) {
+    video.pause();
+    video.removeAttribute("src");
+    video.load(); // ロード中断＋デコーダ解放
+    video.remove();
+  }
 }
 
 function startThumb(el, key) {
@@ -146,22 +186,9 @@ function startThumb(el, key) {
     startThumbFrames(el, key);
     return;
   }
-  const video = document.createElement("video");
-  video.muted = true;
-  video.loop = true;
-  video.playsInline = true;
-  video.preload = "metadata";
-  video.setAttribute("muted", "");
-  video.setAttribute("playsinline", "");
-  video.dataset.src = src;
-  video.onerror = () => {
-    video.remove();
-    state.missingVideos.add(src);
-    startThumbFrames(el, key);
-  };
-  el.appendChild(video);
+  el.dataset.videoKey = key;
   ensureCatalogObserver();
-  catalogObserver.observe(video);
+  catalogObserver.observe(el);
 }
 
 function startThumbFrames(el, key) {
@@ -500,8 +527,11 @@ function startWorkout(workout) {
 
   const engine = new WorkoutEngine(workout, state.settings.prepareSec, {
     onSegmentChange(seg, next) {
-      const label = { prepare: "準備して！", work: EXERCISES[seg.exercise].name, rest: "休憩" }[seg.type];
-      $("#run-phase").textContent = label;
+      // 「休憩」の単調な表示をやめ、次に何が来るかが分かるリッチな表示にする
+      const restLabel = next ? `つぎは、${EXERCISES[next.exercise].name}` : "お疲れさま！";
+      const label = { prepare: "準備して！", work: EXERCISES[seg.exercise].name, rest: restLabel }[seg.type];
+      const icon = { prepare: "🥋", work: "🔥", rest: "💧" }[seg.type];
+      $("#run-phase").innerHTML = `<span class="run-phase-ico">${icon}</span>${label}`;
       $("#run-progress").textContent = `エクササイズ ${seg.slot}/${seg.total}`;
       $("#screen-run").className = `screen hud active phase-${seg.type}`;
       $("#run-next").textContent = next
@@ -529,13 +559,13 @@ function startWorkout(workout) {
     onTick(seg, remain, ratio) {
       const sec = Math.ceil(remain);
       $("#run-count").textContent = sec;
-      $("#run-count").classList.toggle("urgent", seg.type === "work" && sec <= 3 && sec >= 1);
+      $("#run-count").classList.toggle("urgent", sec <= 3 && sec >= 1);
       $("#hbar-fill").style.width = `${Math.max(0, (1 - ratio) * 100)}%`; // 残り時間ぶんが縮む
 
       if (sec !== lastTickSec) {
         lastTickSec = sec;
-        // ワーク・休憩の終わる瞬間、カウントに合わせて「さん・に・いち」
-        if ((seg.type === "work" || seg.type === "rest") && sec <= 3 && sec >= 1) {
+        // ワーク・休憩・準備の終わる瞬間、カウントに合わせて「さん・に・いち」
+        if (sec <= 3 && sec >= 1) {
           Sound.countTick();
           Voice.play(`count_${sec}`);
           Native.tick();                                        // ネイティブ: 軽い振動

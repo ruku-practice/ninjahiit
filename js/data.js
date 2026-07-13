@@ -2,24 +2,25 @@
 
 // seq: 再生するフレーム番号の並び（省略時は 1..frames のループ）
 const EXERCISES = {
+  // U+200B(ゼロ幅スペース)はカード等で折り返す時に自然な位置で改行させるための目印（見た目には出ない）
   squat:            { name: "スクワット",             frames: 2, frameMs: 900 },
-  squat_jump:       { name: "スクワットジャンプ",      frames: 2, frameMs: 550 },
+  squat_jump:       { name: "スクワット​ジャンプ", frames: 2, frameMs: 550 },
   side_lunge:       { name: "サイドランジ",           frames: 3, frameMs: 700, seq: [1, 2, 3, 2] },
   // 1=しゃがむ 2=ジャンプ 3=腕立て前(プランク) 4=腕立て（下）
   burpee:           { name: "バーピー",               frames: 4, frameMs: 500, seq: [1, 2, 1, 3, 4, 3] },
-  mountain_climber: { name: "マウンテンクライマー",    frames: 2, frameMs: 380 },
+  mountain_climber: { name: "マウンテン​クライマー", frames: 2, frameMs: 380 },
   crunch:           { name: "クランチ",               frames: 2, frameMs: 850 },
   bicycle:          { name: "バイシクル",             frames: 2, frameMs: 480 },
-  leg_raise:        { name: "ライイングレッグレイズ",  frames: 2, frameMs: 600 },
+  leg_raise:        { name: "ライイング​レッグレイズ", frames: 2, frameMs: 600 },
   pushup:           { name: "プッシュアップ",          frames: 2, frameMs: 850 },
   high_knees:       { name: "ハイニー",               frames: 2, frameMs: 300 },
   // ↓ 追加種目（アニメ動画は未生成。生成まで🥷プレースホルダ＋種目名で表示）
-  jumping_jack:     { name: "ジャンピングジャック",    frames: 2, frameMs: 300 },
-  kickback_right:   { name: "右足キックバック",        frames: 2, frameMs: 600 },
-  kickback_left:    { name: "左足キックバック",        frames: 2, frameMs: 600 },
+  jumping_jack:     { name: "ジャンピング​ジャック", frames: 2, frameMs: 300 },
+  kickback_right:   { name: "右足​キックバック",  frames: 2, frameMs: 600 },
+  kickback_left:    { name: "左足​キックバック",  frames: 2, frameMs: 600 },
   butt_bridge:      { name: "バットブリッジ",          frames: 2, frameMs: 700 },
-  forward_lunge:    { name: "フォワードランジ",        frames: 2, frameMs: 700 },
-  backward_lunge:   { name: "バックワードランジ",      frames: 2, frameMs: 700 },
+  forward_lunge:    { name: "フォワード​ランジ",  frames: 2, frameMs: 700 },
+  backward_lunge:   { name: "バックワード​ランジ", frames: 2, frameMs: 700 },
   narrow_pushup:    { name: "ナロープッシュアップ",    frames: 2, frameMs: 850 },
   wide_pushup:      { name: "ワイドプッシュアップ",    frames: 2, frameMs: 850 },
   plank:            { name: "プランク",               frames: 1, frameMs: 1000 },
@@ -85,6 +86,14 @@ const PRESETS = [
     workSec: 20, restSec: 10, rounds: 1, setRestSec: 0,
     exercises: ["squat", "bicycle", "squat_jump", "mountain_climber",
       "side_lunge", "burpee", "crunch", "pushup"],
+  },
+  {
+    id: "pushup_fest",
+    title: "プッシュアップ尽くし", short: "腕立て尽くし",
+    icon: "🔺", tint: "blue", pict: "dumbbell",
+    badge: "上半身集中", desc: "腕立てバリエーション制覇",
+    workSec: 20, restSec: 10, rounds: 2, setRestSec: 0,
+    exercises: ["pushup", "narrow_pushup", "wide_pushup", "plank"],
   },
 ];
 

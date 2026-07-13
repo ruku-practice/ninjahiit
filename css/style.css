@@ -535,14 +535,18 @@ button, .btn-primary, .btn-ghost, .catalog-link { font-family: inherit; }
 #screen-run.hud #run-title { color: #1f2a44; }
 #screen-run.hud #run-progress { color: #4a5578; opacity: 1; }
 #screen-run.hud #run-phase {
-  display: inline-block; margin: 16px auto 0; padding: 6px 20px; border-radius: 999px;
-  font-size: 1.35rem; letter-spacing: 0.08em; text-shadow: 0 2px 8px rgba(255,255,255,0.5);
-  background: rgba(255,255,255,0.55); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.7), 0 6px 16px rgba(50,74,120,0.18);
+  display: inline-flex; align-items: center; gap: 8px; max-width: 88vw;
+  margin: 16px auto 0; padding: 8px 22px; border-radius: 14px;
+  font-size: 1.28rem; font-weight: 900; letter-spacing: 0.04em; text-shadow: 0 2px 8px rgba(255,255,255,0.5);
+  background: rgba(255,255,255,0.55); backdrop-filter: blur(10px) saturate(1.3); -webkit-backdrop-filter: blur(10px) saturate(1.3);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.75), 0 8px 20px rgba(50,74,120,0.2);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 100%, 12px 100%);
 }
-#screen-run.hud.phase-prepare #run-phase { color: #2f6fd0; }
-#screen-run.hud.phase-work    #run-phase { color: #e23a5e; }
-#screen-run.hud.phase-rest    #run-phase { color: #0f9f8c; }
+.run-phase-ico { flex: none; font-size: 1.1rem; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.15)); }
+#screen-run.hud.phase-prepare #run-phase { color: #2f6fd0; box-shadow: inset 0 0 0 1px rgba(79,155,240,0.5), 0 8px 20px rgba(47,111,208,0.22); }
+#screen-run.hud.phase-work    #run-phase { color: #e23a5e; box-shadow: inset 0 0 0 1px rgba(255,79,110,0.5), 0 8px 20px rgba(226,58,94,0.22); }
+#screen-run.hud.phase-rest    #run-phase { color: #0f9f8c; box-shadow: inset 0 0 0 1px rgba(23,198,176,0.5), 0 8px 20px rgba(15,159,140,0.22); }
 #screen-run.hud #run-quote { color: #29304a; opacity: 1; font-weight: 700; }
 #screen-run.hud #run-count { color: #1f2a44; text-shadow: 0 2px 12px rgba(255,255,255,0.7); }
 
