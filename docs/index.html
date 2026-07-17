@@ -13,8 +13,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800;900&family=Baloo+2:wght@700;800&display=swap" rel="stylesheet">
-  <script type="module" crossorigin src="./bundle/index-BRilNoMm.js"></script>
-  <link rel="stylesheet" crossorigin href="./bundle/index-CDeYn4q3.css">
+  <script type="module" crossorigin src="./bundle/index-BSn_kI_l.js"></script>
+  <link rel="stylesheet" crossorigin href="./bundle/index-DD-izSLv.css">
 </head>
 <body>
 
@@ -39,6 +39,12 @@
       <button id="hud-challenge" class="hud-challenge glass">
         <span class="hud-ch-flag">🚩</span>
         <span class="hud-ch-main"><b>今日の任務</b><small id="hud-ch-desc"></small></span>
+        <span class="hud-ch-go">›</span>
+      </button>
+
+      <button id="hud-ranking" class="hud-challenge glass">
+        <img class="hud-rk-ico" src="assets/ui/icons/ranking.jpg" alt="">
+        <span class="hud-ch-main"><b>週間ランキング</b><small id="hud-rk-desc">今週の修行値で忍び番付に挑む</small></span>
         <span class="hud-ch-go">›</span>
       </button>
 
@@ -143,6 +149,53 @@
     <div class="detail-cta">
       <span class="detail-cta-q">このメニューを始めますか？</span>
       <button id="btn-detail-start" class="detail-start-btn">はい、はじめる <b>›</b></button>
+    </div>
+  </section>
+
+  <!-- 週間ランキング -->
+  <section id="screen-ranking" class="screen hud">
+    <div class="hud-env"></div>
+    <div class="hud-scroll detail-scroll">
+      <header class="detail-top">
+        <button id="btn-ranking-back" class="hbtn-dark" aria-label="戻る">←</button>
+        <h2>週間ランキング</h2>
+      </header>
+
+      <div class="rank-hero glass">
+        <img src="assets/ui/icons/ranking.jpg" alt="">
+        <div class="rank-hero-info">
+          <b>今週の修行値バトル</b>
+          <small>毎週月曜リセット ・ 忍び名だけで参加（本名は出ません）</small>
+        </div>
+      </div>
+
+      <!-- 未参加: 忍び名を決めて参加 / 参加済み: 自分の名前と変更ボタン -->
+      <div id="rank-join" class="set-card glass" hidden>
+        <div class="set-row">
+          <div class="set-info">
+            <b>忍び名を決めて参加する</b>
+            <small>12文字まで。あとから変えられます</small>
+          </div>
+        </div>
+        <div class="rank-join-row">
+          <input id="rank-name-input" class="rank-name-input" type="text" maxlength="12" placeholder="例: 疾風のルク">
+          <button id="btn-rank-join" class="rank-join-btn">参加する</button>
+        </div>
+      </div>
+      <div id="rank-mine" class="set-card glass" hidden>
+        <div class="set-row">
+          <div class="set-info">
+            <b id="rank-my-name"></b>
+            <small id="rank-my-status"></small>
+          </div>
+          <button id="btn-rank-rename" class="rank-rename-btn">変更</button>
+        </div>
+      </div>
+
+      <div class="hud-sec">今週の番付<i class="hud-slash"></i></div>
+      <div id="rank-list" class="rank-list"><p class="rank-note">読み込み中…</p></div>
+
+      <p class="fan-note">本アプリはCryptoNinjaのファンメイド（二次創作）アプリです。</p>
     </div>
   </section>
 

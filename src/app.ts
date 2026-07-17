@@ -11,6 +11,7 @@ import { Native } from "./native.ts";
 import { KOBAN_RATES, addKoban, kobanBalance } from "./points.ts";
 import { maybeShowInterstitial, recordFirstLaunch } from "./ads.ts";
 import { syncNow } from "./sync.ts";
+import { fetchWeeklyRanking, getNinjaName, setNinjaName, validateNinjaName } from "./ranking.ts";
 
 
 const store = {
@@ -283,6 +284,75 @@ function renderCatalog() {
     list.appendChild(card);
   });
   show("screen-catalog");
+}
+
+// ---- 週間ランキング（R3） ----
+// クラウドの weekly_ranking RPC を表示。忍び名を設定した人だけ番付に載る
+let myNinjaName = "";
+
+async function renderRanking() {
+  stopCatalog();
+  show("screen-ranking");
+  $("#rank-list").innerHTML = `<p class="rank-note">読み込み中…</p>`;
+  $("#rank-join").hidden = true;
+  $("#rank-mine").hidden = true;
+
+  if (!navigator.onLine) {
+    $("#rank-list").innerHTML = `<p class="rank-note">オフラインです。<br>電波のあるところでまた見てみてね。</p>`;
+    return;
+  }
+
+  // 忍び名と番付を並行取得
+  const [name, rows] = await Promise.all([getNinjaName(), fetchWeeklyRanking()]);
+  if (!$("#screen-ranking").classList.contains("active")) return; // 読み込み中に画面を離れた
+  myNinjaName = name;
+
+  if (name) {
+    $("#rank-mine").hidden = false;
+    $("#rank-my-name").textContent = name;
+  } else {
+    $("#rank-join").hidden = false;
+  }
+
+  if (rows === null) {
+    $("#rank-list").innerHTML = `<p class="rank-note">番付を取得できませんでした。<br>少し時間をおいて開き直してみてね。</p>`;
+    return;
+  }
+  renderRankRows(rows);
+}
+
+function renderRankRows(rows) {
+  const me = rows.find((r) => r.is_me);
+  if (myNinjaName) {
+    $("#rank-my-status").textContent = me
+      ? `今週 ${me.rank}位 ・ ${me.weekly_exp} 修行値`
+      : "今週はまだ圏外。1回完走すれば番付に載るよ！";
+  }
+  if (!rows.length) {
+    $("#rank-list").innerHTML =
+      `<p class="rank-note">今週はまだ誰も番付に載っていません。<br>最初の忍びになろう！</p>`;
+    return;
+  }
+  const esc = (t) => t.replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+  $("#rank-list").innerHTML = rows.map((r) =>
+    `<div class="rank-row${r.is_me ? " me" : ""}">` +
+      `<span class="rank-no">${r.rank}</span>` +
+      `<span class="rank-name">${esc(r.ninja_name)}</span>` +
+      `<span class="rank-exp">${r.weekly_exp}<small>修行値</small></span>` +
+    `</div>`).join("");
+}
+
+async function joinRanking(name) {
+  const v = validateNinjaName(name);
+  if (v === "empty") { showToast("忍び名を入れてね"); return; }
+  if (v === "too_long") { showToast("忍び名は12文字までだよ"); return; }
+  if (v === "ng_word") { showToast("その名前は番付には載せられないよ 🥷"); return; }
+  showToast("登録中…");
+  const ok = await setNinjaName(name);
+  if (!ok) { showToast("登録に失敗…電波を確認してもう一度試してね"); return; }
+  showToast(`「${name.trim()}」で番付に参加したよ！`);
+  renderRanking();
 }
 
 // ---- 記録・ストリーク ----
@@ -725,6 +795,14 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll<any>(".hud-tab[data-soon]").forEach(b => {
     b.onclick = () => showToast(`${b.dataset.soon} はただいま準備中だよ 🥷`);
   });
+  $("#hud-ranking").onclick = renderRanking;
+  $("#btn-ranking-back").onclick = renderHome;
+  $("#btn-rank-join").onclick = () => joinRanking($("#rank-name-input").value);
+  $("#rank-name-input").onkeydown = (e) => { if (e.key === "Enter") joinRanking($("#rank-name-input").value); };
+  $("#btn-rank-rename").onclick = () => {
+    const name = prompt("新しい忍び名（12文字まで）", myNinjaName);
+    if (name !== null) joinRanking(name);
+  };
   $("#hud-challenge").onclick = () => {
     const ms = missionStatus();
     if (ms.done) { showToast("今日の任務はクリア済み！おかわりも歓迎だよ 🥷"); return; }

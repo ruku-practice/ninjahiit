@@ -2,6 +2,7 @@
    藍 #2b3a67（準備）／朱 #c73e3a（ワーク）／深緑 #2e5339（休憩）／桃・金はポップ用アクセント */
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
+[hidden] { display: none !important; } /* display:flex等のクラスよりhidden属性を優先 */
 
 :root {
   --ink: #1f2430;
@@ -610,3 +611,41 @@ button, .btn-primary, .btn-ghost, .catalog-link { font-family: inherit; }
   background: rgba(0,0,0,0.25); color: #fff; border-radius: 999px; padding: 2px 10px;
 }
 #screen-home .ph-label, #home-chara .ph-label { background: rgba(0,0,0,0.1); color: #555; }
+
+/* ---- 週間ランキング ---- */
+.hud-rk-ico { flex: none; width: 30px; height: 30px; border-radius: 9px; object-fit: cover;
+  box-shadow: 0 3px 8px rgba(50,74,120,0.28), inset 0 0 0 1px rgba(255,255,255,0.35); }
+.rank-hero { display: flex; align-items: center; gap: 12px; border-radius: 16px; padding: 12px 14px;
+  clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%); }
+.rank-hero img { flex: none; width: 46px; height: 46px; border-radius: 13px; object-fit: cover;
+  box-shadow: 0 4px 10px rgba(50,74,120,0.3); }
+.rank-hero-info b { display: block; font-size: 1.02rem; font-weight: 900; color: #1f2a44; }
+.rank-hero-info small { font-size: 0.68rem; color: #6b779a; font-weight: 700; line-height: 1.4; }
+.rank-join-row { display: flex; gap: 8px; margin-top: 4px; }
+.rank-name-input { flex: 1; min-width: 0; border: 1px solid rgba(120,150,190,0.4); border-radius: 11px;
+  padding: 10px 12px; font-family: inherit; font-size: 0.95rem; font-weight: 700; color: #1f2a44;
+  background: rgba(255,255,255,0.75); outline: none; }
+.rank-name-input:focus { border-color: #ff4f81; box-shadow: 0 0 0 3px rgba(255,79,129,0.15); }
+.rank-join-btn { flex: none; background: var(--grad-cta); color: #fff; border: none; border-radius: 11px;
+  padding: 10px 16px; font-family: inherit; font-weight: 900; font-size: 0.9rem; cursor: pointer;
+  box-shadow: var(--shadow-pop); }
+.rank-join-btn:active { transform: scale(0.96); }
+.rank-rename-btn { flex: none; background: rgba(255,255,255,0.7); border: 1px solid rgba(120,150,190,0.35);
+  color: #4a5578; border-radius: 999px; padding: 7px 14px; font-family: inherit; font-weight: 900;
+  font-size: 0.78rem; cursor: pointer; }
+.rank-list { display: flex; flex-direction: column; gap: 7px; }
+.rank-row { display: flex; align-items: center; gap: 10px; border-radius: 13px; padding: 9px 14px;
+  background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.72);
+  box-shadow: 0 6px 16px rgba(50,74,120,0.12); }
+.rank-row.me { border: 2px solid #ff4f81; box-shadow: 0 6px 18px rgba(255,79,129,0.25); }
+.rank-no { flex: none; width: 34px; text-align: center; font-weight: 800; font-size: 1.05rem; color: #4a5578;
+  font-family: "Baloo 2", inherit; }
+.rank-row:nth-child(1) .rank-no { color: #d99a06; font-size: 1.2rem; }
+.rank-row:nth-child(2) .rank-no { color: #8a97ad; font-size: 1.12rem; }
+.rank-row:nth-child(3) .rank-no { color: #b0713c; font-size: 1.12rem; }
+.rank-name { flex: 1; min-width: 0; font-weight: 900; color: #1f2a44; font-size: 0.95rem;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rank-row.me .rank-name::after { content: "（あなた）"; color: #ff4f81; font-size: 0.72rem; }
+.rank-exp { flex: none; font-weight: 800; color: #4a5578; font-size: 0.9rem; font-family: "Baloo 2", inherit; }
+.rank-exp small { font-size: 0.62rem; color: #8492b5; font-weight: 800; margin-left: 2px; }
+.rank-note { text-align: center; color: #6b779a; font-size: 0.82rem; font-weight: 700; padding: 18px 8px; line-height: 1.7; }
