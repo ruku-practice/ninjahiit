@@ -10,7 +10,7 @@ import { WorkoutEngine } from "./timer.ts";
 import { Native } from "./native.ts";
 import { KOBAN_RATES, addKoban, kobanBalance } from "./points.ts";
 import { maybeShowInterstitial, recordFirstLaunch } from "./ads.ts";
-import { pushPending } from "./sync.ts";
+import { syncNow } from "./sync.ts";
 
 
 const store = {
@@ -333,7 +333,7 @@ function saveResult(workout, totalWorkSec) {
 
   Native.backup();                                              // ネイティブ: 記録をPreferencesへ複製
   Native.syncReminder(state.settings.reminderTime, true);       // 完走した日の通知はスキップ→明日に予約し直し
-  pushPending(state.history);                                   // クラウド同期（未設定なら即座に何もしない）
+  syncNow(state.history);                                       // クラウド同期（未サインイン・オフラインなら静かにスキップ）
 }
 
 // ---- Wake Lock ----
@@ -768,4 +768,7 @@ document.addEventListener("DOMContentLoaded", () => {
       Native.syncReminder(state.settings.reminderTime, todayStats().count > 0);
     });
   }
+
+  // 起動直後のもたつきを避けて、少し後にクラウド同期（前回未送信分の回収）
+  setTimeout(() => syncNow(state.history), 3000);
 });

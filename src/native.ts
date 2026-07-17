@@ -1,6 +1,8 @@
 // ネイティブ(Capacitor)連携層。Webブラウザでは全メソッドが安全にno-opになる。
 // プラグイン: LocalNotifications / Preferences / Haptics / KeepAwake（native/package.json）
 
+import { authStorageKey } from "./config.ts";
+
 declare global {
   interface Window { Capacitor?: any }
 }
@@ -40,6 +42,8 @@ export const Native: any = {
         settings: localStorage.getItem("ninjahiit_settings"),
         koban: localStorage.getItem("ninjahiit_koban_ledger"),
         syncCursor: localStorage.getItem("ninjahiit_sync_cursor"),
+        ledgerCursor: localStorage.getItem("ninjahiit_ledger_cursor"),
+        auth: localStorage.getItem(authStorageKey()),   // 匿名アカウントのセッション（消えると別人になってしまう）
         at: Date.now(),
       }) });
     } catch (e) {}
@@ -56,6 +60,8 @@ export const Native: any = {
       if (d.settings) localStorage.setItem("ninjahiit_settings", d.settings);
       if (d.koban) localStorage.setItem("ninjahiit_koban_ledger", d.koban);
       if (d.syncCursor) localStorage.setItem("ninjahiit_sync_cursor", d.syncCursor);
+      if (d.ledgerCursor) localStorage.setItem("ninjahiit_ledger_cursor", d.ledgerCursor);
+      if (d.auth) localStorage.setItem(authStorageKey(), d.auth);
       return !!d.history;
     } catch (e) { return false; }
   },
