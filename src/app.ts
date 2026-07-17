@@ -3,7 +3,7 @@
 import {
   EXERCISES, PRESETS, TRAINERS, VOICE_LINES, voiceLineFirst, voiceLineNext,
   DEFAULT_SETTINGS, estimateKcal, expForResult, rankInfo, WEEKLY_GOAL,
-  MISSION_BONUS_EXP, missionForDate,
+  MISSION_BONUS_EXP, missionForDate, streakBonusExp,
 } from "./data.ts";
 import { Sound, Voice } from "./audio.ts";
 import { WorkoutEngine } from "./timer.ts";
@@ -31,6 +31,7 @@ const state: {
   missingImages: Set<string>;
   detailFrom?: string; currentWorkout?: any; lastMissionCleared?: boolean;
   lastFinishLine?: string | null; lastKobanEarned?: number;
+  lastBonusExp?: number; lastStreakBonus?: number;
 } = {
   // 既存ユーザーの保存値に新しい設定キー（plankSec等）のデフォルトを補う
   settings: { ...DEFAULT_SETTINGS, ...store.get("settings", {}) },
@@ -168,6 +169,149 @@ function stopCatalog() {
   stopThumbVideo();
 }
 
+// ---- マイメニュー（カスタムワークアウト） ----
+// 保存形式は PRESETS と同じ形＋ custom:true。IDは custom_<epoch>
+const CUSTOM_LIMITS = { maxEx: 16, work: [5, 60], rest: [0, 60], rounds: [1, 3] };
+
+function customMenus(): any[] {
+  return store.get("custom_menus", []);
+}
+function saveCustomMenus(list: any[]) {
+  store.set("custom_menus", list);
+}
+// プリセット/カスタム共通のアイコンパス
+const presetIconSrc = (p) => p.custom ? "assets/ui/icons/custom.jpg" : `assets/ui/icons/preset-${p.id}.jpg`;
+
+// ビルダーの編集状態
+const bld: { editingId: string | null; seq: string[]; workSec: number; restSec: number; rounds: number } =
+  { editingId: null, seq: [], workSec: 20, restSec: 10, rounds: 1 };
+
+function renderBuilder() {
+  stopCatalog();
+  renderBuilderList();
+  renderBldGrid();
+  updateBldUI();
+  show("screen-builder");
+}
+
+function renderBuilderList() {
+  const list = customMenus();
+  const wrap = $("#builder-list");
+  if (!list.length) { wrap.innerHTML = ""; return; }
+  const esc = (t) => t.replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+  wrap.innerHTML = list.map((c) =>
+    `<div class="bld-row glass" data-id="${c.id}">` +
+      `<img src="assets/ui/icons/custom.jpg" alt="">` +
+      `<span class="bld-row-info"><b>${esc(c.title)}</b>` +
+        `<small>${c.exercises.length}種目 ・ ワーク${c.workSec}秒／休憩${c.restSec}秒 ・ ${c.rounds}周</small></span>` +
+      `<button class="bld-edit rank-rename-btn" data-id="${c.id}">編集</button>` +
+      `<button class="bld-del rank-rename-btn" data-id="${c.id}">削除</button>` +
+    `</div>`).join("");
+  wrap.querySelectorAll(".bld-edit").forEach((b) => b.onclick = () => editCustom(b.dataset.id));
+  wrap.querySelectorAll(".bld-del").forEach((b) => b.onclick = () => deleteCustom(b.dataset.id));
+}
+
+function renderBldGrid() {
+  const wrap = $("#bld-grid");
+  if (wrap.childElementCount) return; // 一度だけ生成
+  Object.keys(EXERCISES).forEach((key) => {
+    const item = document.createElement("button");
+    item.className = "bld-ex";
+    item.innerHTML =
+      `<img src="${trainer().thumbDir}/${key}.jpg" alt="">` +
+      `<span>${EXERCISES[key].name}</span>`;
+    item.onclick = () => {
+      if (bld.seq.length >= CUSTOM_LIMITS.maxEx) { showToast(`種目は${CUSTOM_LIMITS.maxEx}個までだよ`); return; }
+      bld.seq.push(key);
+      updateBldUI();
+    };
+    wrap.appendChild(item);
+  });
+}
+
+function updateBldUI() {
+  $("#bld-work").textContent = bld.workSec;
+  $("#bld-rest").textContent = bld.restSec;
+  $("#bld-rounds").textContent = bld.rounds;
+  $("#bld-form-title").firstChild.textContent = bld.editingId ? "メニューを編集中" : "新しく作る";
+  $("#btn-bld-cancel").hidden = !bld.editingId;
+  const wrap = $("#bld-seq");
+  if (!bld.seq.length) {
+    wrap.innerHTML = `<p class="rank-note">まだ種目がありません。上のグリッドから選んでね</p>`;
+  } else {
+    wrap.innerHTML = bld.seq.map((key, i) =>
+      `<button class="bld-chip" data-i="${i}">` +
+        `<img src="${trainer().thumbDir}/${key}.jpg" alt=""><span>${i + 1}</span>` +
+      `</button>`).join("");
+    wrap.querySelectorAll(".bld-chip").forEach((b) =>
+      b.onclick = () => { bld.seq.splice(Number(b.dataset.i), 1); updateBldUI(); });
+  }
+  const n = bld.seq.length * bld.rounds;
+  const workTotal = n * bld.workSec;
+  const totalSec = n ? workTotal + (n - 1) * bld.restSec + state.settings.prepareSec : 0;
+  $("#bld-summary").textContent = n
+    ? `${n}本 ・ 約${Math.max(1, Math.ceil(totalSec / 60))}分 ・ 約${estimateKcal(workTotal)}kcal ・ +${expForResult(workTotal)}修行値`
+    : "";
+}
+
+function stepBld(t: string, d: number) {
+  if (t === "work") bld.workSec = Math.min(CUSTOM_LIMITS.work[1], Math.max(CUSTOM_LIMITS.work[0], bld.workSec + d));
+  if (t === "rest") bld.restSec = Math.min(CUSTOM_LIMITS.rest[1], Math.max(CUSTOM_LIMITS.rest[0], bld.restSec + d));
+  if (t === "rounds") bld.rounds = Math.min(CUSTOM_LIMITS.rounds[1], Math.max(CUSTOM_LIMITS.rounds[0], bld.rounds + d));
+  updateBldUI();
+}
+
+function editCustom(id: string) {
+  const c = customMenus().find((m) => m.id === id);
+  if (!c) return;
+  bld.editingId = id;
+  bld.seq = [...c.exercises];
+  bld.workSec = c.workSec; bld.restSec = c.restSec; bld.rounds = c.rounds;
+  $("#bld-name").value = c.title;
+  updateBldUI();
+  $("#bld-name").scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function deleteCustom(id: string) {
+  const c = customMenus().find((m) => m.id === id);
+  if (!c) return;
+  if (!confirm(`「${c.title}」を削除する？（完走の記録は消えません）`)) return;
+  saveCustomMenus(customMenus().filter((m) => m.id !== id));
+  if (bld.editingId === id) resetBld();
+  renderBuilderList();
+  showToast("削除したよ");
+}
+
+function resetBld() {
+  bld.editingId = null;
+  bld.seq = [];
+  bld.workSec = 20; bld.restSec = 10; bld.rounds = 1;
+  $("#bld-name").value = "";
+  updateBldUI();
+}
+
+function saveCustom() {
+  if (!bld.seq.length) { showToast("種目を1つ以上選んでね"); return; }
+  const title = ($("#bld-name").value || "").trim() || "マイメニュー";
+  const list = customMenus();
+  const menu = {
+    id: bld.editingId || `custom_${Date.now()}`,
+    title, short: title,
+    tint: "gold", badge: "マイメニュー", desc: "自分で組んだ修行",
+    icon: "", pict: "",
+    workSec: bld.workSec, restSec: bld.restSec, rounds: bld.rounds, setRestSec: 0,
+    exercises: [...bld.seq],
+    custom: true,
+  };
+  const i = list.findIndex((m) => m.id === menu.id);
+  if (i >= 0) list[i] = menu; else list.push(menu);
+  saveCustomMenus(list);
+  showToast(`「${title}」を保存したよ！`);
+  resetBld();
+  renderBuilderList();
+}
+
 // ---- メニュー詳細（開始前に全体像を見せて確認） ----
 function openDetail(workout, from) {
   stopCatalog();
@@ -182,7 +326,7 @@ function openDetail(workout, from) {
   $("#detail-title").textContent = p.short || p.title;
   $("#detail-hero").className = `detail-hero glass tint-${p.tint}`;
   $("#detail-hero").innerHTML =
-    `<span class="detail-hero-ico"><img src="assets/ui/icons/preset-${p.id}.jpg" alt=""></span>` +
+    `<span class="detail-hero-ico"><img src="${presetIconSrc(p)}" alt=""></span>` +
     `<span class="detail-hero-info">` +
       `<span class="detail-badge">${p.badge}</span>` +
       `<b class="detail-hero-title">${p.title}</b>` +
@@ -260,7 +404,7 @@ function renderCatalog() {
     card.style.animationDelay = `${i * 0.05}s`;
     card.innerHTML =
       `<div class="catalog-card-header">` +
-      `<span class="preset-icon tint-${p.tint}"><img src="assets/ui/icons/preset-${p.id}.jpg" alt=""></span>` +
+      `<span class="preset-icon tint-${p.tint}"><img src="${presetIconSrc(p)}" alt=""></span>` +
       `<div><div class="catalog-title">${p.title}</div>` +
       `<div class="catalog-meta">${seq}本 ・ 約${Math.ceil(totalSec / 60)}分 ・ ` +
       `ワーク${p.workSec}秒／休憩${p.restSec}秒 ・ ${p.exercises.length}種目×${p.rounds}周</div></div>` +
@@ -388,9 +532,12 @@ function saveResult(workout, totalWorkSec) {
     totalWorkSec, completed: true, ts: Date.now(),
   };
   state.history.push(entry);
-  // この完走で「今日の任務」を初めて達成したら、ボーナス修行値をこの記録に付与
+  // ボーナス修行値：今日の任務の初達成＋連続日数ボーナス（2日目+5〜7日目以降+30）
   state.lastMissionCleared = !beforeDone && missionStatus().done;
-  if (state.lastMissionCleared) entry.bonusExp = MISSION_BONUS_EXP;
+  state.lastStreakBonus = streakBonusExp(streakDays());
+  const bonus = (state.lastMissionCleared ? MISSION_BONUS_EXP : 0) + state.lastStreakBonus;
+  if (bonus > 0) entry.bonusExp = bonus;
+  state.lastBonusExp = bonus;
   store.set("history", state.history);
 
   // 小判の付与（append-only台帳）。完走＋任務＋週目標をこの完走が跨いだ分だけ
@@ -499,6 +646,17 @@ function renderStatusCard() {
   if (en) en.innerHTML = `⚡ <b>${wr.count}/${wr.goal}</b>`;
 }
 
+// ホームのサクヤをタップ→セリフが変わる（同じセリフの連続は避ける）
+function nextHomeQuote() {
+  const el = $("#home-quote");
+  let q = quote("home");
+  for (let i = 0; i < 5 && q === el.textContent; i++) q = quote("home");
+  el.textContent = q;
+  el.classList.remove("bubble-pop");
+  void el.offsetWidth; // アニメーション再発火
+  el.classList.add("bubble-pop");
+}
+
 // ---- ホーム画面 ----
 function renderHome() {
   stopCatalog();
@@ -508,7 +666,7 @@ function renderHome() {
   renderStatusCard();
   const list = $("#preset-list");
   list.innerHTML = "";
-  PRESETS.forEach((p, i) => {
+  [...PRESETS, ...customMenus()].forEach((p, i) => {
     const seq = p.exercises.length * p.rounds;
     const totalSec = seq * p.workSec + (seq - 1) * p.restSec + state.settings.prepareSec;
     const kcal = estimateKcal(seq * p.workSec);
@@ -519,7 +677,7 @@ function renderHome() {
     li.className = `hud-card tint-${p.tint}`;
     li.style.animationDelay = `${i * 0.05}s`;
     li.innerHTML =
-      `<span class="hud-card-icon"><img class="hud-card-icon-rich" src="assets/ui/icons/preset-${p.id}.jpg" alt=""></span>` +
+      `<span class="hud-card-icon"><img class="hud-card-icon-rich" src="${presetIconSrc(p)}" alt=""></span>` +
       `<span class="hud-card-body">` +
         `<b class="hud-card-title">${p.short || p.title}</b>` +
         `<span class="hud-card-prog"><span class="hud-prog-bar"><i style="width:${pct}%"></i></span>` +
@@ -712,7 +870,7 @@ function renderDone(workout, totalWorkSec) {
 
   // 修行値と昇格判定（saveResultで履歴に追加済みなので、今回分を引いて前後比較）
   const missionCleared = !!state.lastMissionCleared;
-  const gained = expForResult(totalWorkSec) + (missionCleared ? MISSION_BONUS_EXP : 0);
+  const gained = expForResult(totalWorkSec) + (state.lastBonusExp || 0);
   const expAfter = totalExp();
   const rankBefore = rankInfo(expAfter - gained);
   const rankAfter = rankInfo(expAfter);
@@ -728,6 +886,7 @@ function renderDone(workout, totalWorkSec) {
     `<li>🥷 ${rankAfter.name} ・ +${gained} 修行値</li>` +
     `<li><img class="koban-ico" src="assets/ui/icons/koban.jpg" alt="">+${state.lastKobanEarned || 0} 小判（計 ${kobanBalance()}）</li>` +
     (missionCleared ? `<li>🚩 今日の任務クリア！（＋${MISSION_BONUS_EXP}修行値込み）</li>` : "") +
+    (state.lastStreakBonus ? `<li>🔥 連続${streakDays()}日ボーナス ＋${state.lastStreakBonus}修行値込み</li>` : "") +
     `<li>${s > 0 ? `🔥 ${s}日連続` : "また明日も待ってるよ"}</li>`;
   const text = encodeURIComponent(
     `${trainer().name}と一緒に「${workout.title}」完走した！🥷 #サクヤ4分HIIT #CryptoNinja`);
@@ -796,6 +955,13 @@ document.addEventListener("DOMContentLoaded", () => {
     b.onclick = () => showToast(`${b.dataset.soon} はただいま準備中だよ 🥷`);
   });
   $("#hud-ranking").onclick = renderRanking;
+  $("#btn-builder").onclick = renderBuilder;
+  $("#btn-builder-back").onclick = renderHome;
+  $("#btn-bld-save").onclick = saveCustom;
+  $("#btn-bld-cancel").onclick = resetBld;
+  document.querySelectorAll<any>(".stepper button").forEach((b) =>
+    b.onclick = () => stepBld(b.dataset.t, Number(b.dataset.d)));
+  $("#home-chara").onclick = nextHomeQuote;
   $("#btn-ranking-back").onclick = renderHome;
   $("#btn-rank-join").onclick = () => joinRanking($("#rank-name-input").value);
   $("#rank-name-input").onkeydown = (e) => { if (e.key === "Enter") joinRanking($("#rank-name-input").value); };

@@ -649,3 +649,49 @@ button, .btn-primary, .btn-ghost, .catalog-link { font-family: inherit; }
 .rank-exp { flex: none; font-weight: 800; color: #4a5578; font-size: 0.9rem; font-family: "Baloo 2", inherit; }
 .rank-exp small { font-size: 0.62rem; color: #8492b5; font-weight: 800; margin-left: 2px; }
 .rank-note { text-align: center; color: #6b779a; font-size: 0.82rem; font-weight: 700; padding: 18px 8px; line-height: 1.7; }
+
+/* ---- マイメニュー（ビルダー） ---- */
+.hud-cat-ico { width: 22px; height: 22px; border-radius: 7px; object-fit: cover; vertical-align: -5px;
+  box-shadow: 0 2px 6px rgba(50,74,120,0.25); }
+.bld-list { display: flex; flex-direction: column; gap: 8px; }
+.bld-row { display: flex; align-items: center; gap: 10px; border-radius: 14px; padding: 9px 12px; }
+.bld-row img { flex: none; width: 38px; height: 38px; border-radius: 11px; object-fit: cover;
+  box-shadow: 0 3px 8px rgba(50,74,120,0.25); }
+.bld-row-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.bld-row-info b { font-size: 0.95rem; font-weight: 900; color: #1f2a44; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bld-row-info small { font-size: 0.65rem; color: #6b779a; font-weight: 700; }
+.bld-num-row { display: flex; justify-content: space-between; gap: 6px; }
+.bld-num { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.bld-num > small { font-size: 0.66rem; font-weight: 800; color: #6b779a; }
+.stepper { display: flex; align-items: center; gap: 8px; }
+.stepper b { min-width: 2ch; text-align: center; font-size: 1.3rem; font-weight: 800; color: #1f2a44;
+  font-family: "Baloo 2", inherit; }
+.stepper button { width: 34px; height: 34px; border-radius: 50%; border: none; cursor: pointer;
+  background: rgba(255,255,255,0.75); color: #1f2a44; font-size: 1.15rem; font-weight: 900;
+  box-shadow: inset 0 0 0 1px rgba(120,150,190,0.35), 0 3px 8px rgba(50,74,120,0.15); }
+.stepper button:active { transform: scale(0.92); }
+.bld-hint { margin-left: auto; font-size: 0.6rem; color: #8492b5; font-weight: 700; }
+.bld-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.bld-ex { border: none; background: rgba(255,255,255,0.5); border-radius: 12px; padding: 6px 4px 5px;
+  display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer;
+  box-shadow: 0 4px 12px rgba(50,74,120,0.12), inset 0 0 0 1px rgba(255,255,255,0.7); }
+.bld-ex:active { transform: scale(0.94); }
+.bld-ex img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 9px; }
+.bld-ex span { font-size: 0.56rem; font-weight: 700; color: #4a5578; line-height: 1.25; text-align: center;
+  word-break: keep-all; overflow-wrap: break-word; }
+.bld-seq { display: flex; flex-wrap: wrap; gap: 7px; min-height: 44px; }
+.bld-chip { position: relative; border: none; padding: 0; width: 44px; height: 44px; border-radius: 11px;
+  overflow: hidden; cursor: pointer; box-shadow: 0 3px 9px rgba(50,74,120,0.2); }
+.bld-chip img { width: 100%; height: 100%; object-fit: cover; }
+.bld-chip span { position: absolute; left: 2px; top: 2px; min-width: 15px; height: 15px; border-radius: 8px;
+  background: var(--grad-cta); color: #fff; font-size: 0.6rem; font-weight: 900; line-height: 15px; }
+.bld-summary { text-align: center; font-size: 0.8rem; font-weight: 800; color: #4a5578; min-height: 1.3em; }
+.bld-actions { display: flex; gap: 10px; justify-content: center; align-items: center; }
+.bld-actions .rank-join-btn { padding: 12px 34px; font-size: 0.95rem; }
+
+/* ホームのサクヤ吹き出し: セリフ切り替え時のポップ */
+.bubble-pop { animation: bubble-pop 0.3s cubic-bezier(.22,1.4,.36,1); }
+@keyframes bubble-pop {
+  0% { transform: scale(0.85); opacity: 0.4; }
+  100% { transform: scale(1); opacity: 1; }
+}

@@ -13,8 +13,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800;900&family=Baloo+2:wght@700;800&display=swap" rel="stylesheet">
-  <script type="module" crossorigin src="./bundle/index-BSn_kI_l.js"></script>
-  <link rel="stylesheet" crossorigin href="./bundle/index-DD-izSLv.css">
+  <script type="module" crossorigin src="./bundle/index-BRSUP1rv.js"></script>
+  <link rel="stylesheet" crossorigin href="./bundle/index-CwmiptoX.css">
 </head>
 <body>
 
@@ -33,6 +33,7 @@
           <div class="hud-sec">ワークアウトメニュー<i class="hud-slash"></i></div>
           <div id="preset-list"></div>
           <button id="btn-catalog" class="hud-catalog glass"><span>📜</span> 種目のうごきを見る</button>
+          <button id="btn-builder" class="hud-catalog glass"><img class="hud-cat-ico" src="assets/ui/icons/custom.jpg" alt=""> マイメニューを作る</button>
         </div>
       </div>
 
@@ -178,7 +179,7 @@
           </div>
         </div>
         <div class="rank-join-row">
-          <input id="rank-name-input" class="rank-name-input" type="text" maxlength="12" placeholder="例: 疾風のルク">
+          <input id="rank-name-input" class="rank-name-input" type="text" maxlength="12" placeholder="例: 疾風のハヤテ">
           <button id="btn-rank-join" class="rank-join-btn">参加する</button>
         </div>
       </div>
@@ -194,6 +195,62 @@
 
       <div class="hud-sec">今週の番付<i class="hud-slash"></i></div>
       <div id="rank-list" class="rank-list"><p class="rank-note">読み込み中…</p></div>
+
+      <p class="fan-note">本アプリはCryptoNinjaのファンメイド（二次創作）アプリです。</p>
+    </div>
+  </section>
+
+  <!-- マイメニュー（カスタムワークアウト作成） -->
+  <section id="screen-builder" class="screen hud">
+    <div class="hud-env"></div>
+    <div class="hud-scroll detail-scroll">
+      <header class="detail-top">
+        <button id="btn-builder-back" class="hbtn-dark" aria-label="戻る">←</button>
+        <h2>マイメニュー</h2>
+      </header>
+
+      <div id="builder-list" class="bld-list"></div>
+
+      <div class="hud-sec" id="bld-form-title">新しく作る<i class="hud-slash"></i></div>
+      <div class="set-card glass">
+        <div class="set-row">
+          <div class="set-info"><b>メニュー名</b></div>
+        </div>
+        <input id="bld-name" class="rank-name-input" type="text" maxlength="15" placeholder="例: 朝の目覚まし忍法">
+      </div>
+
+      <div class="set-card glass">
+        <div class="bld-num-row">
+          <div class="bld-num">
+            <small>ワーク</small>
+            <div class="stepper"><button data-t="work" data-d="-5">−</button><b id="bld-work">20</b><button data-t="work" data-d="5">＋</button></div>
+            <small>秒</small>
+          </div>
+          <div class="bld-num">
+            <small>休憩</small>
+            <div class="stepper"><button data-t="rest" data-d="-5">−</button><b id="bld-rest">10</b><button data-t="rest" data-d="5">＋</button></div>
+            <small>秒</small>
+          </div>
+          <div class="bld-num">
+            <small>周回</small>
+            <div class="stepper"><button data-t="rounds" data-d="-1">−</button><b id="bld-rounds">1</b><button data-t="rounds" data-d="1">＋</button></div>
+            <small>周</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="hud-sec">種目を選ぶ<small class="bld-hint">タップで追加（同じ種目を何度でも・16個まで）</small></div>
+      <div id="bld-grid" class="bld-grid"></div>
+
+      <div class="hud-sec">ならび順<small class="bld-hint">タップで外す</small></div>
+      <div id="bld-seq" class="bld-seq"><p class="rank-note">まだ種目がありません</p></div>
+
+      <p id="bld-summary" class="bld-summary"></p>
+
+      <div class="bld-actions">
+        <button id="btn-bld-save" class="rank-join-btn">保存する</button>
+        <button id="btn-bld-cancel" class="rank-rename-btn" hidden>編集をやめる</button>
+      </div>
 
       <p class="fan-note">本アプリはCryptoNinjaのファンメイド（二次創作）アプリです。</p>
     </div>
