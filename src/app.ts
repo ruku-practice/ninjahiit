@@ -650,6 +650,34 @@ function renderStatusCard() {
 // 初回タップは表示中のあいさつをそのまま喋る（iOSは初タップでAudioContextが解錠される）
 let homeLineKey = "greet_first";   // いま表示中のセリフのボイスキー
 let homeGreetingSpoken = false;    // このホーム表示であいさつを喋ったか
+let greetingAutoSpoken = false;    // セッション中に自動あいさつを済ませたか（連発防止）
+let homeJoyPose = 2;               // いま表示中のjoyポーズ番号(1〜4)
+
+// 音声が解錠済み（＝一度でも操作済み or ネイティブ）なら、ホーム到着時にあいさつを自動発声
+function maybeSpeakGreeting() {
+  if (greetingAutoSpoken) return;
+  try {
+    Sound.init(); // 未解錠ならsuspendedのままになるだけで害はない
+    if (Sound.ctx && Sound.ctx.state === "running") {
+      greetingAutoSpoken = true;
+      homeGreetingSpoken = true;
+      speakHomeLine(homeLineKey);
+    }
+  } catch { /* 音が出せない環境ではテキストのみ */ }
+}
+
+// タップ演出：くるっと回転しながら別のjoyポーズへ切り替え
+function spinHomeChara() {
+  const box = $("#home-chara");
+  let n = homeJoyPose;
+  while (n === homeJoyPose) n = 1 + Math.floor(Math.random() * 4);
+  homeJoyPose = n;
+  box.classList.remove("chara-spin");
+  void box.offsetWidth; // アニメーション再発火
+  box.classList.add("chara-spin");
+  // 半回転して背中を向いた瞬間（約50%地点）にポーズを差し替えると「回ったら変わってた」に見える
+  setTimeout(() => showPose(box, `joy_${homeJoyPose}`, trainer().name), 260);
+}
 
 function speakHomeLine(key: string) {
   Sound.init();
@@ -661,6 +689,7 @@ function speakHomeLine(key: string) {
 }
 
 function nextHomeQuote() {
+  spinHomeChara();
   const el = $("#home-quote");
   if (!homeGreetingSpoken) {
     homeGreetingSpoken = true;      // まずは表示中のあいさつを声で
@@ -684,6 +713,8 @@ function renderHome() {
   homeLineKey = homeGreetingKey();
   homeGreetingSpoken = false;
   $("#home-quote").textContent = VOICE_LINES[homeLineKey];
+  maybeSpeakGreeting();
+  for (let i = 1; i <= 4; i++) new Image().src = `${trainer().dir}/joy_${i}.png`;
   renderStatusCard();
   const list = $("#preset-list");
   list.innerHTML = "";
@@ -1013,7 +1044,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 開発時のみ：コンソールからの動作確認用フック（本番ビルドでは消える）
   if (import.meta.env.DEV) {
-    (window as any).__dbg = { state, startWorkout, renderCatalog, renderHome, renderDone, saveResult, Voice, nextHomeQuote };
+    (window as any).__dbg = { state, startWorkout, renderCatalog, renderHome, renderDone, saveResult, Voice, nextHomeQuote, Sound, flags: () => ({ homeGreetingSpoken, greetingAutoSpoken, homeLineKey }) };
   }
 
   document.addEventListener("visibilitychange", () => {
