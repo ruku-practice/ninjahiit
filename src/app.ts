@@ -3,7 +3,7 @@
 import {
   EXERCISES, PRESETS, TRAINERS, VOICE_LINES, voiceLineFirst, voiceLineNext,
   DEFAULT_SETTINGS, estimateKcal, expForResult, rankInfo, WEEKLY_GOAL,
-  MISSION_BONUS_EXP, missionForDate, streakBonusExp,
+  MISSION_BONUS_EXP, missionForDate, streakBonusExp, HOME_TAP_KEYS,
 } from "./data.ts";
 import { Sound, Voice } from "./audio.ts";
 import { WorkoutEngine } from "./timer.ts";
@@ -599,19 +599,19 @@ function weekRecord() {
 }
 
 // ホームの一言：初回・久しぶり（責めない）・連続・時間帯で出し分け
-function homeGreeting() {
+// 戻り値はボイスキー（VOICE_LINESに表示文言、assets/audio/<trainer>/に音声がある）
+function homeGreetingKey(): string {
   const completed = state.history.filter(h => h.completed);
-  if (completed.length === 0) return "はじめまして。今日から一緒に、4分だけ。";
+  if (completed.length === 0) return "greet_first";
   const last = completed[completed.length - 1];
   const daysSince = Math.round(
     (new Date(todayStr() + "T00:00:00").getTime() - new Date(last.date + "T00:00:00").getTime()) / 86400000);
-  if (daysSince >= 3) return `${daysSince}日ぶりだね。おかえり、また一緒にやろう。`;
-  const s = streakDays();
-  if (s >= 2) return `${s}日連続、その調子だよ！`;
+  if (daysSince >= 3) return "greet_comeback";
+  if (streakDays() >= 2) return "greet_streak";
   const hour = new Date().getHours();
-  if (hour < 10) return "おはよう。朝の4分、いってみる？";
-  if (hour >= 20) return "今日もお疲れさま。寝る前に少しだけ動く？";
-  return quote("home");
+  if (hour < 10) return "greet_morning";
+  if (hour >= 20) return "greet_night";
+  return "greet_noon";
 }
 
 function presetCompletions(id) {
@@ -646,12 +646,31 @@ function renderStatusCard() {
   if (en) en.innerHTML = `⚡ <b>${wr.count}/${wr.goal}</b>`;
 }
 
-// ホームのサクヤをタップ→セリフが変わる（同じセリフの連続は避ける）
+// ホームのサクヤをタップ→声つきでセリフが変わる。
+// 初回タップは表示中のあいさつをそのまま喋る（iOSは初タップでAudioContextが解錠される）
+let homeLineKey = "greet_first";   // いま表示中のセリフのボイスキー
+let homeGreetingSpoken = false;    // このホーム表示であいさつを喋ったか
+
+function speakHomeLine(key: string) {
+  Sound.init();
+  Voice.useCtx(Sound.ctx);
+  Voice.setBase(trainer().voiceDir);
+  Voice.enabled = state.settings.sound;
+  Voice.preload(HOME_TAP_KEYS);
+  Voice.play(key);
+}
+
 function nextHomeQuote() {
   const el = $("#home-quote");
-  let q = quote("home");
-  for (let i = 0; i < 5 && q === el.textContent; i++) q = quote("home");
-  el.textContent = q;
+  if (!homeGreetingSpoken) {
+    homeGreetingSpoken = true;      // まずは表示中のあいさつを声で
+  } else {
+    let key = pick(HOME_TAP_KEYS);
+    for (let i = 0; i < 5 && key === homeLineKey; i++) key = pick(HOME_TAP_KEYS);
+    homeLineKey = key;
+    el.textContent = VOICE_LINES[key];
+  }
+  speakHomeLine(homeLineKey);
   el.classList.remove("bubble-pop");
   void el.offsetWidth; // アニメーション再発火
   el.classList.add("bubble-pop");
@@ -662,7 +681,9 @@ function renderHome() {
   stopCatalog();
   // ヒーローカードでは「迎えてくれる」joyポーズ（いいね）を表示
   showPose($("#home-chara"), "joy_2", trainer().name);
-  $("#home-quote").textContent = homeGreeting();
+  homeLineKey = homeGreetingKey();
+  homeGreetingSpoken = false;
+  $("#home-quote").textContent = VOICE_LINES[homeLineKey];
   renderStatusCard();
   const list = $("#preset-list");
   list.innerHTML = "";
@@ -992,7 +1013,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 開発時のみ：コンソールからの動作確認用フック（本番ビルドでは消える）
   if (import.meta.env.DEV) {
-    (window as any).__dbg = { state, startWorkout, renderCatalog, renderHome, renderDone, saveResult };
+    (window as any).__dbg = { state, startWorkout, renderCatalog, renderHome, renderDone, saveResult, Voice, nextHomeQuote };
   }
 
   document.addEventListener("visibilitychange", () => {
