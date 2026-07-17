@@ -1,14 +1,11 @@
-# バックアップ・退避原本（公開不要、合計約12MB）
-assets/old/
-**/_originals/
-# 素材元データ（webp/大きいpngのソース。アプリ実行には不要）
-assets/characters/sakuya/*.webp
-assets/characters/sakuya/スマホアイコン.png
-# OS
+node_modules/
 .DS_Store
 **/.DS_Store
-# UI素材の原本（アプリ実行には不要・重い）
-assets/fitness_ui_assets/
-assets/fitness_ui_assets.zip
-assets/backgroud.png
-assets/名称未設定フォルダ/
+# 素材原本（assets_src/ 内の重いソース類は下記のみ除外）
+assets_src/old/
+**/_originals/
+assets_src/characters/sakuya/*.webp
+assets_src/fitness_ui_assets/
+assets_src/fitness_ui_assets.zip
+assets_src/backgroud.png
+assets_src/名称未設定フォルダ/
