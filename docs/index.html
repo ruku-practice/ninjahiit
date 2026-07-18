@@ -13,8 +13,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800;900&family=Baloo+2:wght@700;800&display=swap" rel="stylesheet">
-  <script type="module" crossorigin src="./bundle/index-bTywYioY.js"></script>
-  <link rel="stylesheet" crossorigin href="./bundle/index-CsfTbz3Q.css">
+  <script type="module" crossorigin src="./bundle/index-DvzHP3vs.js"></script>
+  <link rel="stylesheet" crossorigin href="./bundle/index-Ub7X48_R.css">
 </head>
 <body>
 
@@ -110,6 +110,15 @@
       <div class="set-card glass">
         <div class="set-row">
           <div class="set-info">
+            <b>お守り <span id="shield-count"></span></b>
+            <small>連続記録が1日空いても、お守りが自動で守ってくれます（2個まで）</small>
+          </div>
+          <button id="btn-buy-shield" class="rank-join-btn shield-buy"></button>
+        </div>
+      </div>
+      <div class="set-card glass">
+        <div class="set-row">
+          <div class="set-info">
             <b>毎日のリマインダー</b>
             <small id="reminder-note">サクヤが毎日この時間に誘ってくれます（完走した日はお休み）</small>
           </div>
@@ -195,6 +204,30 @@
 
       <div class="hud-sec">今週の番付<i class="hud-slash"></i></div>
       <div id="rank-list" class="rank-list"><p class="rank-note">読み込み中…</p></div>
+
+      <div class="hud-sec">なかま<i class="hud-slash"></i></div>
+      <div class="set-card glass">
+        <div class="set-row">
+          <div class="set-info">
+            <b>じぶんの忍びコード: <span id="my-friend-code">……</span></b>
+            <small>コードを交換して追加すると、お互いになかまになります</small>
+          </div>
+          <button id="btn-copy-code" class="rank-rename-btn">コピー</button>
+        </div>
+        <div class="rank-join-row">
+          <input id="friend-code-input" class="rank-name-input" type="text" maxlength="6"
+                 autocapitalize="characters" autocomplete="off" placeholder="なかまのコード">
+          <button id="btn-add-friend" class="rank-join-btn">追加</button>
+        </div>
+      </div>
+      <div id="friend-list" class="rank-list"></div>
+
+      <!-- 手裏剣メッセージ選択（Duolingo式: 用意された応援文から選ぶだけ） -->
+      <div id="poke-menu" class="poke-menu glass" hidden>
+        <b>どの手裏剣を投げる？</b>
+        <div id="poke-menu-btns"></div>
+        <button id="poke-menu-cancel" class="rank-rename-btn">やめる</button>
+      </div>
 
       <p class="fan-note">本アプリはCryptoNinjaのファンメイド（二次創作）アプリです。</p>
     </div>

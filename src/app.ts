@@ -8,10 +8,13 @@ import {
 import { Sound, Voice } from "./audio.ts";
 import { WorkoutEngine } from "./timer.ts";
 import { Native } from "./native.ts";
-import { KOBAN_RATES, addKoban, kobanBalance } from "./points.ts";
+import { KOBAN_RATES, SHIELD_MAX, addKoban, kobanBalance } from "./points.ts";
 import { maybeShowInterstitial, recordFirstLaunch } from "./ads.ts";
 import { syncNow } from "./sync.ts";
 import { fetchWeeklyRanking, getNinjaName, setNinjaName, validateNinjaName } from "./ranking.ts";
+import {
+  POKE_MESSAGES, addFriendByCode, fetchUnseenPokes, friendsBoard, markPokesSeen, myFriendCode, sendPoke,
+} from "./friends.ts";
 
 
 const store = {
@@ -376,6 +379,10 @@ function detailBack() {
 
 // ---- マイページ（設定） ----
 function renderMypage() {
+  const inv = shieldInv();
+  $("#shield-count").textContent = `×${inv.count}`;
+  $("#btn-buy-shield").textContent = inv.count >= SHIELD_MAX ? "所持上限" : `${KOBAN_RATES.shieldCost}小判で購入`;
+  $("#btn-buy-shield").disabled = inv.count >= SHIELD_MAX;
   const ps = state.settings.plankSec || 0;
   document.querySelectorAll<any>("#seg-plank button").forEach((b) =>
     b.classList.toggle("on", Number(b.dataset.v) === ps));
@@ -446,7 +453,8 @@ async function renderRanking() {
     return;
   }
 
-  // 忍び名と番付を並行取得
+  // 忍び名・番付・なかまを並行取得
+  loadFriendsSection();
   const [name, rows] = await Promise.all([getNinjaName(), fetchWeeklyRanking()]);
   if (!$("#screen-ranking").classList.contains("active")) return; // 読み込み中に画面を離れた
   myNinjaName = name;
@@ -499,18 +507,151 @@ async function joinRanking(name) {
   renderRanking();
 }
 
+// ---- なかま（友達）＆手裏剣 ----
+let pokeTargetId: string | null = null;
+
+async function loadFriendsSection() {
+  $("#friend-list").innerHTML = `<p class="rank-note">なかまを読み込み中…</p>`;
+  const [code, board] = await Promise.all([myFriendCode(), friendsBoard()]);
+  if (!$("#screen-ranking").classList.contains("active")) return;
+  $("#my-friend-code").textContent = code || "取得できず";
+  renderFriendRows(board);
+}
+
+function renderFriendRows(board) {
+  const esc = (t) => t.replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+  if (board === null) {
+    $("#friend-list").innerHTML = `<p class="rank-note">なかま情報を取得できませんでした</p>`;
+    return;
+  }
+  if (!board.length) {
+    $("#friend-list").innerHTML =
+      `<p class="rank-note">まだなかまがいません。<br>忍びコードを交換して、一緒に忍ぼう！</p>`;
+    return;
+  }
+  $("#friend-list").innerHTML = board.map((f) =>
+    `<div class="friend-row">` +
+      `<span class="friend-name">${esc(f.ninja_name)}</span>` +
+      (f.done_today ? `<span class="friend-done">今日 完了！</span>` : "") +
+      `<span class="friend-exp">${f.weekly_exp}<small>今週</small></span>` +
+      `<button class="poke-btn" data-id="${f.friend_id}">手裏剣を投げる</button>` +
+    `</div>`).join("");
+  $("#friend-list").querySelectorAll(".poke-btn").forEach((b) => {
+    b.onclick = () => openPokeMenu(b.dataset.id);
+  });
+}
+
+function openPokeMenu(friendId: string) {
+  pokeTargetId = friendId;
+  const wrap = $("#poke-menu-btns");
+  wrap.innerHTML = "";
+  POKE_MESSAGES.forEach((msg, i) => {
+    const b = document.createElement("button");
+    b.textContent = `「${msg}」`;
+    b.onclick = () => throwPoke(i);
+    wrap.appendChild(b);
+  });
+  $("#poke-menu").hidden = false;
+}
+
+async function throwPoke(msgIdx: number) {
+  const target = pokeTargetId;
+  $("#poke-menu").hidden = true;
+  if (!target) return;
+  showToast("手裏剣を投げています…");
+  const r = await sendPoke(target, msgIdx);
+  if (r === "ok") showToast("手裏剣を投げた！相手が次にアプリを開いた時に届くよ 🥷");
+  else if (r === "already_today") showToast("その相手には今日はもう投げたよ。また明日！");
+  else showToast("投げられなかった…電波を確認してもう一度");
+}
+
+// ウィジェットへ現在の状態を届ける（起動時・完走時）
+function pushWidgetState() {
+  Native.updateWidget({
+    streak: streakDays(),
+    doneToday: todayStats().count > 0,
+    mission: missionStatus().mission.label,
+    koban: kobanBalance(),
+    date: todayStr(),
+  });
+}
+
+// 未読の手裏剣が届いていたら、サクヤが知らせる（起動時に呼ぶ）
+async function checkPokes() {
+  const pokes = await fetchUnseenPokes();
+  if (!pokes.length) return;
+  const first = pokes[0];
+  const msg = POKE_MESSAGES[first.msg_idx] || POKE_MESSAGES[0];
+  const extra = pokes.length > 1 ? `（ほか${pokes.length - 1}件）` : "";
+  showToast(`🥷 ${first.from_name}から手裏剣：「${msg}」${extra}`, 5000);
+  try {
+    Sound.init();
+    if (Sound.ctx && Sound.ctx.state === "running" && state.settings.sound) {
+      Voice.useCtx(Sound.ctx);
+      Voice.setBase(trainer().voiceDir);
+      Voice.enabled = true;
+      Voice.play("poke_received");
+    }
+  } catch { /* 音が出せなければ表示のみ */ }
+  markPokesSeen(pokes.map((p) => p.poke_id));
+}
+
 // ---- 記録・ストリーク ----
 function todayStr(d = new Date()) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+// お守りの持ち物: count=未使用数 / covered=お守りが守った日付（streak計算に算入）
+function shieldInv(): { count: number; covered: string[] } {
+  return store.get("shields", { count: 0, covered: [] });
+}
+
 function streakDays() {
   const days = new Set(state.history.filter(h => h.completed).map(h => h.date));
+  shieldInv().covered.forEach((d) => days.add(d)); // お守りが守った日も連続に数える
   let streak = 0;
   const d = new Date();
   if (!days.has(todayStr(d))) d.setDate(d.getDate() - 1); // 今日未実施なら昨日起点
   while (days.has(todayStr(d))) { streak++; d.setDate(d.getDate() - 1); }
   return streak;
+}
+
+// 起動時: 連続記録に穴が開いていて、お守りで埋められるなら自動で守る
+// （Duolingoのストリークフリーズ相当。途切れ不安を減らすと長期継続がむしろ上がる）
+function repairStreakWithShields(): number {
+  const inv = shieldInv();
+  if (!inv.count) return 0;
+  const done = new Set(state.history.filter(h => h.completed).map(h => h.date));
+  inv.covered.forEach((d) => done.add(d));
+  if (!done.size) return 0;
+  const d = new Date();
+  d.setDate(d.getDate() - 1); // 今日はまだこれからやれるので、昨日から遡る
+  const gap: string[] = [];
+  for (let i = 0; i < 30 && !done.has(todayStr(d)); i++) {
+    gap.push(todayStr(d));
+    d.setDate(d.getDate() - 1);
+    if (gap.length > inv.count) return 0; // お守りが足りない穴は守れない（消費もしない）
+  }
+  if (!gap.length || !done.has(todayStr(d))) return 0; // 穴なし or 守る対象の連続がない
+  inv.count -= gap.length;
+  inv.covered.push(...gap);
+  store.set("shields", inv);
+  return gap.length;
+}
+
+function buyShield() {
+  const inv = shieldInv();
+  if (inv.count >= SHIELD_MAX) { showToast(`お守りは${SHIELD_MAX}個まで持てるよ`); return; }
+  if (kobanBalance() < KOBAN_RATES.shieldCost) {
+    showToast(`小判が足りないよ（お守りは${KOBAN_RATES.shieldCost}小判）`); return;
+  }
+  addKoban(-KOBAN_RATES.shieldCost, "unlock", "shield");
+  inv.count += 1;
+  store.set("shields", inv);
+  syncNow(state.history);
+  renderMypage();
+  showToast("お守りを手に入れた！連続記録が1日空いても守ってくれるよ");
 }
 
 // ---- 今日の任務 ----
@@ -546,10 +687,14 @@ function saveResult(workout, totalWorkSec) {
   if (weekBefore < WEEKLY_GOAL && weekRecord().count >= WEEKLY_GOAL) {
     earned += addKoban(KOBAN_RATES.weekGoal, "week_goal", String(entry.ts)).delta;
   }
+  if (weekBefore < 7 && weekRecord().count >= 7) {  // パーフェクト週（7日全部）
+    earned += addKoban(KOBAN_RATES.perfectWeek, "week_goal", `perfect_${entry.date}`).delta;
+  }
   state.lastKobanEarned = earned;
 
   Native.backup();                                              // ネイティブ: 記録をPreferencesへ複製
-  Native.syncReminder(state.settings.reminderTime, true);       // 完走した日の通知はスキップ→明日に予約し直し
+  pushWidgetState();
+  Native.syncReminder(state.settings.reminderTime, true, streakDays()); // 完走した日の通知はスキップ→明日に予約し直し
   syncNow(state.history);                                       // クラウド同期（未サインイン・オフラインなら静かにスキップ）
 }
 
@@ -948,13 +1093,13 @@ function renderDone(workout, totalWorkSec) {
 
 // ---- トースト（準備中の案内など） ----
 let toastTimer = null;
-function showToast(msg) {
+function showToast(msg, ms = 2200) {
   const t = $("#toast");
   if (!t) return;
   t.textContent = msg;
   t.classList.add("show");
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove("show"), 2200);
+  toastTimer = setTimeout(() => t.classList.remove("show"), ms);
 }
 
 // ---- 初期化 ----
@@ -995,10 +1140,11 @@ document.addEventListener("DOMContentLoaded", () => {
     store.set("settings", state.settings);
     renderMypage();
   };
+  $("#btn-buy-shield").onclick = buyShield;
   $("#set-reminder").onchange = async (e) => {
     state.settings.reminderTime = e.target.value || "";
     store.set("settings", state.settings);
-    const r = await Native.syncReminder(state.settings.reminderTime, todayStats().count > 0);
+    const r = await Native.syncReminder(state.settings.reminderTime, todayStats().count > 0, streakDays());
     if (r === "denied") showToast("通知が許可されていません。端末の設定から許可してね");
     else if (state.settings.reminderTime) showToast(`毎日 ${state.settings.reminderTime} にサクヤが誘いに来るよ 🔔`);
     else showToast("リマインダーをオフにしたよ");
@@ -1017,6 +1163,25 @@ document.addEventListener("DOMContentLoaded", () => {
   $("#btn-ranking-back").onclick = renderHome;
   $("#btn-rank-join").onclick = () => joinRanking($("#rank-name-input").value);
   $("#rank-name-input").onkeydown = (e) => { if (e.key === "Enter") joinRanking($("#rank-name-input").value); };
+  $("#btn-copy-code").onclick = async () => {
+    const code = $("#my-friend-code").textContent;
+    try { await navigator.clipboard.writeText(code); showToast(`コード「${code}」をコピーしたよ`); }
+    catch { showToast(`コードは「${code}」だよ（手動でメモしてね）`, 3500); }
+  };
+  $("#btn-add-friend").onclick = async () => {
+    const code = ($("#friend-code-input").value || "").trim();
+    if (code.length < 6) { showToast("6文字のコードを入れてね"); return; }
+    showToast("さがしています…");
+    const r = await addFriendByCode(code);
+    if (r.ok) {
+      $("#friend-code-input").value = "";
+      showToast(`「${r.name}」となかまになったよ！🥷`);
+      loadFriendsSection();
+    } else {
+      showToast("そのコードの忍びが見つからないよ");
+    }
+  };
+  $("#poke-menu-cancel").onclick = () => { $("#poke-menu").hidden = true; };
   $("#btn-rank-rename").onclick = () => {
     const name = prompt("新しい忍び名（12文字まで）", myNinjaName);
     if (name !== null) joinRanking(name);
@@ -1061,10 +1226,11 @@ document.addEventListener("DOMContentLoaded", () => {
   if (Native.isNative) {
     Native.restoreIfEmpty().then((restored) => {
       if (restored) { location.reload(); return; }
-      Native.syncReminder(state.settings.reminderTime, todayStats().count > 0);
+      Native.syncReminder(state.settings.reminderTime, todayStats().count > 0, streakDays());
     });
   }
 
-  // 起動直後のもたつきを避けて、少し後にクラウド同期（前回未送信分の回収）
-  setTimeout(() => syncNow(state.history), 3000);
+  // 起動直後のもたつきを避けて、少し後にクラウド同期（前回未送信分の回収）→手裏剣チェック
+  pushWidgetState();
+  setTimeout(() => { syncNow(state.history); checkPokes(); }, 3000);
 });

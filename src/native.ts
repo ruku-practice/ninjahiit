@@ -66,6 +66,14 @@ export const Native: any = {
     } catch (e) { return false; }
   },
 
+  // ---- ホーム画面ウィジェット連携（iOSのみ。WidgetBridgeカスタムプラグイン） ----
+  // streak等をApp Group経由でウィジェットに渡し、タイムラインを更新させる
+  async updateWidget(info: { streak: number; doneToday: boolean; mission: string; koban: number; date: string }) {
+    const w = this.plugin("WidgetBridge");
+    if (!w) return;
+    try { await w.saveState(info); } catch (e) {}
+  },
+
   // ---- リマインダー通知（罰しない設計：完走した日はその日の通知を出さない） ----
   // 毎回「次の1回」だけを予約し、起動時と完走時に予約し直す（repeat管理より確実）
   REMINDER_ID: 1,
@@ -75,7 +83,13 @@ export const Native: any = {
     "サクヤ、待ってるよ 🥷",
     "今日も少しだけ、前へ。4分いこ！",
   ],
-  async syncReminder(timeHHMM, doneToday) {
+  // 連続記録があるときの文面（Duolingo研究より：キャラ名義＋状況文面。ただし脅さない）
+  STREAK_MSGS: [
+    "連続{n}日目。今日の4分、守りにいこ！",
+    "{n}日続いてるよ。すごいことだよ、今日も少しだけ！",
+    "サクヤと{n}日連続修行中。今日もいける？",
+  ],
+  async syncReminder(timeHHMM, doneToday, streak = 0) {
     const ln = this.plugin("LocalNotifications");
     if (!ln) return "web";
     try {
@@ -87,7 +101,8 @@ export const Native: any = {
       const at = new Date();
       at.setHours(h, m, 0, 0);
       if (at.getTime() <= Date.now() || doneToday) at.setDate(at.getDate() + 1); // 過ぎた or 今日は完走済み→明日
-      const body = this.REMINDER_MSGS[Math.floor(Math.random() * this.REMINDER_MSGS.length)];
+      const pool = streak >= 2 ? this.STREAK_MSGS : this.REMINDER_MSGS;
+      const body = pool[Math.floor(Math.random() * pool.length)].replace("{n}", String(streak));
       await ln.schedule({ notifications: [{
         id: this.REMINDER_ID,
         title: "サクヤといっしょに4分HIIT",

@@ -703,3 +703,32 @@ button, .btn-primary, .btn-ghost, .catalog-link { font-family: inherit; }
   50%  { transform: perspective(700px) rotateY(180deg) scale(0.96); }
   100% { transform: perspective(700px) rotateY(360deg) scale(1); }
 }
+
+/* お守り購入ボタン */
+.shield-buy { font-size: 0.78rem; padding: 8px 14px; white-space: nowrap; }
+.shield-buy:disabled { opacity: 0.5; cursor: default; }
+#shield-count { color: #ff4f81; }
+
+/* ---- なかま＆手裏剣 ---- */
+#my-friend-code { color: #ff4f81; letter-spacing: 0.12em; font-family: "Baloo 2", inherit; }
+.friend-row { display: flex; align-items: center; gap: 10px; border-radius: 13px; padding: 9px 12px;
+  background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.72);
+  box-shadow: 0 6px 16px rgba(50,74,120,0.12); }
+.friend-name { flex: 1; min-width: 0; font-weight: 900; color: #1f2a44; font-size: 0.92rem;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.friend-done { flex: none; font-size: 0.62rem; font-weight: 900; color: #0f9f8c; }
+.friend-exp { flex: none; font-weight: 800; color: #4a5578; font-size: 0.85rem; font-family: "Baloo 2", inherit; }
+.friend-exp small { font-size: 0.6rem; color: #8492b5; margin-left: 2px; }
+.poke-btn { flex: none; border: none; cursor: pointer; border-radius: 999px; padding: 7px 12px;
+  background: var(--grad-cta); color: #fff; font-family: inherit; font-weight: 900; font-size: 0.76rem;
+  box-shadow: var(--shadow-pop); }
+.poke-btn:active { transform: scale(0.94); }
+.poke-menu { position: fixed; left: 50%; bottom: calc(30px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+  z-index: 60; width: min(86vw, 360px); border-radius: 18px; padding: 14px;
+  display: flex; flex-direction: column; gap: 9px; text-align: center; }
+.poke-menu b { color: #1f2a44; font-size: 0.95rem; }
+#poke-menu-btns { display: flex; flex-direction: column; gap: 7px; }
+#poke-menu-btns button { border: none; cursor: pointer; border-radius: 12px; padding: 11px 12px;
+  background: rgba(255,255,255,0.8); color: #1f2a44; font-family: inherit; font-weight: 800; font-size: 0.85rem;
+  box-shadow: inset 0 0 0 1px rgba(120,150,190,0.3); }
+#poke-menu-btns button:active { transform: scale(0.97); }

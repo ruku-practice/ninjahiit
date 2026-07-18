@@ -20,7 +20,8 @@ export interface KobanEntry {
 }
 
 // 獲得レート（仮確定 2026-07-14。ルク調整可）
-export const KOBAN_RATES = { workout: 10, mission: 5, weekGoal: 20 } as const;
+export const KOBAN_RATES = { workout: 10, mission: 5, weekGoal: 20, perfectWeek: 50, shieldCost: 100 } as const;
+export const SHIELD_MAX = 2; // お守りの所持上限
 
 const KEY = "ninjahiit_koban_ledger";
 
