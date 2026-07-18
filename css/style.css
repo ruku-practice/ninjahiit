@@ -732,3 +732,19 @@ button, .btn-primary, .btn-ghost, .catalog-link { font-family: inherit; }
   background: rgba(255,255,255,0.8); color: #1f2a44; font-family: inherit; font-weight: 800; font-size: 0.85rem;
   box-shadow: inset 0 0 0 1px rgba(120,150,190,0.3); }
 #poke-menu-btns button:active { transform: scale(0.97); }
+
+/* ---- 完了画面: やったメニューの中身 ---- */
+.done-menu { width: min(92vw, 420px); margin: 0 auto; border-radius: 16px; padding: 10px 12px;
+  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%); }
+.done-menu-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.done-menu-head img { flex: none; width: 28px; height: 28px; border-radius: 8px; object-fit: cover;
+  box-shadow: 0 2px 6px rgba(50,74,120,0.25); }
+.done-menu-head b { font-size: 0.95rem; font-weight: 900; color: #1f2a44; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.done-menu-head small { margin-left: auto; flex: none; font-size: 0.62rem; font-weight: 800; color: #6b779a; }
+.done-ex-strip { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; -webkit-overflow-scrolling: touch; }
+.done-ex { flex: none; width: 52px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.done-ex img { width: 46px; height: 46px; border-radius: 11px; object-fit: cover;
+  box-shadow: 0 3px 8px rgba(50,74,120,0.2); }
+.done-ex span { font-size: 0.5rem; font-weight: 700; color: #4a5578; line-height: 1.2; text-align: center;
+  width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.done-ex-fin img { box-shadow: 0 0 0 2px #9a7be6, 0 3px 8px rgba(50,74,120,0.2); }

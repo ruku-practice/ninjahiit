@@ -2,7 +2,7 @@
 
 import {
   EXERCISES, PRESETS, TRAINERS, VOICE_LINES, voiceLineFirst, voiceLineNext,
-  DEFAULT_SETTINGS, estimateKcal, expForResult, rankInfo, WEEKLY_GOAL,
+  DEFAULT_SETTINGS, estimateKcal, expForResult, rankInfo, WEEKLY_GOAL, voiceLineLast,
   MISSION_BONUS_EXP, missionForDate, streakBonusExp, HOME_TAP_KEYS,
 } from "./data.ts";
 import { Sound, Voice } from "./audio.ts";
@@ -926,7 +926,9 @@ function startWorkout(workout) {
   Voice.preload([
     "count_3", "count_2", "count_1",
     ...(cheerFew ? [] : ["last10_1", "last10_2", "finish_1", "finish_2",
-      ...exKeys.map((k) => `first_${k}`), ...exKeys.map((k) => `next_${k}`)]),
+      "half_1", "half_2", "hold10_1", "finisher_plank",
+      ...exKeys.map((k) => `first_${k}`), ...exKeys.map((k) => `next_${k}`),
+      ...exKeys.map((k) => `last_${k}`)]),
     ...(cheerMany ? ["go_1", "go_2", "mid_1", "mid_2", "mid_3"] : []),
   ]);
   acquireWakeLock();
@@ -937,7 +939,13 @@ function startWorkout(workout) {
   const engine = new WorkoutEngine(workout, state.settings.prepareSec, {
     onSegmentChange(seg, next) {
       // 「休憩」の単調な表示をやめ、次に何が来るかが分かるリッチな表示にする
-      const restLabel = next ? `つぎは、${EXERCISES[next.exercise].name}` : "お疲れさま！";
+      // 仕上げプランク=「仕上げは」／全体の最後の種目=「最後は」／それ以外=「つぎは」
+      const nextStyle = !next ? null : next.finisher ? "finisher" : (next.slot === next.total ? "last" : "next");
+      const restLabel = next
+        ? (nextStyle === "finisher" ? "仕上げは、プランク"
+          : nextStyle === "last" ? `最後は、${EXERCISES[next.exercise].name}`
+          : `つぎは、${EXERCISES[next.exercise].name}`)
+        : "お疲れさま！";
       const label = { prepare: "準備して！", work: EXERCISES[seg.exercise].name, rest: restLabel }[seg.type];
       $("#run-phase").innerHTML =
         `<img class="run-phase-ico" src="assets/ui/icons/phase-${seg.type}.jpg" alt="">${label}`;
@@ -957,8 +965,16 @@ function startWorkout(workout) {
       } else if (seg.type === "rest") {
         Sound.restStart();
         if (next && !cheerFew) {
-          Voice.play(`next_${next.exercise}`);                  // 休憩中に次の種目を予告
-          $("#run-quote").textContent = voiceLineNext(next.exercise);
+          if (nextStyle === "finisher") {
+            Voice.play("finisher_plank");                       // 「仕上げは、プランク！」
+            $("#run-quote").textContent = VOICE_LINES.finisher_plank;
+          } else if (nextStyle === "last") {
+            Voice.play(`last_${next.exercise}`);                // 「最後は、〇〇！」
+            $("#run-quote").textContent = voiceLineLast(next.exercise);
+          } else {
+            Voice.play(`next_${next.exercise}`);                // 「つぎは、〇〇！」
+            $("#run-quote").textContent = voiceLineNext(next.exercise);
+          }
         }
       } else {
         if (!cheerFew) {
@@ -986,9 +1002,13 @@ function startWorkout(workout) {
         if (seg.type === "work" && sec === 10 && seg.sec > 12 && !cheerFew) {
           say(["last10_1", "last10_2"]);                        // ラスト10秒（多め・普通で言う）
         }
-        // 中盤の応援は「多め」のときだけ。20秒ワークでは中間=10秒＝ラスト10秒と衝突するため14秒地点で言う
-        const midSec = seg.sec >= 25 ? Math.ceil(seg.sec / 2) : 14;
-        if (seg.type === "work" && sec === midSec && sec !== 10 && seg.sec > 15 && cheerMany) {
+        if (seg.type === "work" && seg.sec >= 30 && !cheerFew) {
+          // ロングワーク（プランク60秒等）: 経過10秒「まだ10秒」→ 中間「はんぶん来たよ！」
+          const elapsed = seg.sec - sec;
+          if (elapsed === 10 && seg.sec >= 45) say(["hold10_1"]);
+          if (sec === Math.ceil(seg.sec / 2)) say(["half_1", "half_2"]);
+        } else if (seg.type === "work" && sec === 14 && seg.sec > 15 && cheerMany) {
+          // 20秒ワークの中盤応援は「多め」のみ（中間=10秒はラスト10秒と衝突するため14秒地点）
           say(["mid_1", "mid_2", "mid_3"]);
         }
       }
@@ -1077,6 +1097,24 @@ function renderDone(workout, totalWorkSec) {
   $("#done-quote").textContent = leveledUp
     ? `やった、${rankAfter.name}に昇格だね！おめでとう🎉`
     : (s >= 2 ? quote("streak", { days: s }) : (state.lastFinishLine || quote("finish")));
+  // 今日やったメニューの中身（種目サムネの並び）を見せる
+  const w = state.currentWorkout;
+  if (w) {
+    const plankSec = state.settings.plankSec || 0;
+    const thumbs = w.exercises.map((key) =>
+      `<div class="done-ex"><img src="${trainer().thumbDir}/${key}.jpg" alt="">` +
+      `<span>${EXERCISES[key].name}</span></div>`).join("") +
+      (plankSec > 0
+        ? `<div class="done-ex done-ex-fin"><img src="${trainer().thumbDir}/plank.jpg" alt=""><span>仕上げ</span></div>`
+        : "");
+    $("#done-menu").innerHTML =
+      `<div class="done-menu-head"><img src="${presetIconSrc(w)}" alt="">` +
+      `<b>${w.title}</b><small>${w.exercises.length}種目 × ${w.rounds}周 ・ ワーク${w.workSec}秒</small></div>` +
+      `<div class="done-ex-strip">${thumbs}</div>`;
+  } else {
+    $("#done-menu").innerHTML = "";
+  }
+
   $("#done-stats").innerHTML =
     `<li>${workout.title} 完走 🎉</li>` +
     `<li>運動時間 ${Math.round(totalWorkSec / 60 * 10) / 10}分 ・ 約${estimateKcal(totalWorkSec)}kcal</li>` +

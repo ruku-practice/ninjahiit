@@ -173,6 +173,11 @@ export const VOICE_LINES = {
   greet_noon: "こんにちは。ちょっと体を動かして、切り替えよう。",
   greet_night: "今日もお疲れさま。寝る前に少しだけ動く？",
   poke_received: "なかまから、手裏剣が届いてるよ。",
+  // ロングワーク（30秒以上）の応援
+  half_1: "はんぶん来たよ！",
+  half_2: "折り返し！その調子！",
+  hold10_1: "まだ10秒。呼吸を続けて。",
+  finisher_plank: "仕上げは、プランク！",
   // ワークアウト中
   go_1: "いくよっ！", go_2: "はじめっ！",
   mid_1: "いい調子！", mid_2: "フォーム、きれいだよ。", mid_3: "呼吸を止めないでね。",
@@ -184,6 +189,7 @@ export const HOME_TAP_KEYS = Array.from({ length: 12 }, (_, i) => `home_${i + 1}
 
 export const voiceLineFirst = (exKey) => `最初は、${EXERCISES[exKey].name}！`;
 export const voiceLineNext = (exKey) => `つぎは、${EXERCISES[exKey].name}！`;
+export const voiceLineLast = (exKey) => `最後は、${EXERCISES[exKey].name}！`;
 
 // plankSec: 仕上げプランク（全ワークアウト末尾に追加）0=なし / 30 / 60
 // reminderTime: 毎日のリマインダー通知 "HH:MM"（空文字=オフ。通知はネイティブ版のみ）

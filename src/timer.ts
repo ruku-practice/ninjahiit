@@ -24,18 +24,19 @@ export class WorkoutEngine {
   static buildSegments(w, prepareSec, finisherSec = 0) {
     const seq = [];
     for (let r = 0; r < w.rounds; r++) for (const ex of w.exercises) seq.push({ ex, sec: w.workSec });
-    if (finisherSec > 0) seq.push({ ex: "plank", sec: finisherSec });
+    if (finisherSec > 0) seq.push({ ex: "plank", sec: finisherSec, finisher: true });
     const total = seq.length;
     const segs = [];
     segs.push({ type: "prepare", sec: prepareSec, exercise: seq[0].ex, slot: 1, total });
     seq.forEach((item, i) => {
-      segs.push({ type: "work", sec: item.sec, exercise: item.ex, slot: i + 1, total });
+      segs.push({ type: "work", sec: item.sec, exercise: item.ex, slot: i + 1, total, finisher: !!(item as any).finisher });
       const isLast = i === total - 1;
       if (!isLast) {
         const endOfRound = (i + 1) % w.exercises.length === 0;
         const restSec = endOfRound && w.setRestSec > 0 ? w.setRestSec : w.restSec;
         if (restSec > 0) {
-          segs.push({ type: "rest", sec: restSec, exercise: seq[i + 1].ex, slot: i + 2, total });
+          // restは「次の種目」を予告する区間なので、次が仕上げならフラグを引き継ぐ
+          segs.push({ type: "rest", sec: restSec, exercise: seq[i + 1].ex, slot: i + 2, total, finisher: !!(seq[i + 1] as any).finisher });
         }
       }
     });
