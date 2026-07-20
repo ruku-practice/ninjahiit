@@ -1165,7 +1165,7 @@ document.addEventListener("DOMContentLoaded", () => {
   $("#btn-catalog").onclick = renderCatalog;
   $("#btn-catalog-back").onclick = renderHome;
   $("#btn-detail-back").onclick = detailBack;
-  $("#tab-mypage").onclick = renderMypage;
+  $("#hud-mypage-link").onclick = renderMypage;
   $("#btn-mypage-back").onclick = renderHome;
   document.querySelectorAll<any>("#seg-plank button").forEach((b) => {
     b.onclick = () => {
@@ -1204,9 +1204,6 @@ document.addEventListener("DOMContentLoaded", () => {
     else if (state.settings.reminderTime) showToast(`毎日 ${state.settings.reminderTime} にサクヤが誘いに来るよ 🔔`);
     else showToast("リマインダーをオフにしたよ");
   };
-  document.querySelectorAll<any>(".hud-tab[data-soon]").forEach(b => {
-    b.onclick = () => showToast(`${b.dataset.soon} はただいま準備中だよ 🥷`);
-  });
   $("#hud-ranking").onclick = renderRanking;
   $("#btn-builder").onclick = renderBuilder;
   $("#btn-builder-back").onclick = renderHome;
