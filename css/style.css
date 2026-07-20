@@ -270,6 +270,14 @@ button, .btn-primary, .btn-ghost, .catalog-link { font-family: inherit; }
 .set-link { display: block; text-decoration: none; color: inherit; }
 .set-link:active { transform: scale(0.99); }
 .set-arrow { flex: none; font-size: 1.4rem; color: #8492b5; font-weight: 700; }
+/* アカウント連携カード */
+.acct-note { color: #a2acc4 !important; font-weight: 600 !important; }
+.acct-linked { font-size: 0.88rem; font-weight: 900; color: #17c6b0; text-align: center; padding: 9px 0; }
+.acct-link-small { background: none; border: none; color: #6b779a; font-family: inherit;
+  font-weight: 800; font-size: 0.74rem; text-decoration: underline; text-underline-offset: 2px;
+  cursor: pointer; padding: 4px 0; }
+.acct-link-small:active { opacity: 0.7; }
+.acct-link-small:disabled { color: #b7bfd2; text-decoration: none; cursor: default; }
 
 .detail-cta { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6;
   padding: 10px 16px calc(12px + env(safe-area-inset-bottom));

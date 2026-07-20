@@ -11,6 +11,7 @@ import { Native } from "./native.ts";
 import { KOBAN_RATES, SHIELD_MAX, addKoban, kobanBalance } from "./points.ts";
 import { maybeShowInterstitial, recordFirstLaunch } from "./ads.ts";
 import { syncNow } from "./sync.ts";
+import { ensureSignedIn, getIdentityStatus, isOAuthReturnUrl, linkGoogle } from "./cloud.ts";
 import { fetchWeeklyRanking, getNinjaName, setNinjaName, validateNinjaName } from "./ranking.ts";
 import {
   POKE_MESSAGES, addFriendByCode, fetchUnseenPokes, friendsBoard, markPokesSeen, myFriendCode, sendPoke,
@@ -396,7 +397,33 @@ function renderMypage() {
   if (!Native.isNative) {
     $("#reminder-note").textContent = "通知はアプリ版（準備中）で届きます。時刻は保存されます";
   }
+  refreshAcctCard();
   show("screen-mypage");
+}
+
+// アカウント連携カードの状態更新（非同期・画面表示はrenderMypageが即座に行う）
+async function refreshAcctCard() {
+  if (Native.isNative) {
+    // ネイティブ(Capacitor)はスコープ外。中途半端なネイティブ認証は作らずPWA版へ誘導するのみ
+    $("#acct-desc").textContent = "この機能はPWA版（rukupractice.com/kintore/ をブラウザで開く）でご利用いただけます";
+    $("#btn-link-google").hidden = true;
+    $("#acct-linked-row").hidden = true;
+    $("#btn-signin-google").hidden = true;
+    return;
+  }
+  $("#btn-signin-google").hidden = false;
+  const status = await getIdentityStatus();
+  if (!$("#screen-mypage").classList.contains("active")) return; // 取得中に画面を離れていたら反映しない
+  if (status.linked) {
+    $("#btn-link-google").hidden = true;
+    $("#acct-linked-row").hidden = false;
+    $("#acct-email").textContent = status.email || "";
+    $("#acct-desc").textContent = "連携済みです。機種変更や再インストールでも記録を引き継げます";
+  } else {
+    $("#btn-link-google").hidden = false;
+    $("#acct-linked-row").hidden = true;
+    $("#acct-desc").textContent = "Googleと連携すると、アカウントがGoogleに保護され、なかま・ランキングが回復可能になります。";
+  }
 }
 
 function renderCatalog() {
@@ -1170,6 +1197,20 @@ document.addEventListener("DOMContentLoaded", () => {
   $("#btn-detail-back").onclick = detailBack;
   $("#hud-mypage-link").onclick = renderMypage;
   $("#btn-mypage-back").onclick = renderHome;
+  $("#btn-link-google").onclick = async () => {
+    const btn = $("#btn-link-google");
+    btn.disabled = true;
+    btn.textContent = "連携中…";
+    const ok = await linkGoogle();
+    if (!ok) {
+      showToast("連携できませんでした。時間をおいて試してね");
+      btn.disabled = false;
+      btn.textContent = "Googleと連携する";
+    }
+    // 成功時はこの後Googleへページごとリダイレクトされるので、ここでは何もしない
+  };
+  // #btn-signin-google（別端末ログイン）は復元(cloud→local取り込み)が未実装のため配線しない。
+  // HTML側でdisabled＋「（準備中）」表示のみ（signInWithGoogle自体はcloud.tsに将来用として残置）
   document.querySelectorAll<any>("#seg-plank button").forEach((b) => {
     b.onclick = () => {
       state.settings.plankSec = Number(b.dataset.v);
@@ -1303,5 +1344,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 起動直後のもたつきを避けて、少し後にクラウド同期（前回未送信分の回収）→手裏剣チェック
   pushWidgetState();
-  setTimeout(() => { syncNow(state.history); checkPokes(); }, 3000);
+  // Google連携/ログインのOAuthリダイレクトから戻ってきた直後は、3秒待たずに即同期し、
+  // 結果を確認できるマイページへ直接戻す（ensureSignedInのgetSession呼び出しでsupabase-jsの
+  // detectSessionInUrlがURL中のcode/tokenからセッションを確立する）
+  if (isOAuthReturnUrl(location.search, location.hash)) {
+    ensureSignedIn().then(() => { syncNow(state.history); checkPokes(); renderMypage(); });
+  } else {
+    setTimeout(() => { syncNow(state.history); checkPokes(); }, 3000);
+  }
 });
