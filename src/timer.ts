@@ -1,4 +1,5 @@
-// タイマーエンジン：performance.now() 基準で残時間を計算する（setIntervalのズレに依存しない）
+// タイマーエンジン：絶対時刻（nowで注入可能・既定performance.now()）基準で残時間を計算する
+// （setIntervalのズレに依存しない。rAFは使わない＝非表示タブ/バックグラウンドで停止しても復帰時に正しく再同期できる）
 
 export class WorkoutEngine {
   handlers: { onTick: Function; onSegmentChange: Function; onFinish: Function };
@@ -8,15 +9,18 @@ export class WorkoutEngine {
   segStart: number;
   pausedAt: number | null;
   finished: boolean;
+  now: () => number;
 
   // workout: {workSec, restSec, rounds, setRestSec, exercises[]}
   // finisherSec > 0 のとき、末尾に仕上げプランク(work)を追加する
-  constructor(workout, prepareSec, handlers, finisherSec = 0) {
+  // now: 時計の蛇口（既定=performance.now）。テストでは決定的な値を注入する
+  constructor(workout, prepareSec, handlers, finisherSec = 0, now: () => number = () => performance.now()) {
     this.handlers = handlers; // {onTick, onSegmentChange, onFinish}
     this.segments = WorkoutEngine.buildSegments(workout, prepareSec, finisherSec);
+    this.now = now;
     this.index = 0;
     this.timerId = null;
-    this.segStart = 0;      // 現セグメント開始時刻（performance.now）
+    this.segStart = 0;      // 現セグメント開始時刻（this.now()基準）
     this.pausedAt = null;
     this.finished = false;
   }
@@ -55,20 +59,20 @@ export class WorkoutEngine {
   }
 
   start() {
-    this.segStart = performance.now();
+    this.segStart = this.now();
     this.handlers.onSegmentChange(this.current, this.next);
     this.timerId = setInterval(() => this._tick(), 100);
   }
 
   pause() {
     if (this.pausedAt !== null || this.finished) return;
-    this.pausedAt = performance.now();
+    this.pausedAt = this.now();
     clearInterval(this.timerId);
   }
 
   resume() {
     if (this.pausedAt === null || this.finished) return;
-    this.segStart += performance.now() - this.pausedAt;
+    this.segStart += this.now() - this.pausedAt;
     this.pausedAt = null;
     this.timerId = setInterval(() => this._tick(), 100);
   }
@@ -78,21 +82,27 @@ export class WorkoutEngine {
     this.finished = true;
   }
 
+  // 1回のtickで複数セグメント分の経過をまとめて消化する（バックグラウンド復帰などで
+  // 一度に長い時間が経過していても、通過したはずのセグメントを1つ飛ばしで無かったことに
+  // せず、正しく全て消化してから現在のセグメントの残り時間を計算する）
   _tick() {
-    const seg = this.current;
-    const elapsed = (performance.now() - this.segStart) / 1000;
-    const remain = seg.sec - elapsed;
-    if (remain <= 0) {
+    let seg = this.current;
+    let elapsed = (this.now() - this.segStart) / 1000;
+    let remain = seg.sec - elapsed;
+    while (remain <= 0) {
+      const overrun = -remain; // 次のセグメントに繰り越す超過分（秒）
       this.index++;
       if (this.index >= this.segments.length) {
         this.stop();
         this.handlers.onFinish();
         return;
       }
-      this.segStart = performance.now();
-      this.handlers.onSegmentChange(this.current, this.next);
-      this.handlers.onTick(this.current, this.current.sec, 0);
-      return;
+      // 新セグメントの開始点を「超過分だけ過去」にずらし、実経過時間を正しく引き継ぐ
+      this.segStart = this.now() - overrun * 1000;
+      seg = this.current;
+      this.handlers.onSegmentChange(seg, this.next);
+      elapsed = (this.now() - this.segStart) / 1000;
+      remain = seg.sec - elapsed;
     }
     this.handlers.onTick(seg, remain, elapsed / seg.sec);
   }

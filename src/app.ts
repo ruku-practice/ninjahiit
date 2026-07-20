@@ -905,6 +905,7 @@ function renderHistory() {
 
 // ---- ワークアウト実行 ----
 function startWorkout(workout) {
+  autoPausedByVisibility = false;
   Sound.init();
   Sound.enabled = state.settings.sound;
   Voice.useCtx(Sound.ctx);
@@ -1015,6 +1016,7 @@ function startWorkout(workout) {
     },
 
     async onFinish() {
+      autoPausedByVisibility = false;
       Sound.finish();
       // 完走セリフも音声と表示を一致させる（少なめモードは3-2-1のみなので声なし）
       state.lastFinishLine = cheerFew ? null : VOICE_LINES[Voice.playOne(["finish_1", "finish_2"])];
@@ -1034,24 +1036,39 @@ function startWorkout(workout) {
   engine.start();
 }
 
+// バックグラウンド復帰(visibilitychange)でも手動ボタンと同じ経路を通す共通ヘルパー
+// autoPausedByVisibility: hiddenで自動pauseした場合だけvisible復帰で自動resumeする
+// （ユーザーが手動でpauseした状態のままバックグラウンドへ行った場合は、戻ってきても勝手に再開しない）
+let autoPausedByVisibility = false;
+
+function pauseEngine() {
+  const e = state.engine;
+  if (!e || e.finished || e.pausedAt !== null) return;
+  e.pause();
+  Voice.stop();
+  $("#run-chara video")?.pause();
+  $("#btn-pause").textContent = "▶";
+}
+
+function resumeEngine() {
+  const e = state.engine;
+  if (!e || e.finished || e.pausedAt === null) return;
+  e.resume();
+  playSprite($("#run-chara"), e.current.exercise);
+  $("#btn-pause").textContent = "⏸";
+}
+
 function togglePause() {
   const e = state.engine;
   if (!e || e.finished) return;
-  if (e.pausedAt === null) {
-    e.pause();
-    Voice.stop();
-    $("#run-chara video")?.pause();
-    $("#btn-pause").textContent = "▶";
-  } else {
-    e.resume();
-    playSprite($("#run-chara"), e.current.exercise);
-    $("#btn-pause").textContent = "⏸";
-  }
+  if (e.pausedAt === null) pauseEngine();
+  else resumeEngine();
 }
 
 function quitWorkout() {
   if (!confirm("修行を中断する？")) return;
   state.engine?.stop();
+  autoPausedByVisibility = false;
   Voice.stop();
   $("#run-chara video")?.pause();
   releaseWakeLock();
@@ -1124,7 +1141,7 @@ function renderDone(workout, totalWorkSec) {
     (state.lastStreakBonus ? `<li>🔥 連続${streakDays()}日ボーナス ＋${state.lastStreakBonus}修行値込み</li>` : "") +
     `<li>${s > 0 ? `🔥 ${s}日連続` : "また明日も待ってるよ"}</li>`;
   const text = encodeURIComponent(
-    `${trainer().name}と一緒に「${workout.title}」完走した！🥷 #サクヤ4分HIIT #CryptoNinja`);
+    `${trainer().name}と一緒に「${workout.title}」完走した！🥷 #毎日筋トレ #CryptoNinja`);
   $("#btn-share").href = `https://twitter.com/intent/tweet?text=${text}`;
   show("screen-done");
 }
@@ -1250,8 +1267,24 @@ document.addEventListener("DOMContentLoaded", () => {
     (window as any).__dbg = { state, startWorkout, renderCatalog, renderHome, renderDone, saveResult, Voice, nextHomeQuote, Sound, flags: () => ({ homeGreetingSpoken, greetingAutoSpoken, homeLineKey }) };
   }
 
+  // バックグラウンド/非表示タブ対策：rAFではなくsetInterval+絶対時刻基準のタイマーだが、
+  // 非表示中はJS自体が止まる（特にiOSネイティブ）ため、hiddenで明示的にpause・visibleで
+  // 復帰した時だけresumeする（＝バックグラウンド中は進行を止める。罰しない設計）。
+  // 手動pauseボタンで既に止めている場合はここでは触らず、visible復帰でも勝手に再開しない。
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible" && state.engine && !state.engine.finished) acquireWakeLock();
+    const e = state.engine;
+    if (document.visibilityState === "hidden") {
+      if (e && !e.finished && e.pausedAt === null) {
+        pauseEngine();
+        autoPausedByVisibility = true;
+      }
+    } else if (document.visibilityState === "visible") {
+      if (autoPausedByVisibility) {
+        resumeEngine();
+        autoPausedByVisibility = false;
+      }
+      if (state.engine && !state.engine.finished) acquireWakeLock();
+    }
   });
 
   // ネイティブ(Capacitor)ではアセット同梱のためSW不要（capacitor://で動くので条件的にも登録されない）

@@ -105,7 +105,7 @@ export const Native: any = {
       const body = pool[Math.floor(Math.random() * pool.length)].replace("{n}", String(streak));
       await ln.schedule({ notifications: [{
         id: this.REMINDER_ID,
-        title: "サクヤといっしょに4分HIIT",
+        title: "サクヤと毎日筋トレ",
         body,
         schedule: { at, allowWhileIdle: true },
       }] });

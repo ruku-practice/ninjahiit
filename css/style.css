@@ -748,3 +748,36 @@ button, .btn-primary, .btn-ghost, .catalog-link { font-family: inherit; }
 .done-ex span { font-size: 0.5rem; font-weight: 700; color: #4a5578; line-height: 1.2; text-align: center;
   width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .done-ex-fin img { box-shadow: 0 0 0 2px #9a7be6, 0 3px 8px rgba(50,74,120,0.2); }
+
+/* =========================================================
+   PC・ワイド画面対応：スマホ幅430pxの中央カラムに固定
+   500px未満（実機スマホ）の表示は一切変更しない（本ブロックは丸ごとmin-width:500pxの中）
+   ========================================================= */
+@media (min-width: 500px) {
+  html {
+    min-height: 100%;
+    /* カラム外の余白：アプリの藍色(--indigo)地に、うっすら金のグロー（過度な装飾は避ける） */
+    background:
+      radial-gradient(ellipse 70% 40% at 50% -6%, rgba(255,182,72,0.16), transparent 60%),
+      var(--indigo);
+  }
+  body {
+    max-width: 430px;
+    margin: 0 auto;
+    position: relative;
+    /* スマホ画面らしく見せる控えめな縁取り（任意演出） */
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 24px 70px rgba(0,0,0,0.4);
+    /* transformはno-opだが、これによりbodyがposition:fixedな子孫（下部ナビ・トースト・
+       検出/実行画面のオーバーレイ・モーダル等）の containing block になる。
+       結果としてそれらのleft:0/right:0やleft:50%+translateXは実ビューポートではなく
+       この430pxカラム基準で計算され、広い画面でもカラム内にきれいに収まる。 */
+    transform: translateZ(0);
+  }
+
+  /* vw/vh系ユニットは上のtransformトリックの影響を受けず実ビューポート基準のまま残るため、
+     カラム幅(430px)を超えて崩れる箇所だけ個別に固定値へ置き換える（挙動は430px幅の場合と同一） */
+  .hud-nav { height: calc(430px * 126 / 941 + env(safe-area-inset-bottom)); } /* 元: 100vw基準 */
+  .chara-box img { max-width: 301px; } /* 元: 70vw（430pxの70%に固定） */
+  #run-chara img { max-width: 322px; } /* 元: 75vw（430pxの75%に固定） */
+  #screen-run.hud #run-phase { max-width: 396px; } /* 元: 92vw（430pxの92%に固定） */
+}

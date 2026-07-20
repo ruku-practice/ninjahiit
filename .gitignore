@@ -9,3 +9,7 @@ assets_src/fitness_ui_assets/
 assets_src/fitness_ui_assets.zip
 assets_src/backgroud.png
 assets_src/名称未設定フォルダ/
+# アップスケール用モデル（再DL可・github.com/xinntao/Real-ESRGAN）
+tools/upscale/models/
+# 元640px動画のバックアップ（本コミット直前の履歴から復元可能なため除外）
+assets_src/videos/orig640_backup_20260720/
