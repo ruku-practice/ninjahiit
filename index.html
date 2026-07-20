@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>お引っ越ししました｜サクヤと毎日筋トレ</title>
+<!-- JS無効環境向けのフォールバック（JS側のSW掃除を先に走らせるため2秒後） -->
+<meta http-equiv="refresh" content="2; url=https://rukupractice.com/kintore/">
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+    background: #14121c;
+    color: #f2eefb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 24px;
+    box-sizing: border-box;
+    text-align: center;
+  }
+  .card {
+    max-width: 480px;
+  }
+  h1 {
+    font-size: 1.4rem;
+    margin-bottom: 0.8em;
+  }
+  p {
+    line-height: 1.8;
+    margin: 0.6em 0;
+  }
+  a {
+    color: #ffd166;
+    word-break: break-all;
+  }
+  .spinner {
+    display: inline-block;
+    width: 28px;
+    height: 28px;
+    border: 3px solid rgba(255,255,255,0.2);
+    border-top-color: #ffd166;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 1em;
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="spinner" aria-hidden="true"></div>
+    <h1>お引っ越ししました</h1>
+    <p>「サクヤと毎日筋トレ」（旧NinjaHIIT）は新しい住所に移転しました。<br>まもなく自動で新しいページに移動します。</p>
+    <p>移動しない場合はこちらをタップしてください。<br>
+      <a href="https://rukupractice.com/kintore/">https://rukupractice.com/kintore/</a>
+    </p>
+  </div>
+  <script>
+    (function () {
+      var DEST = "https://rukupractice.com/kintore/";
+
+      function goDest() {
+        location.replace(DEST);
+      }
+
+      // 旧PWAはキャッシュファーストのService Workerを持っているため、
+      // 先に登録解除＋キャッシュ削除してから遷移する（残っていると旧画面が
+      // 再表示されてしまうため必須）。
+      function cleanupAndGo() {
+        var tasks = [];
+
+        if ("serviceWorker" in navigator) {
+          tasks.push(
+            navigator.serviceWorker.getRegistrations().then(function (regs) {
+              return Promise.all(
+                regs.map(function (reg) {
+                  return reg.unregister().catch(function () {});
+                })
+              );
+            }).catch(function () {})
+          );
+        }
+
+        if (window.caches && caches.keys) {
+          tasks.push(
+            caches.keys().then(function (keys) {
+              return Promise.all(
+                keys.map(function (key) {
+                  return caches.delete(key).catch(function () {});
+                })
+              );
+            }).catch(function () {})
+          );
+        }
+
+        Promise.all(tasks).then(goDest).catch(goDest);
+
+        // 万一Promiseが詰まっても必ず遷移する保険
+        setTimeout(goDest, 1500);
+      }
+
+      cleanupAndGo();
+    })();
+  </script>
+</body>
+</html>
