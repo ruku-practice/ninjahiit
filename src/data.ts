@@ -238,6 +238,24 @@ export function streakBonusExp(days: number): number {
   return Math.max(0, (Math.min(days, 7) - 1) * 5);
 }
 
+// 今週（月曜始まり）7日分の実施状況。index0=月…index6=日。
+// app.tsのweekRecord()（ホーム画面の週間活動ドット）と、ウィジェットへ渡すweekDoneの
+// 単一ソース。「完走」の判定・週境界の取り方を両者でズレさせないためここに集約する。
+export function weekDoneArray(history: { date: string; completed: boolean }[], now: Date = new Date()): boolean[] {
+  const dow = (now.getDay() + 6) % 7; // 月=0 … 日=6
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - dow);
+  const doneDates = new Set(history.filter((h) => h.completed).map((h) => h.date));
+  const days: boolean[] = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    days.push(doneDates.has(ds));
+  }
+  return days;
+}
+
 // ---- 今日の任務（デイリー目標）----
 // 日付文字列から決定的に選ぶ（同じ日は誰でも・何度開いても同じ任務）。クリアでボーナス修行値
 export const MISSION_BONUS_EXP = 50;

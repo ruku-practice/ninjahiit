@@ -3,7 +3,7 @@
 import {
   EXERCISES, PRESETS, TRAINERS, VOICE_LINES, voiceLineFirst, voiceLineNext,
   DEFAULT_SETTINGS, estimateKcal, expForResult, rankInfo, WEEKLY_GOAL, voiceLineLast,
-  MISSION_BONUS_EXP, missionForDate, streakBonusExp, HOME_TAP_KEYS,
+  MISSION_BONUS_EXP, missionForDate, streakBonusExp, HOME_TAP_KEYS, weekDoneArray,
 } from "./data.ts";
 import { Sound, Voice } from "./audio.ts";
 import { WorkoutEngine } from "./timer.ts";
@@ -574,6 +574,7 @@ function pushWidgetState() {
     mission: missionStatus().mission.label,
     koban: kobanBalance(),
     date: todayStr(),
+    weekDone: weekDoneArray(state.history), // 週間実施ドット（月〜日7要素）。ホームのweekRecord()と同じ判定基準
   });
 }
 
@@ -726,19 +727,21 @@ function todayStats() {
 }
 
 // 今週（月曜始まり）の活動日ドット。やさしく「日数」で数える
+// 実施判定・週境界そのものはdata.tsのweekDoneArray()を単一ソースとして使う
+// （ウィジェットへ渡すweekDoneと定義がズレないように）
 function weekRecord() {
   const now = new Date();
   const dow = (now.getDay() + 6) % 7; // 月=0 … 日=6
   const monday = new Date(now);
   monday.setDate(now.getDate() - dow);
-  const doneDates = new Set(state.history.filter(h => h.completed).map(h => h.date));
+  const done7 = weekDoneArray(state.history, now);
   const todayS = todayStr(now);
   const days = [];
   for (let i = 0; i < 7; i++) {
     const d = new Date(monday);
     d.setDate(monday.getDate() + i);
     const ds = todayStr(d);
-    days.push({ label: "月火水木金土日"[i], done: doneDates.has(ds), isToday: ds === todayS });
+    days.push({ label: "月火水木金土日"[i], done: done7[i], isToday: ds === todayS });
   }
   return { days, count: days.filter(d => d.done).length, goal: WEEKLY_GOAL };
 }

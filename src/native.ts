@@ -68,10 +68,17 @@ export const Native: any = {
 
   // ---- ホーム画面ウィジェット連携（iOSのみ。WidgetBridgeカスタムプラグイン） ----
   // streak等をApp Group経由でウィジェットに渡し、タイムラインを更新させる
-  async updateWidget(info: { streak: number; doneToday: boolean; mission: string; koban: number; date: string }) {
+  // weekDone: 週間実施ドット（月〜日7要素・任意）。SakuyaWidget.swiftのparseWeekDone()が
+  // 受理する「カンマ区切り "1,0,1,..."」に変換して渡す。未指定でも従来どおり動く（前方互換）。
+  async updateWidget(info: { streak: number; doneToday: boolean; mission: string; koban: number; date: string; weekDone?: boolean[] }) {
     const w = this.plugin("WidgetBridge");
     if (!w) return;
-    try { await w.saveState(info); } catch (e) {}
+    const { weekDone, ...rest } = info;
+    const payload: any = { ...rest };
+    if (weekDone && weekDone.length === 7) {
+      payload.weekDone = weekDone.map((d) => (d ? "1" : "0")).join(",");
+    }
+    try { await w.saveState(payload); } catch (e) {}
   },
 
   // ---- リマインダー通知（罰しない設計：完走した日はその日の通知を出さない） ----
