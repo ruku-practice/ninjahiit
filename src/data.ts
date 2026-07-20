@@ -194,7 +194,8 @@ export const voiceLineLast = (exKey) => `最後は、${EXERCISES[exKey].name}！
 // plankSec: 仕上げプランク（全ワークアウト末尾に追加）0=なし / 30 / 60
 // reminderTime: 毎日のリマインダー通知 "HH:MM"（空文字=オフ。通知はネイティブ版のみ）
 // cheer: 応援ボイスの量 many=多め（従来） / normal=普通（あと10秒＋3-2-1のみ） / few=少なめ（3-2-1のみ）
-export const DEFAULT_SETTINGS = { trainer: "sakuya", sound: true, prepareSec: 10, plankSec: 0, reminderTime: "", cheer: "normal" };
+// recommendMode: ホームの「今日のおすすめ」の選び方 sequential=順繰り（既定） / random_undone=ランダム（やってない優先）
+export const DEFAULT_SETTINGS = { trainer: "sakuya", sound: true, prepareSec: 10, plankSec: 0, reminderTime: "", cheer: "normal", recommendMode: "sequential" };
 
 // カロリー概算（METs 8.0 × 体重60kg 想定のざっくり値）
 export function estimateKcal(totalWorkSec) {
@@ -238,6 +239,11 @@ export function streakBonusExp(days: number): number {
   return Math.max(0, (Math.min(days, 7) - 1) * 5);
 }
 
+// Date → "YYYY-MM-DD"。history.dateと同じ書式で比較するための単一ソース（JST想定）
+function ymd(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 // 今週（月曜始まり）7日分の実施状況。index0=月…index6=日。
 // app.tsのweekRecord()（ホーム画面の週間活動ドット）と、ウィジェットへ渡すweekDoneの
 // 単一ソース。「完走」の判定・週境界の取り方を両者でズレさせないためここに集約する。
@@ -250,10 +256,57 @@ export function weekDoneArray(history: { date: string; completed: boolean }[], n
   for (let i = 0; i < 7; i++) {
     const d = new Date(monday);
     d.setDate(monday.getDate() + i);
-    const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    days.push(doneDates.has(ds));
+    days.push(doneDates.has(ymd(d)));
   }
   return days;
+}
+
+// ---- 昨日の実績・今日のおすすめ（ホーム用・純粋関数）----
+// 昨日(JST)に完走した記録があれば振り返りメッセージを、なければ責めない一言を返す
+export function yesterdaySummary(
+  history: { date: string; workoutId?: string; title?: string; completed: boolean }[],
+  now: Date = new Date()
+): { done: boolean; title: string | null; message: string } {
+  const y = new Date(now);
+  y.setDate(now.getDate() - 1);
+  const hit = history.find((h) => h.completed && h.date === ymd(y));
+  if (!hit) return { done: false, title: null, message: "昨日はお休みだったね。今日から4分、どう？" };
+  const title = PRESETS.find((p) => p.id === hit.workoutId)?.title || hit.title || "クイック";
+  return { done: true, title, message: `昨日は${title}、おつかれさま！` };
+}
+
+// 今日のおすすめメニュー（サクヤの提案として提示。数字よりサクヤ）。
+// sequential（既定）: 直近に完走したメニューのpresets index の次（末尾なら先頭へループ）。
+//   完走履歴が無ければ先頭のメニュー。
+// random_undone: 今週(月曜始まり・JST)まだ完走していないpresetsからランダム。
+//   全部やっていれば全体からランダム。
+export function recommendWorkout(
+  history: { date: string; workoutId?: string; completed: boolean }[],
+  mode: string,
+  presets: any[],
+  now: Date = new Date()
+): any {
+  if (!presets.length) return null;
+  if (mode === "random_undone") {
+    const dow = (now.getDay() + 6) % 7;
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - dow);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    const mondayStr = ymd(monday), sundayStr = ymd(sunday);
+    const doneIds = new Set(
+      history.filter((h) => h.completed && h.date >= mondayStr && h.date <= sundayStr).map((h) => h.workoutId));
+    const undone = presets.filter((p) => !doneIds.has(p.id));
+    const pool = undone.length ? undone : presets;
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+  // sequential: historyは完走のたびに末尾へ追記される前提（saveResultと同じ並び順）
+  const completed = history.filter((h) => h.completed);
+  if (!completed.length) return presets[0];
+  const last = completed[completed.length - 1];
+  const idx = presets.findIndex((p) => p.id === last.workoutId);
+  if (idx === -1) return presets[0];
+  return presets[(idx + 1) % presets.length];
 }
 
 // ---- 今日の任務（デイリー目標）----

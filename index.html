@@ -24,6 +24,15 @@
     <div class="hud-scroll">
       <div id="status-card" class="hud-summary glass"></div>
 
+      <div id="reco-card" class="reco-card">
+        <p id="reco-yesterday" class="reco-yesterday"></p>
+        <button id="reco-today" class="hud-challenge glass">
+          <span class="hud-ch-flag">🎯</span>
+          <span class="hud-ch-main"><b>今日のおすすめ</b><small id="reco-today-desc"></small></span>
+          <span class="hud-ch-go">›</span>
+        </button>
+      </div>
+
       <div class="hud-body">
         <aside class="hud-companion">
           <div id="home-chara" class="chara-box"></div>
@@ -64,6 +73,17 @@
         <h2>マイページ</h2>
       </header>
 
+      <div class="hud-sec">記録<i class="hud-slash"></i></div>
+      <button id="btn-history-link" class="set-card glass set-link" type="button">
+        <div class="set-row">
+          <div class="set-info">
+            <b>📜 実施履歴</b>
+            <small>これまでの修行の記録を振り返る</small>
+          </div>
+          <span class="set-arrow">›</span>
+        </div>
+      </button>
+
       <div class="hud-sec">ワークアウト設定<i class="hud-slash"></i></div>
       <div class="set-card glass">
         <div class="set-row">
@@ -76,6 +96,18 @@
           <button data-v="0">なし</button>
           <button data-v="30">30秒</button>
           <button data-v="60">60秒</button>
+        </div>
+      </div>
+      <div class="set-card glass">
+        <div class="set-row">
+          <div class="set-info">
+            <b>今日のおすすめの選び方</b>
+            <small>順繰り＝メニューを1つずつ順番に。ランダム＝今週まだやってないメニュー優先</small>
+          </div>
+        </div>
+        <div class="seg" id="seg-recommend">
+          <button data-v="sequential">順繰り</button>
+          <button data-v="random_undone">ランダム</button>
         </div>
       </div>
       <div class="set-card glass">
@@ -143,6 +175,31 @@
           <span class="set-arrow">›</span>
         </div>
       </a>
+
+      <p class="fan-note">本アプリはCryptoNinjaのファンメイド（二次創作）アプリです。</p>
+    </div>
+  </section>
+
+  <!-- 実施履歴（修行の記録） -->
+  <section id="screen-history" class="screen hud">
+    <div class="hud-env"></div>
+    <div class="hud-scroll detail-scroll">
+      <header class="detail-top">
+        <button id="btn-history-back" class="hbtn-dark" aria-label="戻る">←</button>
+        <h2>修行の記録</h2>
+      </header>
+
+      <div id="history-summary" class="hud-summary glass">
+        <div class="hud-metrics">
+          <div class="hud-metric"><span class="hud-m-ico">🎉</span><b id="history-total">0</b><small>総完走回数</small></div>
+          <div class="hud-metric"><span class="hud-m-ico">📅</span><b id="history-week">0</b><small>今週の回数</small></div>
+          <div class="hud-metric"><span class="hud-m-ico">⭐</span><b id="history-exp">0</b><small>合計修行値</small></div>
+          <div class="hud-metric"><span class="hud-m-ico">🔥</span><b id="history-streak">0</b><small>連続日数</small></div>
+        </div>
+      </div>
+
+      <div class="hud-sec">これまでの記録<i class="hud-slash"></i></div>
+      <div id="history-list" class="rank-list"></div>
 
       <p class="fan-note">本アプリはCryptoNinjaのファンメイド（二次創作）アプリです。</p>
     </div>

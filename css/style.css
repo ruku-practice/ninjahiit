@@ -177,6 +177,11 @@ button, .btn-primary, .btn-ghost, .catalog-link { font-family: inherit; }
 .hud-catalog { border-radius: 12px; padding: 12px; font-weight: 800; font-size: 0.92rem; color: #1f2a44; cursor: pointer; }
 .hud-catalog:active { transform: scale(0.98); }
 
+/* 昨日の実績＋今日のおすすめ（ホーム上部カード） */
+.reco-card { display: flex; flex-direction: column; gap: 6px; }
+.reco-yesterday { text-align: center; font-size: 0.72rem; font-weight: 700; color: #4a5578;
+  padding: 0 8px; line-height: 1.4; }
+
 /* 今日のチャレンジ */
 .hud-challenge { display: flex; align-items: center; gap: 11px; border: none; cursor: pointer; border-radius: 15px; padding: 12px 15px; text-align: left;
   clip-path: polygon(15px 0, 100% 0, 100% 100%, 0 100%, 0 15px); }
@@ -655,6 +660,19 @@ button, .btn-primary, .btn-ghost, .catalog-link { font-family: inherit; }
 .rank-exp { flex: none; font-weight: 800; color: #4a5578; font-size: 0.9rem; font-family: "Baloo 2", inherit; }
 .rank-exp small { font-size: 0.62rem; color: #8492b5; font-weight: 800; margin-left: 2px; }
 .rank-note { text-align: center; color: #6b779a; font-size: 0.82rem; font-weight: 700; padding: 18px 8px; line-height: 1.7; }
+
+/* ---- 実施履歴（修行の記録） ---- */
+.hist-row { gap: 8px; }
+.hist-date { flex: none; width: 3.6em; text-align: center; font-size: 0.72rem; font-weight: 800; color: #6b779a;
+  font-family: "Baloo 2", inherit; }
+.hist-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.hist-info b { font-size: 0.9rem; font-weight: 900; color: #1f2a44; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hist-info small { font-size: 0.64rem; color: #8492b5; font-weight: 700; }
+.hist-exp { flex: none; font-weight: 900; color: #ff4f81; font-size: 0.86rem; font-family: "Baloo 2", inherit; text-align: right; }
+.hist-exp small { display: block; font-size: 0.56rem; color: #8492b5; font-weight: 800; }
+.hist-exp-quit { color: #8492b5; font-size: 0.72rem; }
+.hist-badge { flex: none; font-size: 0.9rem; }
+.hist-badge-quit { opacity: 0.6; }
 
 /* ---- マイメニュー（ビルダー） ---- */
 .hud-cat-ico { width: 22px; height: 22px; border-radius: 7px; object-fit: cover; vertical-align: -5px;

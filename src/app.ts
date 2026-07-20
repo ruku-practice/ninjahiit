@@ -4,6 +4,7 @@ import {
   EXERCISES, PRESETS, TRAINERS, VOICE_LINES, voiceLineFirst, voiceLineNext,
   DEFAULT_SETTINGS, estimateKcal, expForResult, rankInfo, WEEKLY_GOAL, voiceLineLast,
   MISSION_BONUS_EXP, missionForDate, streakBonusExp, HOME_TAP_KEYS, weekDoneArray,
+  recommendWorkout, yesterdaySummary,
 } from "./data.ts";
 import { Sound, Voice } from "./audio.ts";
 import { WorkoutEngine } from "./timer.ts";
@@ -390,6 +391,9 @@ function renderMypage() {
   const cheer = state.settings.cheer || "normal";
   document.querySelectorAll<any>("#seg-cheer button").forEach((b) =>
     b.classList.toggle("on", b.dataset.v === cheer));
+  const recommendMode = state.settings.recommendMode || "sequential";
+  document.querySelectorAll<any>("#seg-recommend button").forEach((b) =>
+    b.classList.toggle("on", b.dataset.v === recommendMode));
   const st = $("#set-sound");
   st.classList.toggle("on", !!state.settings.sound);
   st.textContent = state.settings.sound ? "ON" : "OFF";
@@ -880,6 +884,18 @@ function nextHomeQuote() {
   el.classList.add("bubble-pop");
 }
 
+// ---- 昨日の実績＋今日のおすすめ（ホーム上部カード）----
+// 純粋関数（data.ts）の結果をDOMへ反映するだけ。タップ遷移用に選ばれたメニューを保持しておく
+let recoWorkout: any = null;
+
+function renderRecoCard() {
+  const y = yesterdaySummary(state.history);
+  $("#reco-yesterday").textContent = y.message;
+  const mode = state.settings.recommendMode || "sequential";
+  recoWorkout = recommendWorkout(state.history, mode, PRESETS);
+  $("#reco-today-desc").textContent = recoWorkout ? `「${recoWorkout.title}」はどう？` : "";
+}
+
 // ---- ホーム画面 ----
 function renderHome() {
   stopCatalog();
@@ -891,6 +907,7 @@ function renderHome() {
   maybeSpeakGreeting();
   for (let i = 1; i <= 4; i++) new Image().src = `${trainer().dir}/joy_${i}.png`;
   renderStatusCard();
+  renderRecoCard();
   const list = $("#preset-list");
   list.innerHTML = "";
   [...PRESETS, ...customMenus()].forEach((p, i) => {
@@ -923,14 +940,51 @@ function renderHome() {
   show("screen-home");
 }
 
+// 実働時間を「◯分◯秒」（1分未満は「◯秒」）で表示
+function fmtMinSec(totalSec: number): string {
+  const s = Math.max(0, Math.round(totalSec));
+  const m = Math.floor(s / 60), sc = s % 60;
+  return m > 0 ? `${m}分${sc}秒` : `${sc}秒`;
+}
+
+// 履歴1件のメニュー名：workoutId→PRESETS.title、消えたメニュー(カスタム削除済み等)は
+// 完走時点の記録(entry.title)、それも無ければ「クイック」
+function historyMenuTitle(h: HistoryEntry): string {
+  return PRESETS.find((p) => p.id === h.workoutId)?.title || h.title || "クイック";
+}
+
+const escHtml = (t: any) => String(t).replace(/[&<>"']/g, (c) =>
+  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" } as any)[c]);
+
+// ---- 実施履歴（修行の記録）----
 function renderHistory() {
-  const el = $("#history-list");
-  const items = [...state.history].reverse().slice(0, 30);
-  $("#history-total").textContent =
-    `完走 ${state.history.length}回 ・ 累計 ${Math.round(state.history.reduce((a, h) => a + h.totalWorkSec, 0) / 60)}分`;
-  el.innerHTML = items.length
-    ? items.map(h => `<li>${h.date}　${h.title}</li>`).join("")
-    : "<li>まだ記録がないよ。最初の4分から！</li>";
+  show("screen-history");
+  $("#history-total").textContent = String(state.history.filter((h) => h.completed).length);
+  $("#history-week").textContent = String(weekRecord().count);
+  $("#history-exp").textContent = String(totalExp());
+  $("#history-streak").textContent = String(streakDays());
+
+  const wrap = $("#history-list");
+  const items = [...state.history].sort((a, b) => (b.ts || 0) - (a.ts || 0)); // 日付降順（ts基準）
+  if (!items.length) {
+    wrap.innerHTML = `<p class="rank-note">まだ記録がないよ。最初の4分、いっしょに始めよう。</p>`;
+    return;
+  }
+  wrap.innerHTML = items.map((h) => {
+    const d = new Date(h.date + "T00:00:00");
+    const dateLabel = `${d.getMonth() + 1}/${d.getDate()}(${"日月火水木金土"[d.getDay()]})`;
+    const gained = expForResult(h.totalWorkSec) + (h.bonusExp || 0);
+    return `<div class="rank-row hist-row">` +
+      `<span class="hist-date">${dateLabel}</span>` +
+      `<span class="hist-info"><b>${escHtml(historyMenuTitle(h))}</b>` +
+        `<small>${fmtMinSec(h.totalWorkSec)} ・ 約${estimateKcal(h.totalWorkSec)}kcal</small></span>` +
+      (h.completed
+        ? `<span class="hist-exp">+${gained}<small>修行値</small></span>`
+        : `<span class="hist-exp hist-exp-quit">中断</span>`) +
+      `<span class="hist-badge${h.completed ? " hist-badge-done" : " hist-badge-quit"}">` +
+        `${h.completed ? "🎉" : "⏸"}</span>` +
+    `</div>`;
+  }).join("");
 }
 
 // ---- ワークアウト実行 ----
@@ -1197,6 +1251,9 @@ document.addEventListener("DOMContentLoaded", () => {
   $("#btn-detail-back").onclick = detailBack;
   $("#hud-mypage-link").onclick = renderMypage;
   $("#btn-mypage-back").onclick = renderHome;
+  $("#btn-history-link").onclick = renderHistory;
+  $("#btn-history-back").onclick = renderMypage;
+  $("#reco-today").onclick = () => { if (recoWorkout) openDetail(recoWorkout, "home"); };
   $("#btn-link-google").onclick = async () => {
     const btn = $("#btn-link-google");
     btn.disabled = true;
@@ -1229,6 +1286,16 @@ document.addEventListener("DOMContentLoaded", () => {
       showToast({ few: "応援少なめ：3・2・1だけ言うね",
                   normal: "応援普通：あと10秒とカウントだけ言うね",
                   many: "応援多め：たくさん話しかけるね！" }[b.dataset.v]);
+    };
+  });
+  document.querySelectorAll<any>("#seg-recommend button").forEach((b) => {
+    b.onclick = () => {
+      state.settings.recommendMode = b.dataset.v;
+      store.set("settings", state.settings);
+      renderMypage();
+      showToast(b.dataset.v === "random_undone"
+        ? "おすすめをランダム（やってないメニュー優先）にしたよ"
+        : "おすすめを順繰りにしたよ");
     };
   });
   $("#set-sound").onclick = () => {
