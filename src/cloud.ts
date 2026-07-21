@@ -106,3 +106,20 @@ export async function signInWithGoogle(): Promise<boolean> {
     return false;
   }
 }
+
+// ログアウト（マイページの「ログアウト」ボタン用）。
+// この端末は次回起動時にensureSignedIn()が新しい匿名セッションを自動作成するので、
+// アプリが使えなくなることはない。localStorageの記録（履歴・連続日数・小判等）は
+// サインアウトでは一切消さない＝ローカルファースト維持。失敗してもthrowせずfalseを返す
+// （オフライン等でsignOut自体に失敗しても、呼び出し側はUIを未連携表示へ戻してよい）
+export async function signOutGoogle(): Promise<boolean> {
+  const p = supabasePromise();
+  if (!p) return false;
+  try {
+    const sb = await p;
+    const { error } = await sb.auth.signOut();
+    return !error;
+  } catch {
+    return false;
+  }
+}

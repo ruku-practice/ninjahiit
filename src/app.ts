@@ -4,7 +4,7 @@ import {
   EXERCISES, PRESETS, TRAINERS, VOICE_LINES, voiceLineFirst, voiceLineNext,
   DEFAULT_SETTINGS, estimateKcal, expForResult, rankInfo, WEEKLY_GOAL, voiceLineLast,
   MISSION_BONUS_EXP, missionForDate, streakBonusExp, HOME_TAP_KEYS, weekDoneArray,
-  recommendWorkout, yesterdaySummary,
+  recommendWorkout, yesterdaySummary, shouldShowHealthNotice, pauseButtonState,
 } from "./data.ts";
 import { Sound, Voice } from "./audio.ts";
 import { WorkoutEngine } from "./timer.ts";
@@ -12,10 +12,16 @@ import { Native } from "./native.ts";
 import { KOBAN_RATES, SHIELD_MAX, addKoban, kobanBalance } from "./points.ts";
 import { maybeShowInterstitial, recordFirstLaunch } from "./ads.ts";
 import { syncNow } from "./sync.ts";
-import { ensureSignedIn, getIdentityStatus, isOAuthReturnUrl, linkGoogle } from "./cloud.ts";
-import { fetchWeeklyRanking, getNinjaName, setNinjaName, validateNinjaName } from "./ranking.ts";
+import { ensureSignedIn, isOAuthReturnUrl } from "./cloud.ts";
+// Google連携(linkGoogle/signOutGoogle/getIdentityStatus)はv1でUIを蓋にしたため未import。
+// 将来復活のため関数自体はcloud.tsに残置（審査前仕分け§1b・2026-07-21ルク決定）。
+import {
+  fetchWeeklyRanking, getNinjaName, setNinjaName, validateNinjaName,
+  hiddenNinjas, hideNinja, unhideNinja, filterHiddenRanking,
+} from "./ranking.ts";
 import {
   POKE_MESSAGES, addFriendByCode, fetchUnseenPokes, friendsBoard, markPokesSeen, myFriendCode, sendPoke,
+  removeFriend, removeFriendFromBoard,
 } from "./friends.ts";
 
 
@@ -256,7 +262,7 @@ function updateBldUI() {
   const workTotal = n * bld.workSec;
   const totalSec = n ? workTotal + (n - 1) * bld.restSec + state.settings.prepareSec : 0;
   $("#bld-summary").textContent = n
-    ? `${n}本 ・ 約${Math.max(1, Math.ceil(totalSec / 60))}分 ・ 約${estimateKcal(workTotal)}kcal ・ +${expForResult(workTotal)}修行値`
+    ? `${n}本 ・ 約${Math.max(1, Math.ceil(totalSec / 60))}分 ・ 約${estimateKcal(workTotal)}kcal（体重60kg想定の概算） ・ +${expForResult(workTotal)}修行値`
     : "";
 }
 
@@ -340,6 +346,7 @@ function openDetail(workout, from) {
         `<span>🥷 ${seq}種目</span><span>⏱ 約${min}分</span>` +
         `<span>🔁 ${p.rounds}周</span><span>🔥 ${kcal}kcal</span>` +
       `</span>` +
+      `<small class="kcal-note">（体重60kg想定の概算）</small>` +
     `</span>`;
   const wrap = $("#detail-ex");
   wrap.innerHTML = "";
@@ -401,34 +408,35 @@ function renderMypage() {
   if (!Native.isNative) {
     $("#reminder-note").textContent = "通知はアプリ版（準備中）で届きます。時刻は保存されます";
   }
-  refreshAcctCard();
+  renderHiddenNinjaList();
   show("screen-mypage");
 }
 
-// アカウント連携カードの状態更新（非同期・画面表示はrenderMypageが即座に行う）
-async function refreshAcctCard() {
-  if (Native.isNative) {
-    // ネイティブ(Capacitor)はスコープ外。中途半端なネイティブ認証は作らずPWA版へ誘導するのみ
-    $("#acct-desc").textContent = "この機能はPWA版（rukupractice.com/kintore/ をブラウザで開く）でご利用いただけます";
-    $("#btn-link-google").hidden = true;
-    $("#acct-linked-row").hidden = true;
-    $("#btn-signin-google").hidden = true;
+// マイページの「非表示にした人」一覧（番付でこっそり非表示にした忍び名の解除リスト）
+function renderHiddenNinjaList() {
+  const list = hiddenNinjas();
+  const wrap = $("#hidden-ninja-list");
+  if (!wrap) return;
+  if (!list.length) {
+    wrap.innerHTML = `<p class="rank-note hidden-ninja-empty">非表示にした人はいないよ</p>`;
     return;
   }
-  $("#btn-signin-google").hidden = false;
-  const status = await getIdentityStatus();
-  if (!$("#screen-mypage").classList.contains("active")) return; // 取得中に画面を離れていたら反映しない
-  if (status.linked) {
-    $("#btn-link-google").hidden = true;
-    $("#acct-linked-row").hidden = false;
-    $("#acct-email").textContent = status.email || "";
-    $("#acct-desc").textContent = "連携済みです。機種変更や再インストールでも記録を引き継げます";
-  } else {
-    $("#btn-link-google").hidden = false;
-    $("#acct-linked-row").hidden = true;
-    $("#acct-desc").textContent = "Googleと連携すると、アカウントがGoogleに保護され、なかま・ランキングが回復可能になります。";
-  }
+  wrap.innerHTML = list.map((h) =>
+    `<div class="hidden-ninja-row">` +
+      `<span class="hidden-ninja-name">${escHtml(h.name || "名無しの忍び")}</span>` +
+      `<button class="rank-rename-btn" data-id="${escHtml(h.id)}">戻す</button>` +
+    `</div>`).join("");
+  wrap.querySelectorAll(".rank-rename-btn").forEach((b) => {
+    b.onclick = () => {
+      unhideNinja(b.dataset.id);
+      renderHiddenNinjaList();
+      showToast("番付にまた表示するようにしたよ");
+    };
+  });
 }
+
+// アカウント連携カード(Google)はv1でUIを蓋にしたため、状態更新関数ごと撤去済み。
+// 将来復活時はcloud.tsのgetIdentityStatus/linkGoogle/signOutGoogleとここのUI配線を戻す。
 
 function renderCatalog() {
   stopCatalog();
@@ -471,6 +479,7 @@ function renderCatalog() {
 // ---- 週間ランキング（R3） ----
 // クラウドの weekly_ranking RPC を表示。忍び名を設定した人だけ番付に載る
 let myNinjaName = "";
+let lastRankRows: any[] | null = null; // 非表示操作で再取得せずに再描画するための直近データ
 
 async function renderRanking() {
   stopCatalog();
@@ -501,6 +510,7 @@ async function renderRanking() {
     $("#rank-list").innerHTML = `<p class="rank-note">番付を取得できませんでした。<br>少し時間をおいて開き直してみてね。</p>`;
     return;
   }
+  lastRankRows = rows;
   renderRankRows(rows);
 }
 
@@ -516,14 +526,33 @@ function renderRankRows(rows) {
       `<p class="rank-note">今週はまだ誰も番付に載っていません。<br>最初の忍びになろう！</p>`;
     return;
   }
-  const esc = (t) => t.replace(/[&<>"']/g, (c) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
-  $("#rank-list").innerHTML = rows.map((r) =>
+  // 忍び名の非表示（ローカルミュート）を適用。改名しても効くようninja_id基準
+  const visible = filterHiddenRanking(rows, hiddenNinjas());
+  if (!visible.length) {
+    $("#rank-list").innerHTML =
+      `<p class="rank-note">表示できる番付がありません。<br>マイページの「非表示にした人」から戻せます。</p>`;
+    return;
+  }
+  $("#rank-list").innerHTML = visible.map((r) =>
     `<div class="rank-row${r.is_me ? " me" : ""}">` +
       `<span class="rank-no">${r.rank}</span>` +
-      `<span class="rank-name">${esc(r.ninja_name)}</span>` +
+      `<span class="rank-name">${escHtml(r.ninja_name)}</span>` +
       `<span class="rank-exp">${r.weekly_exp}<small>修行値</small></span>` +
+      (r.is_me ? "" :
+        `<button class="rank-hide-btn" data-id="${escHtml(r.ninja_id)}" data-name="${escHtml(r.ninja_name)}" aria-label="この名前を番付から非表示にする" title="この名前を番付から非表示にする">⋯</button>`) +
     `</div>`).join("");
+  $("#rank-list").querySelectorAll(".rank-hide-btn").forEach((b) => {
+    b.onclick = () => hideRankRow(b.dataset.id, b.dataset.name);
+  });
+}
+
+// 忍び名を番付から非表示にする（罰しないトーン・自分の画面だけに反映・いつでもマイページから戻せる）
+function hideRankRow(ninjaId: string, name: string) {
+  if (!ninjaId) return;
+  if (!confirm(`「${name}」を番付から非表示にする？\n（あなたの画面だけに反映されます。マイページからいつでも戻せます）`)) return;
+  hideNinja(ninjaId, name);
+  showToast(`「${name}」を番付から非表示にしたよ`);
+  if (lastRankRows) renderRankRows(lastRankRows); // 再取得せず手元のデータで即再描画
 }
 
 async function joinRanking(name) {
@@ -540,18 +569,19 @@ async function joinRanking(name) {
 
 // ---- なかま（友達）＆手裏剣 ----
 let pokeTargetId: string | null = null;
+let lastFriendBoard: any[] | null = null; // 解除操作で再取得せずに再描画するための直近データ
+let friendRemovePending = false;          // 多重タップ耐性（連打で二重RPCを飛ばさない）
 
 async function loadFriendsSection() {
   $("#friend-list").innerHTML = `<p class="rank-note">なかまを読み込み中…</p>`;
   const [code, board] = await Promise.all([myFriendCode(), friendsBoard()]);
   if (!$("#screen-ranking").classList.contains("active")) return;
   $("#my-friend-code").textContent = code || "取得できず";
+  lastFriendBoard = board;
   renderFriendRows(board);
 }
 
 function renderFriendRows(board) {
-  const esc = (t) => t.replace(/[&<>"']/g, (c) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   if (board === null) {
     $("#friend-list").innerHTML = `<p class="rank-note">なかま情報を取得できませんでした</p>`;
     return;
@@ -563,14 +593,48 @@ function renderFriendRows(board) {
   }
   $("#friend-list").innerHTML = board.map((f) =>
     `<div class="friend-row">` +
-      `<span class="friend-name">${esc(f.ninja_name)}</span>` +
-      (f.done_today ? `<span class="friend-done">今日 完了！</span>` : "") +
-      `<span class="friend-exp">${f.weekly_exp}<small>今週</small></span>` +
-      `<button class="poke-btn" data-id="${f.friend_id}">手裏剣を投げる</button>` +
+      `<div class="friend-top">` +
+        `<span class="friend-name">${escHtml(f.ninja_name)}</span>` +
+        (f.done_today ? `<span class="friend-done">今日 完了！</span>` : "") +
+        `<span class="friend-exp">${f.weekly_exp}<small>今週</small></span>` +
+      `</div>` +
+      `<div class="friend-actions">` +
+        `<button class="poke-btn" data-id="${f.friend_id}">手裏剣を投げる</button>` +
+        `<button class="friend-unfriend-btn" data-id="${f.friend_id}" data-name="${escHtml(f.ninja_name)}">解除</button>` +
+      `</div>` +
     `</div>`).join("");
   $("#friend-list").querySelectorAll(".poke-btn").forEach((b) => {
     b.onclick = () => openPokeMenu(b.dataset.id);
   });
+  $("#friend-list").querySelectorAll(".friend-unfriend-btn").forEach((b) => {
+    b.onclick = () => unfriendRow(b.dataset.id, b.dataset.name);
+  });
+}
+
+// なかま解除（罰しないトーン：確認ダイアログ→双方向で削除→一覧を即更新）
+async function unfriendRow(friendId: string, name: string) {
+  if (!friendId || friendRemovePending) return;
+  if (!confirm(`「${name}」さんをなかまから外しますか？`)) return;
+  friendRemovePending = true;
+  try {
+    if (!navigator.onLine) { showToast("オフラインです。電波のあるところでもう一度試してね"); return; }
+    // 楽観的更新：まず一覧から消して即座に反映し、失敗したら元のデータで復元する
+    const before = lastFriendBoard;
+    if (lastFriendBoard) {
+      lastFriendBoard = removeFriendFromBoard(lastFriendBoard, friendId);
+      renderFriendRows(lastFriendBoard);
+    }
+    const ok = await removeFriend(friendId);
+    if (ok) {
+      showToast(`「${name}」さんをなかまから外したよ`);
+    } else {
+      lastFriendBoard = before; // 失敗したら元に戻す
+      if (lastFriendBoard) renderFriendRows(lastFriendBoard);
+      showToast("解除できなかった…電波を確認してもう一度試してね");
+    }
+  } finally {
+    friendRemovePending = false;
+  }
 }
 
 function openPokeMenu(friendId: string) {
@@ -818,6 +882,7 @@ function renderStatusCard() {
         `<small class="hud-rank-next">${r.next ? `あと ${r.remain}` : "最高位！"}</small>` +
       `</div>` +
     `</div>` +
+    `<p class="kcal-note">消費kcalは（体重60kg想定の概算）です</p>` +
     `<div class="hud-week"><span class="hud-week-lbl">今週 <b>${wr.count}/${wr.goal}日</b></span>` +
     `<span class="hud-wd-row">${strip}</span>` +
     `<span class="hud-koban"><img src="assets/ui/icons/koban.jpg" alt="">${kobanBalance()}</span></div>`;
@@ -977,7 +1042,7 @@ function renderHistory() {
     return `<div class="rank-row hist-row">` +
       `<span class="hist-date">${dateLabel}</span>` +
       `<span class="hist-info"><b>${escHtml(historyMenuTitle(h))}</b>` +
-        `<small>${fmtMinSec(h.totalWorkSec)} ・ 約${estimateKcal(h.totalWorkSec)}kcal</small></span>` +
+        `<small>${fmtMinSec(h.totalWorkSec)} ・ 約${estimateKcal(h.totalWorkSec)}kcal（体重60kg想定の概算）</small></span>` +
       (h.completed
         ? `<span class="hist-exp">+${gained}<small>修行値</small></span>`
         : `<span class="hist-exp hist-exp-quit">中断</span>`) +
@@ -1115,9 +1180,27 @@ function startWorkout(workout) {
 
   state.engine = engine;
   $("#run-title").textContent = workout.title;
-  $("#btn-pause").textContent = "⏸";
+  setPauseButtonUI(false);
   show("screen-run");
   engine.start();
+}
+
+// 一時停止ボタンのアイコン（絵文字⏸/▶をやめ、既存UIアイコンのトーンに合わせたインラインSVGへ。
+// 新規のAI画像生成はしない＝SVGで完結させる。currentColorなのでhud配色にもそのまま追従する）
+const ICON_PAUSE_SVG =
+  `<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">` +
+  `<rect x="6" y="5" width="4.4" height="14" rx="1.6" fill="currentColor"/>` +
+  `<rect x="13.6" y="5" width="4.4" height="14" rx="1.6" fill="currentColor"/></svg>`;
+const ICON_PLAY_SVG =
+  `<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">` +
+  `<path d="M8.5 5.6v12.8a1 1 0 0 0 1.53.85l10-6.4a1 1 0 0 0 0-1.7l-10-6.4a1 1 0 0 0-1.53.85Z" fill="currentColor"/></svg>`;
+
+function setPauseButtonUI(paused: boolean) {
+  const s = pauseButtonState(paused);
+  const btn = $("#btn-pause");
+  if (!btn) return;
+  btn.innerHTML = s.icon === "pause" ? ICON_PAUSE_SVG : ICON_PLAY_SVG;
+  btn.setAttribute("aria-label", s.label);
 }
 
 // バックグラウンド復帰(visibilitychange)でも手動ボタンと同じ経路を通す共通ヘルパー
@@ -1131,7 +1214,7 @@ function pauseEngine() {
   e.pause();
   Voice.stop();
   $("#run-chara video")?.pause();
-  $("#btn-pause").textContent = "▶";
+  setPauseButtonUI(true);
 }
 
 function resumeEngine() {
@@ -1139,7 +1222,7 @@ function resumeEngine() {
   if (!e || e.finished || e.pausedAt === null) return;
   e.resume();
   playSprite($("#run-chara"), e.current.exercise);
-  $("#btn-pause").textContent = "⏸";
+  setPauseButtonUI(false);
 }
 
 function togglePause() {
@@ -1218,7 +1301,7 @@ function renderDone(workout, totalWorkSec) {
 
   $("#done-stats").innerHTML =
     `<li>${workout.title} 完走 🎉</li>` +
-    `<li>運動時間 ${Math.round(totalWorkSec / 60 * 10) / 10}分 ・ 約${estimateKcal(totalWorkSec)}kcal</li>` +
+    `<li>運動時間 ${Math.round(totalWorkSec / 60 * 10) / 10}分 ・ 約${estimateKcal(totalWorkSec)}kcal（体重60kg想定の概算）</li>` +
     `<li>🥷 ${rankAfter.name} ・ +${gained} 修行値</li>` +
     `<li><img class="koban-ico" src="assets/ui/icons/koban.jpg" alt="">+${state.lastKobanEarned || 0} 小判（計 ${kobanBalance()}）</li>` +
     (missionCleared ? `<li>🚩 今日の任務クリア！（＋${MISSION_BONUS_EXP}修行値込み）</li>` : "") +
@@ -1254,20 +1337,9 @@ document.addEventListener("DOMContentLoaded", () => {
   $("#btn-history-link").onclick = renderHistory;
   $("#btn-history-back").onclick = renderMypage;
   $("#reco-today").onclick = () => { if (recoWorkout) openDetail(recoWorkout, "home"); };
-  $("#btn-link-google").onclick = async () => {
-    const btn = $("#btn-link-google");
-    btn.disabled = true;
-    btn.textContent = "連携中…";
-    const ok = await linkGoogle();
-    if (!ok) {
-      showToast("連携できませんでした。時間をおいて試してね");
-      btn.disabled = false;
-      btn.textContent = "Googleと連携する";
-    }
-    // 成功時はこの後Googleへページごとリダイレクトされるので、ここでは何もしない
-  };
-  // #btn-signin-google（別端末ログイン）は復元(cloud→local取り込み)が未実装のため配線しない。
-  // HTML側でdisabled＋「（準備中）」表示のみ（signInWithGoogle自体はcloud.tsに将来用として残置）
+  // Googleアカウント連携ボタン(#btn-link-google/#btn-signin-google/#btn-logout-google)は
+  // v1でUIを蓋にしたためindex.htmlから撤去済み・配線もなし。
+  // 将来復活時はcloud.tsのlinkGoogle/signOutGoogleと合わせてここに戻す。
   document.querySelectorAll<any>("#seg-plank button").forEach((b) => {
     b.onclick = () => {
       state.settings.plankSec = Number(b.dataset.v);
@@ -1365,6 +1437,17 @@ document.addEventListener("DOMContentLoaded", () => {
     $("#btn-sound").textContent = state.settings.sound ? "🔊" : "🔇";
   };
   $("#btn-sound").textContent = state.settings.sound ? "🔊" : "🔇";
+  setPauseButtonUI(false); // 実行画面に入る前の初期状態（絵文字の一瞬表示を避ける）
+
+  // 初回起動時の健康注意モーダル（マイページからいつでも再表示可）
+  $("#btn-health-ack").onclick = () => {
+    store.set("health_notice_ack", true);
+    $("#health-modal").hidden = true;
+  };
+  $("#btn-health-notice-link").onclick = () => { $("#health-modal").hidden = false; };
+  if (shouldShowHealthNotice(store.get("health_notice_ack", false))) {
+    $("#health-modal").hidden = false;
+  }
 
   // ホームのバージョン表示：package.jsonのversionがViteのdefineで注入される
   $("#app-version").textContent = `v${__APP_VERSION__.split(".").slice(0, 2).join(".")}`;
@@ -1372,7 +1455,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 開発時のみ：コンソールからの動作確認用フック（本番ビルドでは消える）
   if (import.meta.env.DEV) {
-    (window as any).__dbg = { state, startWorkout, renderCatalog, renderHome, renderDone, saveResult, Voice, nextHomeQuote, Sound, flags: () => ({ homeGreetingSpoken, greetingAutoSpoken, homeLineKey }) };
+    (window as any).__dbg = {
+      state, startWorkout, renderCatalog, renderHome, renderDone, saveResult, Voice, nextHomeQuote, Sound,
+      flags: () => ({ homeGreetingSpoken, greetingAutoSpoken, homeLineKey }),
+      // FIX-1/2/4/6 のヘッドレス検証用（クラウド未接続でもUIだけ確認できるようにする）
+      renderFriendRows, renderRankRows, renderHiddenNinjaList, renderMypage, renderHistory, openDetail,
+      store, setPauseButtonUI, pauseEngine, resumeEngine,
+      // renderRanking/loadFriendsSection(実クラウド通信)を経由せずに、hideRankRow/unfriendRowが
+      // 参照するモジュール内キャッシュ(lastRankRows/lastFriendBoard)だけをテスト用に注入するフック
+      setTestCache(rankRows, friendBoard) {
+        if (rankRows !== undefined) { lastRankRows = rankRows; renderRankRows(rankRows); }
+        if (friendBoard !== undefined) { lastFriendBoard = friendBoard; renderFriendRows(friendBoard); }
+      },
+    };
   }
 
   // バックグラウンド/非表示タブ対策：rAFではなくsetInterval+絶対時刻基準のタイマーだが、
@@ -1411,11 +1506,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 起動直後のもたつきを避けて、少し後にクラウド同期（前回未送信分の回収）→手裏剣チェック
   pushWidgetState();
-  // Google連携/ログインのOAuthリダイレクトから戻ってきた直後は、3秒待たずに即同期し、
-  // 結果を確認できるマイページへ直接戻す（ensureSignedInのgetSession呼び出しでsupabase-jsの
-  // detectSessionInUrlがURL中のcode/tokenからセッションを確立する）
+  // Google連携UIはv1で蓋にしたが、万一URLにOAuth戻りパラメータが付いていても
+  // エラーを出さず無害に握りつぶす（ensureSignedInのgetSession呼び出しでsupabase-jsの
+  // detectSessionInUrlがURL中のcode/tokenを消費するだけで、UI操作は発生しない）
   if (isOAuthReturnUrl(location.search, location.hash)) {
-    ensureSignedIn().then(() => { syncNow(state.history); checkPokes(); renderMypage(); });
+    ensureSignedIn().then(() => { syncNow(state.history); checkPokes(); });
   } else {
     setTimeout(() => { syncNow(state.history); checkPokes(); }, 3000);
   }

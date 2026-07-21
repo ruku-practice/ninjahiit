@@ -14,8 +14,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800;900&family=Baloo+2:wght@700;800&display=swap" rel="stylesheet">
-  <script type="module" crossorigin src="./bundle/index-DtkATfpD.js"></script>
-  <link rel="stylesheet" crossorigin href="./bundle/index-C8GangYA.css">
+  <script type="module" crossorigin src="./bundle/index-5vK0PPPS.js"></script>
+  <link rel="stylesheet" crossorigin href="./bundle/index-DkHHrlKE.css">
 </head>
 <body>
 
@@ -152,21 +152,30 @@
         </div>
       </div>
 
-      <div class="hud-sec">アカウント連携<i class="hud-slash"></i></div>
+      <div class="hud-sec">ソーシャル<i class="hud-slash"></i></div>
       <div class="set-card glass">
         <div class="set-row">
           <div class="set-info">
-            <b>☁️ Googleと連携</b>
-            <small id="acct-desc">Googleと連携すると、アカウントがGoogleに保護され、なかま・ランキングが回復可能になります。</small>
-            <small class="acct-note">※ 連続日数など記録の別端末への復元は準備中です。</small>
+            <b>非表示にした人</b>
+            <small>週間ランキングでこっそり非表示にした忍び名。あなたの画面だけの設定です</small>
           </div>
         </div>
-        <button id="btn-link-google" class="rank-join-btn" hidden>Googleと連携する</button>
-        <div id="acct-linked-row" class="acct-linked" hidden>✓ Google連携済み（<span id="acct-email"></span>）</div>
-        <button id="btn-signin-google" class="acct-link-small" disabled hidden>別の端末で引き継ぐ（準備中）</button>
+        <div id="hidden-ninja-list" class="hidden-ninja-list"></div>
       </div>
 
+      <!-- Googleアカウント連携UIはv1では蓋（審査前仕分け§1b・2026-07-21ルク決定）。
+           cloud.tsの連携関数自体は将来復活のため残置。ここではUIを描画しない。 -->
+
       <div class="hud-sec">このアプリについて<i class="hud-slash"></i></div>
+      <button id="btn-health-notice-link" class="set-card glass set-link" type="button">
+        <div class="set-row">
+          <div class="set-info">
+            <b>🩹 運動前の注意事項</b>
+            <small>体調が気になるときは、いつでも見返せます</small>
+          </div>
+          <span class="set-arrow">›</span>
+        </div>
+      </button>
       <a class="set-card glass set-link" href="privacy.html">
         <div class="set-row">
           <div class="set-info">
@@ -207,6 +216,16 @@
   </section>
 
   <div id="toast" class="toast"></div>
+
+  <!-- 運動前の健康注意（初回起動時に1回・マイページからいつでも再表示可） -->
+  <div id="health-modal" class="modal-veil" hidden>
+    <div class="modal-card glass">
+      <div class="modal-ico">🩹</div>
+      <h3>はじめる前に</h3>
+      <p>運動の前に。体調がすぐれない時は無理をせず休んでね。持病や不安のある方は、始める前に医師に相談を。痛みや異常を感じたらすぐ中止してください。</p>
+      <button id="btn-health-ack" class="detail-start-btn">わかった、はじめよう</button>
+    </div>
+  </div>
 
   <!-- メニュー詳細（開始確認） -->
   <section id="screen-detail" class="screen hud">
@@ -385,7 +404,7 @@
         <div class="hbar"><i id="hbar-fill"></i></div>
       </div>
 
-      <button id="btn-pause" aria-label="一時停止">⏸</button>
+      <button id="btn-pause" aria-label="一時停止"></button>
       <p id="run-next"></p>
   </section>
 

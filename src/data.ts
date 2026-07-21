@@ -329,3 +329,15 @@ export function missionForDate(dateStr) {
   for (const c of dateStr) h = (h * 31 + c.charCodeAt(0)) >>> 0;
   return DAILY_MISSIONS[h % DAILY_MISSIONS.length];
 }
+
+// ---- 初回起動時の健康注意モーダル（純粋関数）----
+// ack: localStorageから読んだ既読フラグ（trueのみ既読扱い）。未設定・null・不正値は「未読」＝表示する
+export function shouldShowHealthNotice(ack: unknown): boolean {
+  return ack !== true;
+}
+
+// ---- 一時停止ボタンの表示状態（純粋関数）----
+// paused=trueなら「再開」アイコン（三角）を、falseなら「一時停止」アイコン（二本線）を出す
+export function pauseButtonState(paused: boolean): { icon: "pause" | "play"; label: string } {
+  return paused ? { icon: "play", label: "再開" } : { icon: "pause", label: "一時停止" };
+}

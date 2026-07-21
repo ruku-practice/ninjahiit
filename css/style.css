@@ -132,6 +132,10 @@ button, .btn-primary, .btn-ghost, .catalog-link { font-family: inherit; }
 .hud-wd.done { background: var(--grad-cta); color: #fff; box-shadow: 0 2px 6px rgba(255,79,129,0.3); }
 .hud-wd.today { outline: 2px solid #ff4f81; outline-offset: -2px; }
 
+/* kcal表記の注記（体重60kg想定の概算）。ホーム/詳細/履歴/完了画面で共通利用 */
+.kcal-note { display: block; font-size: 0.6rem; color: #8492b5; font-weight: 700; margin: 3px 0 0; line-height: 1.4; }
+p.kcal-note { text-align: center; }
+
 /* 本体：左サクヤ（反射）＋右メニュー */
 .hud-body { display: flex; gap: 4px; align-items: flex-start; }
 .hud-companion { flex: 0 0 52%; position: sticky; top: 6px; align-self: flex-start; display: flex; flex-direction: column; align-items: center; }
@@ -484,8 +488,12 @@ button, .btn-primary, .btn-ghost, .catalog-link { font-family: inherit; }
   width: 56px; height: 56px; border-radius: 50%;
   margin: 24px auto 0; cursor: pointer; backdrop-filter: blur(4px); /* ゲージと一時停止の間 */
   transition: transform 0.15s ease;
+  display: flex; align-items: center; justify-content: center; /* インラインSVGアイコンの中央寄せ */
 }
+#btn-pause svg { display: block; }
 #btn-pause:active { transform: scale(0.9); }
+#btn-pause:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+#screen-run.hud #btn-pause:focus-visible { outline-color: #1f2a44; }
 #run-next { font-size: 1rem; opacity: 0.85; font-weight: 700;
   margin-top: 16px; /* 一時停止と次のエクササイズの間 */
   padding-bottom: max(20px, env(safe-area-inset-bottom)); }
@@ -531,8 +539,12 @@ button, .btn-primary, .btn-ghost, .catalog-link { font-family: inherit; }
 /* =========================================================
    HUD統一：一覧・実行・完了をトップ（近未来HUD）と同じ空気に
    ========================================================= */
-/* 各画面：hud-env(fixed)を最背面に固定し、中身を前面へ */
-#screen-catalog.hud, #screen-run.hud, #screen-done.hud { background: #aabfe0; color: #1f2a44; }
+/* 各画面：hud-env(fixed)を最背面に固定し、中身を前面へ。
+   .screen.hudの下地色は全hud画面共通（.hud-envはposition:fixedでビューポート全面をカバーするが、
+   iOS等のスクロール端バウンス時に一瞬hud-envの外＝.screenの地の色が透けて見える。
+   個別画面だけ背景色を持たせると持たない画面（マイページ/実施履歴/詳細/ランキング/マイメニュー）だけ
+   下地の紙色(--paper)が透けて「背景が切れた」ように見えるため、hud画面は全て同じ下地色にする） */
+.screen.hud { background: #aabfe0; color: #1f2a44; }
 #screen-catalog.hud .hud-env, #screen-run.hud .hud-env, #screen-done.hud .hud-env { z-index: 0; }
 #screen-catalog.hud > *:not(.hud-env),
 #screen-run.hud > *:not(.hud-env),
@@ -660,6 +672,11 @@ button, .btn-primary, .btn-ghost, .catalog-link { font-family: inherit; }
 .rank-exp { flex: none; font-weight: 800; color: #4a5578; font-size: 0.9rem; font-family: "Baloo 2", inherit; }
 .rank-exp small { font-size: 0.62rem; color: #8492b5; font-weight: 800; margin-left: 2px; }
 .rank-note { text-align: center; color: #6b779a; font-size: 0.82rem; font-weight: 700; padding: 18px 8px; line-height: 1.7; }
+/* 忍び名の非表示（ローカルミュート）ボタン。番付行の末尾に付く小さな「⋯」 */
+.rank-hide-btn { flex: none; width: 26px; height: 26px; border-radius: 50%; border: none; cursor: pointer;
+  background: rgba(120,150,190,0.16); color: #8492b5; font-weight: 900; font-size: 0.85rem; line-height: 1;
+  display: flex; align-items: center; justify-content: center; }
+.rank-hide-btn:active { transform: scale(0.9); }
 
 /* ---- 実施履歴（修行の記録） ---- */
 .hist-row { gap: 8px; }
@@ -735,18 +752,48 @@ button, .btn-primary, .btn-ghost, .catalog-link { font-family: inherit; }
 
 /* ---- なかま＆手裏剣 ---- */
 #my-friend-code { color: #ff4f81; letter-spacing: 0.12em; font-family: "Baloo 2", inherit; }
-.friend-row { display: flex; align-items: center; gap: 10px; border-radius: 13px; padding: 9px 12px;
+/* なかま解除ボタン(FIX-1)を置くため縦積み：上段=名前/バッジ/EXP、下段=アクション行 */
+.friend-row { display: flex; flex-direction: column; align-items: stretch; gap: 8px; border-radius: 13px; padding: 9px 12px;
   background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.72);
   box-shadow: 0 6px 16px rgba(50,74,120,0.12); }
+.friend-top { display: flex; align-items: center; gap: 10px; }
 .friend-name { flex: 1; min-width: 0; font-weight: 900; color: #1f2a44; font-size: 0.92rem;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .friend-done { flex: none; font-size: 0.62rem; font-weight: 900; color: #0f9f8c; }
 .friend-exp { flex: none; font-weight: 800; color: #4a5578; font-size: 0.85rem; font-family: "Baloo 2", inherit; }
 .friend-exp small { font-size: 0.6rem; color: #8492b5; margin-left: 2px; }
+.friend-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
 .poke-btn { flex: none; border: none; cursor: pointer; border-radius: 999px; padding: 7px 12px;
   background: var(--grad-cta); color: #fff; font-family: inherit; font-weight: 900; font-size: 0.76rem;
   box-shadow: var(--shadow-pop); }
 .poke-btn:active { transform: scale(0.94); }
+/* なかま解除：控えめなトーン（罰しない・でも押せると分かる） */
+.friend-unfriend-btn { flex: none; border: 1px solid rgba(120,150,190,0.35); background: rgba(255,255,255,0.7);
+  color: #8492b5; border-radius: 999px; padding: 7px 12px; font-family: inherit; font-weight: 900;
+  font-size: 0.74rem; cursor: pointer; }
+.friend-unfriend-btn:active { transform: scale(0.94); }
+
+/* ---- 非表示にした人（マイページ・FIX-2）---- */
+.hidden-ninja-list { display: flex; flex-direction: column; }
+.hidden-ninja-row { display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 7px 2px; border-bottom: 1px dashed rgba(120,150,190,0.25); }
+.hidden-ninja-row:last-child { border-bottom: none; }
+.hidden-ninja-name { font-size: 0.85rem; font-weight: 800; color: #1f2a44; min-width: 0; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap; }
+.hidden-ninja-empty { padding: 8px 2px; }
+
+/* ---- 運動前の健康注意モーダル（FIX-4）---- */
+.modal-veil { position: fixed; inset: 0; z-index: 90; background: rgba(20,26,45,0.55);
+  display: flex; align-items: center; justify-content: center; padding: 24px;
+  backdrop-filter: blur(2px); }
+.modal-card { width: min(92vw, 380px); border-radius: 20px; padding: 26px 22px 22px; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  box-shadow: 0 20px 40px rgba(20,26,45,0.35); }
+.modal-ico { font-size: 2rem; }
+.modal-card h3 { font-size: 1.08rem; font-weight: 900; color: #1f2a44; }
+.modal-card p { font-size: 0.86rem; color: #4a5578; font-weight: 600; line-height: 1.7; }
+.modal-card .detail-start-btn { width: 100%; margin-top: 6px; }
+
 .poke-menu { position: fixed; left: 50%; bottom: calc(30px + env(safe-area-inset-bottom)); transform: translateX(-50%);
   z-index: 60; width: min(86vw, 360px); border-radius: 18px; padding: 14px;
   display: flex; flex-direction: column; gap: 9px; text-align: center; }

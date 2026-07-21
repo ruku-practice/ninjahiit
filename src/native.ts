@@ -7,6 +7,20 @@ declare global {
   interface Window { Capacitor?: any }
 }
 
+// リマインダー文面（単一ソース。Native.syncReminderとbuildReminderPlanの両方がここを参照する）
+export const REMINDER_MSGS = [
+  "今日の4分、いっしょにやろ？",
+  "4分だけ、忍んでいこ！",
+  "サクヤ、待ってるよ 🥷",
+  "今日も少しだけ、前へ。4分いこ！",
+];
+// 連続記録があるときの文面（Duolingo研究より：キャラ名義＋状況文面。ただし脅さない）
+export const STREAK_MSGS = [
+  "連続{n}日目。今日の4分、守りにいこ！",
+  "{n}日続いてるよ。すごいことだよ、今日も少しだけ！",
+  "サクヤと{n}日連続修行中。今日もいける？",
+];
+
 export const Native: any = {
   get isNative() {
     return !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
@@ -82,41 +96,68 @@ export const Native: any = {
   },
 
   // ---- リマインダー通知（罰しない設計：完走した日はその日の通知を出さない） ----
-  // 毎回「次の1回」だけを予約し、起動時と完走時に予約し直す（repeat管理より確実）
-  REMINDER_ID: 1,
-  REMINDER_MSGS: [
-    "今日の4分、いっしょにやろ？",
-    "4分だけ、忍んでいこ！",
-    "サクヤ、待ってるよ 🥷",
-    "今日も少しだけ、前へ。4分いこ！",
-  ],
-  // 連続記録があるときの文面（Duolingo研究より：キャラ名義＋状況文面。ただし脅さない）
-  STREAK_MSGS: [
-    "連続{n}日目。今日の4分、守りにいこ！",
-    "{n}日続いてるよ。すごいことだよ、今日も少しだけ！",
-    "サクヤと{n}日連続修行中。今日もいける？",
-  ],
+  // 修正前バグ(2026-07-12〜既知): `at`で「次の1回」だけを単発予約し、起動時と完走時に
+  // 予約し直す設計だったため、数日アプリを開かないと予約が尽きて通知が完全に止まっていた
+  // （「毎日」と謳いながら実際は毎日ではなかった）。
+  // 修正: buildReminderPlan()でこれから REMINDER_DAYS_AHEAD 日分をまとめて予約する。
+  // アプリを開く頻度が落ちても、直近の来訪時点から既に2週間分が積まれているため
+  // 通知が完全に途切れることはない（「毎日繰り返し」の実質を満たす）。
+  // 完走日スキップ（今日はもう完走済みなら今日の分だけ出さない）は buildReminderPlan 側で維持。
+  REMINDER_ID: 1,          // 旧バージョン（単発予約）の予約ID。移行時の掃除用に残す
+  REMINDER_BASE_ID: 1000,  // 新方式：REMINDER_BASE_ID + dayOffset を予約IDにする
+  REMINDER_DAYS_AHEAD: 14,
   async syncReminder(timeHHMM, doneToday, streak = 0) {
     const ln = this.plugin("LocalNotifications");
     if (!ln) return "web";
     try {
-      await ln.cancel({ notifications: [{ id: this.REMINDER_ID }] });
+      // 直近の予約をすべて取り消してから、これから14日分を作り直す
+      // （旧バージョンのREMINDER_ID単発予約が残っていても一緒に掃除する）
+      const cancelIds = [{ id: this.REMINDER_ID },
+        ...Array.from({ length: this.REMINDER_DAYS_AHEAD }, (_, i) => ({ id: this.REMINDER_BASE_ID + i }))];
+      await ln.cancel({ notifications: cancelIds });
       if (!timeHHMM) return "off";
       const perm = await ln.requestPermissions();
       if (!perm || perm.display !== "granted") return "denied";
-      const [h, m] = timeHHMM.split(":").map(Number);
-      const at = new Date();
-      at.setHours(h, m, 0, 0);
-      if (at.getTime() <= Date.now() || doneToday) at.setDate(at.getDate() + 1); // 過ぎた or 今日は完走済み→明日
-      const pool = streak >= 2 ? this.STREAK_MSGS : this.REMINDER_MSGS;
-      const body = pool[Math.floor(Math.random() * pool.length)].replace("{n}", String(streak));
-      await ln.schedule({ notifications: [{
-        id: this.REMINDER_ID,
+      const plan = buildReminderPlan(timeHHMM, doneToday, streak, new Date(), this.REMINDER_DAYS_AHEAD, this.REMINDER_BASE_ID);
+      if (!plan.length) return "off"; // 今日はもう完走済み＆明日以降の枠も無い等（daysAheadを極端に小さくした場合のみ）
+      await ln.schedule({ notifications: plan.map((p) => ({
+        id: p.id,
         title: "サクヤと毎日筋トレ",
-        body,
-        schedule: { at, allowWhileIdle: true },
-      }] });
+        body: p.body,
+        schedule: { at: p.at, allowWhileIdle: true },
+      })) });
       return "scheduled";
     } catch (e) { return "error"; }
   },
 };
+
+// ---- リマインダー予約プラン（純粋関数・テスト用） ----
+// timeHHMM: "HH:MM"（空文字ならoff）。doneToday: 今日は完走済みか（今日分だけスキップ）。
+// streak: 連続日数（2日以上でSTREAK_MSGSを使う）。now: 基準時刻（省略時は現在時刻・テストで注入）。
+// daysAhead: 何日分先まで一度に予約するか。baseId: 予約IDの起点（id = baseId + dayOffset）。
+export interface ReminderPlanItem { id: number; at: Date; body: string }
+export function buildReminderPlan(
+  timeHHMM: string,
+  doneToday: boolean,
+  streak: number = 0,
+  now: Date = new Date(),
+  daysAhead: number = 14,
+  baseId: number = 1000,
+): ReminderPlanItem[] {
+  if (!timeHHMM) return [];
+  const [h, m] = timeHHMM.split(":").map(Number);
+  const pool = streak >= 2 ? STREAK_MSGS : REMINDER_MSGS;
+  const plan: ReminderPlanItem[] = [];
+  for (let dayOffset = 0; dayOffset < daysAhead; dayOffset++) {
+    const at = new Date(now);
+    at.setDate(at.getDate() + dayOffset);
+    at.setHours(h, m, 0, 0);
+    if (dayOffset === 0) {
+      if (at.getTime() <= now.getTime()) continue; // 今日の時刻はもう過ぎている
+      if (doneToday) continue;                      // 罰しない設計：完走済みの今日はスキップ
+    }
+    const body = pool[Math.floor(Math.random() * pool.length)].replace("{n}", String(streak));
+    plan.push({ id: baseId + dayOffset, at, body });
+  }
+  return plan;
+}

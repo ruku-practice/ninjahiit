@@ -80,6 +80,25 @@ export async function sendPoke(friendId: string, msgIdx: number): Promise<string
   } catch { return "error"; }
 }
 
+// なかま解除（双方向）。サーバー側は supabase/schema_v4_social_fixes.sql の remove_friend RPC。
+// 「関わりたくない相手を切れる」導線＝罰しないトーンで、自分の一覧から消え・相手の一覧からも消え・
+// 以後の手裏剣も send_poke が not_friend で弾くようになる（=つつき受信も止まる）
+export async function removeFriend(friendId: string): Promise<boolean> {
+  if (!cloudEnabled() || !friendId) return false;
+  try {
+    const uid = await ensureSignedIn();
+    if (!uid) return false;
+    const sb = await supabasePromise();
+    const { error } = await sb.rpc("remove_friend", { target: friendId });
+    return !error;
+  } catch { return false; }
+}
+
+// なかま一覧からIDを取り除いた新しい配列を返す純粋関数（UIの楽観的更新・テスト用）
+export function removeFriendFromBoard(board: FriendRow[], friendId: string): FriendRow[] {
+  return board.filter((f) => f.friend_id !== friendId);
+}
+
 export async function fetchUnseenPokes(): Promise<PokeRow[]> {
   if (!cloudEnabled()) return [];
   try {
