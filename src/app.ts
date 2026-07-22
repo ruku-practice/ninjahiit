@@ -6,7 +6,7 @@ import {
   DEFAULT_SETTINGS, estimateKcal, expForResult, rankInfo, WEEKLY_GOAL, voiceLineLast,
   MISSION_BONUS_EXP, missionForDate, streakBonusExp, HOME_TAP_KEYS, weekDoneArray,
   recommendWorkout, yesterdaySummary, shouldShowHealthNotice, pauseButtonState,
-  restBannerLabel, runNextLabel, soundIconState,
+  restBannerLabel, runNextLabel, soundIconState, fitFontSize, shareImageFileName,
 } from "./data.ts";
 import { Bgm, Sound, Voice } from "./audio.ts";
 import { WorkoutEngine } from "./timer.ts";
@@ -488,7 +488,7 @@ function syncSoundUI() {
   const pb = $("#pop-toggle-bgm");
   pb.classList.toggle("on", bgmOn);
   pb.textContent = bgmOn ? "ON" : "OFF";
-  $("#btn-sound").textContent = soundIconState(voiceOn, bgmOn);
+  $("#sound-icon").setAttribute("class", `sound-icon ${soundIconState(voiceOn, bgmOn)}`);
 }
 
 function setVoiceEnabled(on: boolean) {
@@ -1538,6 +1538,206 @@ function renderDone(workout, totalWorkSec) {
   show("screen-done");
 }
 
+// ---- 完了画面のシェア画像（2026-07-23ルク指示）----
+// 画面のスクショではなく、Xに貼って映える1枚絵をキャンバスで描き起こす。
+// 内容は完了画面と同じ（サクヤ／セリフ／メニューと種目サムネ／記録）。
+const SHARE_W = 1080, SHARE_H = 1350;
+
+function loadImg(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error(`load failed: ${src}`));
+    img.src = src;
+  });
+}
+
+function roundRectPath(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+// 画像を指定枠にcoverで描く（アスペクト比を保ったまま枠を埋める）
+function drawCover(ctx, img, x, y, w, h) {
+  const scale = Math.max(w / img.width, h / img.height);
+  const dw = img.width * scale, dh = img.height * scale;
+  ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+}
+
+async function buildShareImageBlob(): Promise<Blob> {
+  const cv = document.createElement("canvas");
+  cv.width = SHARE_W; cv.height = SHARE_H;
+  const ctx = cv.getContext("2d");
+  const FONT = '"M PLUS Rounded 1c", system-ui, sans-serif';
+  try { await (document as any).fonts?.ready; } catch { /* フォント未対応環境は既定フォントで描く */ }
+
+  // 背景（読み込めない場合はアプリ配色のグラデで代替）
+  try {
+    const bg = await loadImg("assets/ui/background.jpg");
+    drawCover(ctx, bg, 0, 0, SHARE_W, SHARE_H);
+  } catch {
+    const g = ctx.createLinearGradient(0, 0, 0, SHARE_H);
+    g.addColorStop(0, "#c7d6ee"); g.addColorStop(1, "#aabfe0");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, SHARE_W, SHARE_H);
+  }
+  ctx.fillStyle = "rgba(255,255,255,0.18)";
+  ctx.fillRect(0, 0, SHARE_W, SHARE_H);
+
+  // サクヤ（完了画面に出ている絵をそのまま使う）
+  const charaSrc = ($("#done-chara img") as HTMLImageElement)?.getAttribute("src");
+  let y = 56;
+  if (charaSrc) {
+    try {
+      const chara = await loadImg(charaSrc);
+      const h = 540, w = chara.width * (h / chara.height);
+      ctx.save();
+      ctx.shadowColor = "rgba(31,42,68,0.28)"; ctx.shadowBlur = 30; ctx.shadowOffsetY = 14;
+      ctx.drawImage(chara, (SHARE_W - w) / 2, y, w, h);
+      ctx.restore();
+      y += h + 18;
+    } catch { y += 40; }
+  }
+
+  // セリフ吹き出し
+  const quote = $("#done-quote").textContent.trim();
+  if (quote) {
+    const size = fitFontSize(quote, SHARE_W - 260, 46, 30,
+      (t, s) => { ctx.font = `700 ${s}px ${FONT}`; return ctx.measureText(t).width; });
+    ctx.font = `700 ${size}px ${FONT}`;
+    const bw = Math.min(SHARE_W - 120, ctx.measureText(quote).width + 90), bh = 104;
+    const bx = (SHARE_W - bw) / 2;
+    ctx.save();
+    ctx.shadowColor = "rgba(31,42,68,0.20)"; ctx.shadowBlur = 22; ctx.shadowOffsetY = 8;
+    ctx.fillStyle = "#fff";
+    roundRectPath(ctx, bx, y, bw, bh, 34);
+    ctx.fill();
+    ctx.restore();
+    ctx.fillStyle = "#1f2a44"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText(quote, SHARE_W / 2, y + bh / 2);
+    y += bh + 26;
+  }
+
+  // メニューカード（タイトル＋種目サムネ）
+  const w0 = state.currentWorkout;
+  if (w0) {
+    const keys = [...w0.exercises, ...((state.settings.plankSec || 0) > 0 ? ["plank"] : [])].slice(0, 8);
+    const cx = 60, cw = SHARE_W - 120;
+    // サムネは上限128pxで、種目が少ない時も大きくなりすぎないようにして中央寄せする
+    const n = keys.length, gap = 12;
+    const tw = Math.min(128, Math.floor((cw - 52 - gap * (n - 1)) / n));
+    const rowW = n * tw + gap * (n - 1);
+    const rowX = cx + (cw - rowW) / 2;
+    const cardH = 108 + tw + 40;
+    ctx.save();
+    ctx.shadowColor = "rgba(50,74,120,0.18)"; ctx.shadowBlur = 24; ctx.shadowOffsetY = 10;
+    ctx.fillStyle = "rgba(255,255,255,0.82)";
+    roundRectPath(ctx, cx, y, cw, cardH, 28);
+    ctx.fill();
+    ctx.restore();
+    // ヘッダー行
+    try {
+      const ico = await loadImg(presetIconSrc(w0));
+      ctx.save();
+      roundRectPath(ctx, cx + 26, y + 22, 64, 64, 16);
+      ctx.clip();
+      ctx.drawImage(ico, cx + 26, y + 22, 64, 64);
+      ctx.restore();
+    } catch { /* アイコンが無い場合は文字だけで成立させる */ }
+    ctx.textAlign = "left"; ctx.textBaseline = "middle";
+    ctx.fillStyle = "#1f2a44"; ctx.font = `800 42px ${FONT}`;
+    ctx.fillText(w0.title, cx + 106, y + 46);
+    ctx.fillStyle = "#4a5578"; ctx.font = `700 26px ${FONT}`;
+    ctx.fillText(`${w0.exercises.length}種目 × ${w0.rounds}周 ・ ワーク${w0.workSec}秒`, cx + 106, y + 80);
+    // 種目サムネ
+    for (let i = 0; i < n; i++) {
+      const tx = rowX + i * (tw + gap), ty = y + 108;
+      try {
+        const th = await loadImg(`${trainer().thumbDir}/${keys[i]}.jpg`);
+        ctx.save();
+        roundRectPath(ctx, tx, ty, tw, tw, 14);
+        ctx.clip();
+        drawCover(ctx, th, tx, ty, tw, tw);
+        ctx.restore();
+      } catch {
+        ctx.fillStyle = "rgba(255,255,255,0.6)";
+        roundRectPath(ctx, tx, ty, tw, tw, 14); ctx.fill();
+      }
+      const name = EXERCISES[keys[i]].name.replace(/​/g, "");
+      ctx.fillStyle = "#4a5578"; ctx.textAlign = "center";
+      const ns = fitFontSize(name, tw + 6, 20, 12,
+        (t, s) => { ctx.font = `700 ${s}px ${FONT}`; return ctx.measureText(t).width; });
+      ctx.font = `700 ${ns}px ${FONT}`;
+      ctx.fillText(name, tx + tw / 2, ty + tw + 18);
+    }
+    y += cardH + 26;
+  }
+
+  // 記録（完了画面の行をそのまま使う。小判行は画像の代わりに絵文字を置く）
+  const lines = [...$("#done-stats").querySelectorAll("li")].map((li: any) =>
+    (li.querySelector("img") ? "🪙 " : "") + li.textContent.trim());
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  for (const line of lines) {
+    if (y > SHARE_H - 150) break;
+    const size = fitFontSize(line, SHARE_W - 140, 34, 22,
+      (t, s) => { ctx.font = `700 ${s}px ${FONT}`; return ctx.measureText(t).width; });
+    ctx.font = `700 ${size}px ${FONT}`;
+    ctx.fillStyle = "rgba(255,255,255,0.85)";
+    ctx.fillText(line, SHARE_W / 2 + 1, y + 25);
+    ctx.fillStyle = "#1f2a44";
+    ctx.fillText(line, SHARE_W / 2, y + 24);
+    y += 50;
+  }
+
+  // フッター
+  ctx.font = `800 30px ${FONT}`;
+  ctx.fillStyle = "rgba(31,42,68,0.72)";
+  ctx.fillText(`${trainer().name}と毎日筋トレ　#毎日筋トレ #CryptoNinja`, SHARE_W / 2, SHARE_H - 46);
+
+  return new Promise((resolve, reject) => {
+    cv.toBlob((b) => b ? resolve(b) : reject(new Error("toBlob failed")), "image/png");
+  });
+}
+
+// クリップボードへコピー。iOS Safari/WKWebViewはユーザー操作と同じタスクで
+// ClipboardItemを作る必要があるため、Blobは「Promiseのまま」渡す
+async function copyShareImage() {
+  const btn = $("#btn-copy-image") as HTMLButtonElement;
+  btn.disabled = true;
+  try {
+    if (navigator.clipboard && "write" in navigator.clipboard && typeof ClipboardItem !== "undefined") {
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": buildShareImageBlob() })]);
+      showToast("画像をコピーしたよ！Xに貼りつけてね");
+      return;
+    }
+    throw new Error("clipboard image unsupported");
+  } catch {
+    // フォールバック：共有シート（iOS）→ それも無理ならダウンロード
+    try {
+      const blob = await buildShareImageBlob();
+      const name = shareImageFileName(state.currentWorkout?.title || "workout", new Date().toISOString());
+      const file = new File([blob], name, { type: "image/png" });
+      if ((navigator as any).canShare?.({ files: [file] })) {
+        await (navigator as any).share({ files: [file] });
+        return;
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = name; a.click();
+      URL.revokeObjectURL(url);
+      showToast("画像を保存したよ");
+    } catch {
+      showToast("画像を作れなかった…もう一度試してね");
+    }
+  } finally {
+    btn.disabled = false;
+  }
+}
+
 // ---- トースト（準備中の案内など） ----
 let toastTimer = null;
 function showToast(msg, ms = 2200) {
@@ -1556,6 +1756,7 @@ document.addEventListener("DOMContentLoaded", () => {
   $("#btn-quit-confirm").onclick = confirmQuitWorkout;
   $("#btn-quit-cancel").onclick = closeQuitModal;
   $("#btn-done-home").onclick = renderHome;
+  $("#btn-copy-image").onclick = copyShareImage;
   $("#btn-catalog").onclick = renderCatalog;
   $("#btn-catalog-back").onclick = renderHome;
   $("#btn-detail-back").onclick = detailBack;

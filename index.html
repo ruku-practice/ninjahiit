@@ -455,7 +455,38 @@
           <div id="run-title"></div>
           <div id="run-progress"></div>
         </div>
-        <button id="btn-sound" class="hbtn" aria-label="サウンド">🔊</button>
+        <button id="btn-sound" class="hbtn" aria-label="サウンド">
+          <!-- サウンドアイコン（Codex製SVG・2026-07-23）。ON/OFFは is-on/is-off クラスで切り替える -->
+          <svg id="sound-icon" class="sound-icon is-on" viewBox="0 0 24 24" aria-hidden="true">
+            <defs>
+              <linearGradient id="sndIconAccent" x1="6" y1="5" x2="19" y2="19" gradientUnits="userSpaceOnUse">
+                <stop offset="0" stop-color="#ff4f81"/>
+                <stop offset="1" stop-color="#ff8a4f"/>
+              </linearGradient>
+              <filter id="sndIconSoftGlow" x="-30%" y="-30%" width="160%" height="160%">
+                <feGaussianBlur stdDeviation="0.45" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+            <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+              <path d="M4.75 9.25h3.1l4.35-3.45v12.4l-4.35-3.45h-3.1z"/>
+              <path d="M7.85 9.25v5.5"/>
+            </g>
+            <path d="M10.1 7.5l2.1-1.7v12.4l-2.1-1.7z" fill="url(#sndIconAccent)" opacity="0.26"/>
+            <path d="M4.75 9.25h3.1l4.35-3.45v12.4l-4.35-3.45h-3.1z" fill="none" stroke="url(#sndIconAccent)" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.1" opacity="0.55"/>
+            <g class="ico-on" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15.35 8.3c1.05.92 1.65 2.22 1.65 3.7s-.6 2.78-1.65 3.7" stroke="currentColor" stroke-width="2"/>
+              <path d="M18.05 6.15A8.05 8.05 0 0 1 20.25 12a8.05 8.05 0 0 1-2.2 5.85" stroke="currentColor" stroke-width="1.9" opacity="0.78"/>
+              <path d="M15.35 8.3c1.05.92 1.65 2.22 1.65 3.7s-.6 2.78-1.65 3.7" stroke="url(#sndIconAccent)" stroke-width="1.05" opacity="0.86" filter="url(#sndIconSoftGlow)"/>
+              <path d="M18.05 6.15A8.05 8.05 0 0 1 20.25 12a8.05 8.05 0 0 1-2.2 5.85" stroke="url(#sndIconAccent)" stroke-width="1" opacity="0.62" filter="url(#sndIconSoftGlow)"/>
+            </g>
+            <g class="ico-off" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15.15 9.35l3.85 3.85" stroke="currentColor" stroke-width="2" opacity="0.24"/>
+              <path d="M19 9.35l-5.55 5.55" stroke="currentColor" stroke-width="2.15"/>
+              <path d="M19 9.35l-5.55 5.55" stroke="url(#sndIconAccent)" stroke-width="1.15" opacity="0.88" filter="url(#sndIconSoftGlow)"/>
+            </g>
+          </svg>
+        </button>
       </header>
 
       <div id="sound-popover" class="sound-pop glass" hidden>
@@ -490,8 +521,9 @@
     <p id="done-quote" class="quote-bubble" style="color: var(--ink)"></p>
     <div id="done-menu" class="done-menu glass"></div>
     <ul id="done-stats"></ul>
-    <div>
+    <div class="done-share-row">
       <a id="btn-share" class="btn-primary" target="_blank" rel="noopener">Xでシェア</a>
+      <button id="btn-copy-image" class="btn-primary" type="button">画像をコピー</button>
     </div>
     <div>
       <button id="btn-done-home" class="btn-ghost">ホームへ戻る</button>

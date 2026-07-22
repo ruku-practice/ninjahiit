@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sound Icon Preview</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --navy: #1f2a44;
+      --pink: #ff4f81;
+      --orange: #ff8a4f;
+      --teal: #39e1d3;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at 18% 16%, rgba(57, 225, 211, 0.16), transparent 28%),
+        radial-gradient(circle at 82% 24%, rgba(255, 79, 129, 0.18), transparent 30%),
+        #101727;
+      color: white;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    main {
+      width: min(900px, calc(100vw - 32px));
+      display: grid;
+      gap: 18px;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .preview-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .surface {
+      min-height: 176px;
+      padding: 18px;
+      display: grid;
+      align-content: space-between;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .surface-gradient {
+      background: linear-gradient(135deg, var(--pink), var(--orange));
+    }
+
+    .surface-navy {
+      background:
+        linear-gradient(135deg, rgba(57, 225, 211, 0.14), transparent 42%),
+        var(--navy);
+    }
+
+    .surface-glass {
+      background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.07)),
+        rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(16px);
+    }
+
+    .label {
+      margin: 0;
+      color: rgba(255, 255, 255, 0.82);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .buttons {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .sound-button {
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.2);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.32),
+        0 8px 20px rgba(0, 0, 0, 0.18);
+      backdrop-filter: blur(12px);
+    }
+
+    .surface-gradient .sound-button {
+      color: #fff;
+    }
+
+    .surface-glass .sound-button {
+      color: var(--navy);
+      border-color: rgba(255, 255, 255, 0.5);
+      background: rgba(255, 255, 255, 0.34);
+    }
+
+    .sound-button svg {
+      width: 24px;
+      height: 24px;
+      display: block;
+    }
+
+    /* Toggle by changing only the SVG class:
+       ON:  <svg class="sound-icon is-on" ...>
+       OFF: <svg class="sound-icon is-off" ...>
+       No innerHTML replacement is needed. */
+    .sound-icon .ico-on,
+    .sound-icon .ico-off {
+      transition: opacity 160ms ease, transform 160ms ease;
+      transform-origin: 12px 12px;
+    }
+
+    .sound-icon.is-on .ico-on,
+    .sound-icon:not(.is-off) .ico-on {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .sound-icon.is-on .ico-off,
+    .sound-icon:not(.is-off) .ico-off {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+
+    .sound-icon.is-off .ico-on {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+
+    .sound-icon.is-off .ico-off {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    @media (max-width: 720px) {
+      .preview-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Sound Button Icon</h1>
+    <section class="preview-grid" aria-label="Sound icon previews">
+      <article class="surface surface-gradient">
+        <p class="label">Pink to Orange</p>
+        <div class="buttons">
+          <button class="sound-button" type="button" aria-label="Sound on">
+            <svg class="sound-icon is-on" viewBox="0 0 24 24" role="img" aria-label="Sound on" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="sndIconAccentA" x1="6" y1="5" x2="19" y2="19" gradientUnits="userSpaceOnUse">
+                  <stop offset="0" stop-color="#ff4f81"/>
+                  <stop offset="1" stop-color="#ff8a4f"/>
+                </linearGradient>
+                <filter id="sndIconSoftGlowA" x="-30%" y="-30%" width="160%" height="160%">
+                  <feGaussianBlur stdDeviation="0.45" result="blur"/>
+                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+              </defs>
+              <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                <path d="M4.75 9.25h3.1l4.35-3.45v12.4l-4.35-3.45h-3.1z"/>
+                <path d="M7.85 9.25v5.5"/>
+              </g>
+              <path d="M10.1 7.5l2.1-1.7v12.4l-2.1-1.7z" fill="url(#sndIconAccentA)" opacity="0.26"/>
+              <path d="M4.75 9.25h3.1l4.35-3.45v12.4l-4.35-3.45h-3.1z" fill="none" stroke="url(#sndIconAccentA)" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.1" opacity="0.55"/>
+              <g class="ico-on" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15.35 8.3c1.05.92 1.65 2.22 1.65 3.7s-.6 2.78-1.65 3.7" stroke="currentColor" stroke-width="2"/>
+                <path d="M18.05 6.15A8.05 8.05 0 0 1 20.25 12a8.05 8.05 0 0 1-2.2 5.85" stroke="currentColor" stroke-width="1.9" opacity="0.78"/>
+                <path d="M15.35 8.3c1.05.92 1.65 2.22 1.65 3.7s-.6 2.78-1.65 3.7" stroke="url(#sndIconAccentA)" stroke-width="1.05" opacity="0.86" filter="url(#sndIconSoftGlowA)"/>
+                <path d="M18.05 6.15A8.05 8.05 0 0 1 20.25 12a8.05 8.05 0 0 1-2.2 5.85" stroke="url(#sndIconAccentA)" stroke-width="1" opacity="0.62" filter="url(#sndIconSoftGlowA)"/>
+              </g>
+              <g class="ico-off" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15.15 9.35l3.85 3.85" stroke="currentColor" stroke-width="2" opacity="0.24"/>
+                <path d="M19 9.35l-5.55 5.55" stroke="currentColor" stroke-width="2.15"/>
+                <path d="M19 9.35l-5.55 5.55" stroke="url(#sndIconAccentA)" stroke-width="1.15" opacity="0.88" filter="url(#sndIconSoftGlowA)"/>
+              </g>
+            </svg>
+          </button>
+          <button class="sound-button" type="button" aria-label="Sound off">
+            <svg class="sound-icon is-off" viewBox="0 0 24 24" role="img" aria-label="Sound off" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="sndIconAccentB" x1="6" y1="5" x2="19" y2="19" gradientUnits="userSpaceOnUse">
+                  <stop offset="0" stop-color="#ff4f81"/>
+                  <stop offset="1" stop-color="#ff8a4f"/>
+                </linearGradient>
+                <filter id="sndIconSoftGlowB" x="-30%" y="-30%" width="160%" height="160%">
+                  <feGaussianBlur stdDeviation="0.45" result="blur"/>
+                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+              </defs>
+              <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                <path d="M4.75 9.25h3.1l4.35-3.45v12.4l-4.35-3.45h-3.1z"/>
+                <path d="M7.85 9.25v5.5"/>
+              </g>
+              <path d="M10.1 7.5l2.1-1.7v12.4l-2.1-1.7z" fill="url(#sndIconAccentB)" opacity="0.26"/>
+              <path d="M4.75 9.25h3.1l4.35-3.45v12.4l-4.35-3.45h-3.1z" fill="none" stroke="url(#sndIconAccentB)" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.1" opacity="0.55"/>
+              <g class="ico-on" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15.35 8.3c1.05.92 1.65 2.22 1.65 3.7s-.6 2.78-1.65 3.7" stroke="currentColor" stroke-width="2"/>
+                <path d="M18.05 6.15A8.05 8.05 0 0 1 20.25 12a8.05 8.05 0 0 1-2.2 5.85" stroke="currentColor" stroke-width="1.9" opacity="0.78"/>
+                <path d="M15.35 8.3c1.05.92 1.65 2.22 1.65 3.7s-.6 2.78-1.65 3.7" stroke="url(#sndIconAccentB)" stroke-width="1.05" opacity="0.86" filter="url(#sndIconSoftGlowB)"/>
+                <path d="M18.05 6.15A8.05 8.05 0 0 1 20.25 12a8.05 8.05 0 0 1-2.2 5.85" stroke="url(#sndIconAccentB)" stroke-width="1" opacity="0.62" filter="url(#sndIconSoftGlowB)"/>
+              </g>
+              <g class="ico-off" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15.15 9.35l3.85 3.85" stroke="currentColor" stroke-width="2" opacity="0.24"/>
+                <path d="M19 9.35l-5.55 5.55" stroke="currentColor" stroke-width="2.15"/>
+                <path d="M19 9.35l-5.55 5.55" stroke="url(#sndIconAccentB)" stroke-width="1.15" opacity="0.88" filter="url(#sndIconSoftGlowB)"/>
+              </g>
+            </svg>
+          </button>
+        </div>
+      </article>
+
+      <article class="surface surface-navy">
+        <p class="label">Navy HUD</p>
+        <div class="buttons">
+          <button class="sound-button" type="button" aria-label="Sound on">
+            <svg class="sound-icon is-on" viewBox="0 0 24 24" role="img" aria-label="Sound on" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="sndIconAccentC" x1="6" y1="5" x2="19" y2="19" gradientUnits="userSpaceOnUse">
+                  <stop offset="0" stop-color="#ff4f81"/>
+                  <stop offset="1" stop-color="#ff8a4f"/>
+                </linearGradient>
+                <filter id="sndIconSoftGlowC" x="-30%" y="-30%" width="160%" height="160%">
+                  <feGaussianBlur stdDeviation="0.45" result="blur"/>
+                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+              </defs>
+              <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                <path d="M4.75 9.25h3.1l4.35-3.45v12.4l-4.35-3.45h-3.1z"/>
+                <path d="M7.85 9.25v5.5"/>
+              </g>
+              <path d="M10.1 7.5l2.1-1.7v12.4l-2.1-1.7z" fill="url(#sndIconAccentC)" opacity="0.26"/>
+              <path d="M4.75 9.25h3.1l4.35-3.45v12.4l-4.35-3.45h-3.1z" fill="none" stroke="url(#sndIconAccentC)" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.1" opacity="0.55"/>
+              <g class="ico-on" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15.35 8.3c1.05.92 1.65 2.22 1.65 3.7s-.6 2.78-1.65 3.7" stroke="currentColor" stroke-width="2"/>
+                <path d="M18.05 6.15A8.05 8.05 0 0 1 20.25 12a8.05 8.05 0 0 1-2.2 5.85" stroke="currentColor" stroke-width="1.9" opacity="0.78"/>
+                <path d="M15.35 8.3c1.05.92 1.65 2.22 1.65 3.7s-.6 2.78-1.65 3.7" stroke="url(#sndIconAccentC)" stroke-width="1.05" opacity="0.86" filter="url(#sndIconSoftGlowC)"/>
+                <path d="M18.05 6.15A8.05 8.05 0 0 1 20.25 12a8.05 8.05 0 0 1-2.2 5.85" stroke="url(#sndIconAccentC)" stroke-width="1" opacity="0.62" filter="url(#sndIconSoftGlowC)"/>
+              </g>
+              <g class="ico-off" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15.15 9.35l3.85 3.85" stroke="currentColor" stroke-width="2" opacity="0.24"/>
+                <path d="M19 9.35l-5.55 5.55" stroke="currentColor" stroke-width="2.15"/>
+                <path d="M19 9.35l-5.55 5.55" stroke="url(#sndIconAccentC)" stroke-width="1.15" opacity="0.88" filter="url(#sndIconSoftGlowC)"/>
+              </g>
+            </svg>
+          </button>
+          <button class="sound-button" type="button" aria-label="Sound off">
+            <svg class="sound-icon is-off" viewBox="0 0 24 24" role="img" aria-label="Sound off" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="sndIconAccentD" x1="6" y1="5" x2="19" y2="19" gradientUnits="userSpaceOnUse">
+                  <stop offset="0" stop-color="#ff4f81"/>
+                  <stop offset="1" stop-color="#ff8a4f"/>
+                </linearGradient>
+                <filter id="sndIconSoftGlowD" x="-30%" y="-30%" width="160%" height="160%">
+                  <feGaussianBlur stdDeviation="0.45" result="blur"/>
+                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+              </defs>
+              <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                <path d="M4.75 9.25h3.1l4.35-3.45v12.4l-4.35-3.45h-3.1z"/>
+                <path d="M7.85 9.25v5.5"/>
+              </g>
+              <path d="M10.1 7.5l2.1-1.7v12.4l-2.1-1.7z" fill="url(#sndIconAccentD)" opacity="0.26"/>
+              <path d="M4.75 9.25h3.1l4.35-3.45v12.4l-4.35-3.45h-3.1z" fill="none" stroke="url(#sndIconAccentD)" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.1" opacity="0.55"/>
+              <g class="ico-on" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15.35 8.3c1.05.92 1.65 2.22 1.65 3.7s-.6 2.78-1.65 3.7" stroke="currentColor" stroke-width="2"/>
+                <path d="M18.05 6.15A8.05 8.05 0 0 1 20.25 12a8.05 8.05 0 0 1-2.2 5.85" stroke="currentColor" stroke-width="1.9" opacity="0.78"/>
+                <path d="M15.35 8.3c1.05.92 1.65 2.22 1.65 3.7s-.6 2.78-1.65 3.7" stroke="url(#sndIconAccentD)" stroke-width="1.05" opacity="0.86" filter="url(#sndIconSoftGlowD)"/>
+                <path d="M18.05 6.15A8.05 8.05 0 0 1 20.25 12a8.05 8.05 0 0 1-2.2 5.85" stroke="url(#sndIconAccentD)" stroke-width="1" opacity="0.62" filter="url(#sndIconSoftGlowD)"/>
+              </g>
+              <g class="ico-off" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15.15 9.35l3.85 3.85" stroke="currentColor" stroke-width="2" opacity="0.24"/>
+                <path d="M19 9.35l-5.55 5.55" stroke="currentColor" stroke-width="2.15"/>
+                <path d="M19 9.35l-5.55 5.55" stroke="url(#sndIconAccentD)" stroke-width="1.15" opacity="0.88" filter="url(#sndIconSoftGlowD)"/>
+              </g>
+            </svg>
+          </button>
+        </div>
+      </article>
+
+      <article class="surface surface-glass">
+        <p class="label">Glass Button</p>
+        <div class="buttons">
+          <button class="sound-button" type="button" aria-label="Sound on">
+            <svg class="sound-icon is-on" viewBox="0 0 24 24" role="img" aria-label="Sound on" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="sndIconAccentE" x1="6" y1="5" x2="19" y2="19" gradientUnits="userSpaceOnUse">
+                  <stop offset="0" stop-color="#ff4f81"/>
+                  <stop offset="1" stop-color="#ff8a4f"/>
+                </linearGradient>
+                <filter id="sndIconSoftGlowE" x="-30%" y="-30%" width="160%" height="160%">
+                  <feGaussianBlur stdDeviation="0.45" result="blur"/>
+                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+              </defs>
+              <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                <path d="M4.75 9.25h3.1l4.35-3.45v12.4l-4.35-3.45h-3.1z"/>
+                <path d="M7.85 9.25v5.5"/>
+              </g>
+              <path d="M10.1 7.5l2.1-1.7v12.4l-2.1-1.7z" fill="url(#sndIconAccentE)" opacity="0.26"/>
+              <path d="M4.75 9.25h3.1l4.35-3.45v12.4l-4.35-3.45h-3.1z" fill="none" stroke="url(#sndIconAccentE)" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.1" opacity="0.55"/>
+              <g class="ico-on" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15.35 8.3c1.05.92 1.65 2.22 1.65 3.7s-.6 2.78-1.65 3.7" stroke="currentColor" stroke-width="2"/>
+                <path d="M18.05 6.15A8.05 8.05 0 0 1 20.25 12a8.05 8.05 0 0 1-2.2 5.85" stroke="currentColor" stroke-width="1.9" opacity="0.78"/>
+                <path d="M15.35 8.3c1.05.92 1.65 2.22 1.65 3.7s-.6 2.78-1.65 3.7" stroke="url(#sndIconAccentE)" stroke-width="1.05" opacity="0.86" filter="url(#sndIconSoftGlowE)"/>
+                <path d="M18.05 6.15A8.05 8.05 0 0 1 20.25 12a8.05 8.05 0 0 1-2.2 5.85" stroke="url(#sndIconAccentE)" stroke-width="1" opacity="0.62" filter="url(#sndIconSoftGlowE)"/>
+              </g>
+              <g class="ico-off" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15.15 9.35l3.85 3.85" stroke="currentColor" stroke-width="2" opacity="0.24"/>
+                <path d="M19 9.35l-5.55 5.55" stroke="currentColor" stroke-width="2.15"/>
+                <path d="M19 9.35l-5.55 5.55" stroke="url(#sndIconAccentE)" stroke-width="1.15" opacity="0.88" filter="url(#sndIconSoftGlowE)"/>
+              </g>
+            </svg>
+          </button>
+          <button class="sound-button" type="button" aria-label="Sound off">
+            <svg class="sound-icon is-off" viewBox="0 0 24 24" role="img" aria-label="Sound off" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="sndIconAccentF" x1="6" y1="5" x2="19" y2="19" gradientUnits="userSpaceOnUse">
+                  <stop offset="0" stop-color="#ff4f81"/>
+                  <stop offset="1" stop-color="#ff8a4f"/>
+                </linearGradient>
+                <filter id="sndIconSoftGlowF" x="-30%" y="-30%" width="160%" height="160%">
+                  <feGaussianBlur stdDeviation="0.45" result="blur"/>
+                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+              </defs>
+              <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                <path d="M4.75 9.25h3.1l4.35-3.45v12.4l-4.35-3.45h-3.1z"/>
+                <path d="M7.85 9.25v5.5"/>
+              </g>
+              <path d="M10.1 7.5l2.1-1.7v12.4l-2.1-1.7z" fill="url(#sndIconAccentF)" opacity="0.26"/>
+              <path d="M4.75 9.25h3.1l4.35-3.45v12.4l-4.35-3.45h-3.1z" fill="none" stroke="url(#sndIconAccentF)" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.1" opacity="0.55"/>
+              <g class="ico-on" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15.35 8.3c1.05.92 1.65 2.22 1.65 3.7s-.6 2.78-1.65 3.7" stroke="currentColor" stroke-width="2"/>
+                <path d="M18.05 6.15A8.05 8.05 0 0 1 20.25 12a8.05 8.05 0 0 1-2.2 5.85" stroke="currentColor" stroke-width="1.9" opacity="0.78"/>
+                <path d="M15.35 8.3c1.05.92 1.65 2.22 1.65 3.7s-.6 2.78-1.65 3.7" stroke="url(#sndIconAccentF)" stroke-width="1.05" opacity="0.86" filter="url(#sndIconSoftGlowF)"/>
+                <path d="M18.05 6.15A8.05 8.05 0 0 1 20.25 12a8.05 8.05 0 0 1-2.2 5.85" stroke="url(#sndIconAccentF)" stroke-width="1" opacity="0.62" filter="url(#sndIconSoftGlowF)"/>
+              </g>
+              <g class="ico-off" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15.15 9.35l3.85 3.85" stroke="currentColor" stroke-width="2" opacity="0.24"/>
+                <path d="M19 9.35l-5.55 5.55" stroke="currentColor" stroke-width="2.15"/>
+                <path d="M19 9.35l-5.55 5.55" stroke="url(#sndIconAccentF)" stroke-width="1.15" opacity="0.88" filter="url(#sndIconSoftGlowF)"/>
+              </g>
+            </svg>
+          </button>
+        </div>
+      </article>
+    </section>
+  </main>
+</body>
+</html>

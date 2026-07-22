@@ -402,7 +402,26 @@ export function runNextLabel(segType: "prepare" | "work" | "rest", next: { exerc
 }
 
 // ---- サウンドアイコン（2026-07-23）----
-// ボイス・BGMのどちらかがOFFなら🔇にして、消音状態が一目で分かるようにする
-export function soundIconState(voiceOn: boolean, bgmOn: boolean): "🔊" | "🔇" {
-  return voiceOn && bgmOn ? "🔊" : "🔇";
+// ボイス・BGMのどちらかがOFFなら消音表示にして、状態が一目で分かるようにする
+// 戻り値はSVGアイコン（#sound-icon）に付けるクラス名
+export function soundIconState(voiceOn: boolean, bgmOn: boolean): "is-on" | "is-off" {
+  return voiceOn && bgmOn ? "is-on" : "is-off";
+}
+
+// ---- 完了画面のシェア画像（2026-07-23）----
+// Xへ貼るための1枚絵をキャンバスで描く。ここは幅に収まるフォントサイズを決める純粋関数だけを持つ
+// （measure は ctx.measureText(text).width 相当を返す関数。テスト時は文字数×係数で代用する）
+export function fitFontSize(
+  text: string, maxWidth: number, baseSize: number, minSize: number,
+  measure: (text: string, size: number) => number,
+): number {
+  let size = baseSize;
+  while (size > minSize && measure(text, size) > maxWidth) size -= 1;
+  return size;
+}
+
+// シェア画像のファイル名（保存・共有シート用）
+export function shareImageFileName(title: string, isoDate: string): string {
+  const safe = (title || "workout").replace(/[\\/:*?"<>|\s]+/g, "_");
+  return `sakuya-hiit_${safe}_${isoDate.slice(0, 10)}.png`;
 }

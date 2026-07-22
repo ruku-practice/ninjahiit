@@ -1,6 +1,6 @@
 {
   "name": "sakuya-hiit",
-  "version": "0.69.6",
+  "version": "0.70.0",
   "private": true,
   "type": "module",
   "scripts": {
