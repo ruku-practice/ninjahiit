@@ -390,11 +390,9 @@ export function pauseButtonState(paused: boolean): { icon: "pause" | "play"; lab
 // 下部の「次のエクササイズ：〇〇」はレスト中だけ非表示にする（ワーク中は従来どおり表示）。
 export type RestNextStyle = "finisher" | "last" | "next" | null;
 
-export function restBannerLabel(style: RestNextStyle, exKey?: string): string {
-  if (style === "finisher") return "仕上げは、プランク";
-  if (style === "last") return `最後は、${EXERCISES[exKey].name}`;
-  if (style === "next") return EXERCISES[exKey].name;
-  return "お疲れさま！";
+export function restBannerLabel(): string {
+  // レスト中の上部バナーは「休憩」に固定（次の種目は中央セリフが予告する。2026-07-23ルク指示）
+  return "休憩";
 }
 
 export function runNextLabel(segType: "prepare" | "work" | "rest", next: { exercise: string } | null): string {

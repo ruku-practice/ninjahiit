@@ -1299,11 +1299,10 @@ function startWorkout(workout) {
 
   const engine = new WorkoutEngine(workout, state.settings.prepareSec, {
     onSegmentChange(seg, next) {
-      // 「休憩」の単調な表示をやめ、次に何が来るかが分かるリッチな表示にする
-      // 仕上げプランク=「仕上げは」／全体の最後の種目=「最後は」／それ以外=種目名のみ
-      // （「つぎは、」は下部・中央セリフと重複するため上部バナーからは削る。2026-07-23ルク指摘対応）
+      // レスト中の上部バナーは「休憩」固定。次の種目は中央セリフ（つぎは、◯◯！）が予告する
+      // （2026-07-23ルク指示。nextStyleはセリフの出し分けに引き続き使用）
       const nextStyle = !next ? null : next.finisher ? "finisher" : (next.slot === next.total ? "last" : "next");
-      const restLabel = restBannerLabel(next ? nextStyle : null, next?.exercise);
+      const restLabel = restBannerLabel();
       const label = { prepare: "準備して！", work: EXERCISES[seg.exercise].name, rest: restLabel }[seg.type];
       $("#run-phase").innerHTML =
         `<img class="run-phase-ico" src="assets/ui/icons/phase-${seg.type}.jpg" alt="">${label}`;

@@ -463,9 +463,13 @@ p.kcal-note { text-align: center; }
 #run-title { font-size: 0.95rem; font-weight: 700; }
 #run-progress { font-size: 0.75rem; opacity: 0.85; }
 
-/* サウンドアイコンのポップオーバー（ボイス/BGM個別トグル。2026-07-23） */
+/* サウンドアイコンのポップオーバー（ボイス/BGM個別トグル。2026-07-23）
+   ※位置指定は #screen-run.hud > *:not(.hud-env)（position:relative/z-index:1 強制）に
+   負けないよう、より強いセレクタで書く（実機で左流れ＋バナー裏に潜るバグの修正） */
+#screen-run #sound-popover {
+  position: absolute; top: calc(58px + env(safe-area-inset-top)); right: 14px; left: auto; z-index: 80;
+}
 .sound-pop {
-  position: absolute; top: calc(52px + env(safe-area-inset-top)); right: 14px; z-index: 20;
   width: min(78vw, 260px); border-radius: 16px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px;
 }
 .sound-pop-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
