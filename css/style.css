@@ -195,7 +195,9 @@ p.kcal-note { text-align: center; }
 .hud-prog-num { font-size: 0.64rem; color: #4a5578; font-weight: 800; white-space: nowrap; }
 .hud-card-go { flex: none; align-self: center; width: 26px; height: 26px; border-radius: 8px; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 700; box-shadow: 0 3px 8px rgba(50,74,120,0.25); }
 
-.hud-catalog { border-radius: 12px; padding: 12px; font-weight: 800; font-size: 0.92rem; color: #1f2a44; cursor: pointer; }
+/* ラベルは1行に収める（折り返すと2〜3行になって間延びするため。2026-07-23ルク指示） */
+.hud-catalog { border-radius: 12px; padding: 12px 8px; font-weight: 800; font-size: 0.84rem; color: #1f2a44; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 5px; white-space: nowrap; }
 .hud-catalog:active { transform: scale(0.98); }
 
 /* 昨日の実績＋今日のおすすめ（ホーム上部カード） */

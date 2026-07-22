@@ -1902,7 +1902,8 @@ document.addEventListener("DOMContentLoaded", () => {
   maybeAskTutorial();
 
   // ホームのバージョン表示：package.jsonのversionがViteのdefineで注入される
-  $("#app-version").textContent = `v${__APP_VERSION__.split(".").slice(0, 2).join(".")}`;
+  // パッチ番号まで出す（実機でどのビルドが動いているか切り分けるため。2026-07-23）
+  $("#app-version").textContent = `v${__APP_VERSION__}`;
   recordFirstLaunch();
 
   // 開発時のみ：コンソールからの動作確認用フック（本番ビルドでは消える）
