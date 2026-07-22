@@ -835,8 +835,11 @@ p.kcal-note { text-align: center; }
   display: flex; flex-direction: column; align-items: center; gap: 10px;
   box-shadow: 0 20px 40px rgba(20,26,45,0.35); }
 .modal-ico { font-size: 2rem; }
-.modal-card h3 { font-size: 1.08rem; font-weight: 900; color: #1f2a44; }
-.modal-card p { font-size: 0.86rem; color: #4a5578; font-weight: 600; line-height: 1.7; }
+.modal-card h3 { font-size: 1.08rem; font-weight: 900; color: #fff;
+  text-shadow: 0 1px 8px rgba(31,42,68,0.5); }
+/* 本文は白＋うっすら影（すりガラス背景だと紺系は沈むため・2026-07-23ルク指示） */
+.modal-card p { font-size: 0.86rem; color: #fff; font-weight: 700; line-height: 1.7;
+  text-shadow: 0 1px 6px rgba(31,42,68,0.45); }
 .modal-card .detail-start-btn { width: 100%; margin-top: 6px; }
 
 .poke-menu { position: fixed; left: 50%; bottom: calc(30px + env(safe-area-inset-bottom)); transform: translateX(-50%);
@@ -908,6 +911,9 @@ p.kcal-note { text-align: center; }
 .tut-caption { margin: 10px 2px 12px; font-size: 0.82rem; font-weight: 700; color: #4a5578; }
 .tut-switch { display: flex; gap: 8px; }
 .tut-switch .btn-ghost { flex: 1; }
+/* 初回モーダルの丸窓サクヤ（解説動画と同じバストアップ・2026-07-23ルク指示） */
+.modal-chara { height: 128px; width: 128px; display: block; margin: 8px auto 10px;
+  filter: drop-shadow(0 6px 14px rgba(255,79,129,0.30)); }
 .modal-ico-img { width: 70px; height: 70px; display: block; margin: 0 auto 2px;
   filter: drop-shadow(0 6px 14px rgba(50,74,120,0.28)); }
 .set-info b .set-ico { width: 20px; height: 20px; vertical-align: -4px; margin-right: 2px; }
