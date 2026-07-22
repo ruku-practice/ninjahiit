@@ -463,6 +463,14 @@ p.kcal-note { text-align: center; }
 #run-title { font-size: 0.95rem; font-weight: 700; }
 #run-progress { font-size: 0.75rem; opacity: 0.85; }
 
+/* サウンドアイコンのポップオーバー（ボイス/BGM個別トグル。2026-07-23） */
+.sound-pop {
+  position: absolute; top: calc(52px + env(safe-area-inset-top)); right: 14px; z-index: 20;
+  width: min(78vw, 260px); border-radius: 16px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px;
+}
+.sound-pop-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.sound-pop-row span { font-size: 0.86rem; font-weight: 800; color: #1f2a44; }
+
 #run-phase {
   font-size: 1.8rem; font-weight: 900; margin-top: 18px; letter-spacing: 0.06em;
   text-shadow: 0 3px 10px rgba(0,0,0,0.18);

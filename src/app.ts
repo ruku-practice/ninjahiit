@@ -6,6 +6,7 @@ import {
   DEFAULT_SETTINGS, estimateKcal, expForResult, rankInfo, WEEKLY_GOAL, voiceLineLast,
   MISSION_BONUS_EXP, missionForDate, streakBonusExp, HOME_TAP_KEYS, weekDoneArray,
   recommendWorkout, yesterdaySummary, shouldShowHealthNotice, pauseButtonState,
+  restBannerLabel, runNextLabel, soundIconState,
 } from "./data.ts";
 import { Bgm, Sound, Voice } from "./audio.ts";
 import { WorkoutEngine } from "./timer.ts";
@@ -470,6 +471,52 @@ function detailBack() {
   else renderHome();
 }
 
+// ---- サウンド設定（ボイス/BGM個別トグル。2026-07-23）----
+// マイページのON/OFFボタン・実行画面のポップオーバー・ヘッダーのアイコンの3箇所を必ず揃える
+function syncSoundUI() {
+  const voiceOn = !!state.settings.sound;
+  const bgmOn = state.settings.bgm !== false;
+  const st = $("#set-sound");
+  st.classList.toggle("on", voiceOn);
+  st.textContent = voiceOn ? "ON" : "OFF";
+  const bg = $("#set-bgm");
+  bg.classList.toggle("on", bgmOn);
+  bg.textContent = bgmOn ? "ON" : "OFF";
+  const pv = $("#pop-toggle-voice");
+  pv.classList.toggle("on", voiceOn);
+  pv.textContent = voiceOn ? "ON" : "OFF";
+  const pb = $("#pop-toggle-bgm");
+  pb.classList.toggle("on", bgmOn);
+  pb.textContent = bgmOn ? "ON" : "OFF";
+  $("#btn-sound").textContent = soundIconState(voiceOn, bgmOn);
+}
+
+function setVoiceEnabled(on: boolean) {
+  state.settings.sound = on;
+  Sound.enabled = on;
+  Voice.enabled = on;
+  if (!on) Voice.stop();
+  store.set("settings", state.settings);
+  syncSoundUI();
+}
+
+function setBgmEnabled(on: boolean) {
+  state.settings.bgm = on;
+  Bgm.setEnabled(on);
+  store.set("settings", state.settings);
+  // 設定を戻したときにその場で鳴らす。実行画面ならワークアウト曲、それ以外はタイトル曲
+  if (on) Bgm.play($("#screen-run").classList.contains("active") ? "workout" : "title");
+  syncSoundUI();
+}
+
+// ヘッダーのサウンドアイコンをタップして開く小さなポップオーバー。外側タップで閉じる。
+// エンジンは止めない＝ワークアウト進行を妨げない。
+function toggleSoundPopover() {
+  const pop = $("#sound-popover");
+  pop.hidden = !pop.hidden;
+  if (!pop.hidden) syncSoundUI();
+}
+
 // ---- マイページ（設定） ----
 function renderMypage() {
   const inv = shieldInv();
@@ -485,12 +532,7 @@ function renderMypage() {
   const recommendMode = state.settings.recommendMode || "sequential";
   document.querySelectorAll<any>("#seg-recommend button").forEach((b) =>
     b.classList.toggle("on", b.dataset.v === recommendMode));
-  const st = $("#set-sound");
-  st.classList.toggle("on", !!state.settings.sound);
-  st.textContent = state.settings.sound ? "ON" : "OFF";
-  const bg = $("#set-bgm");
-  bg.classList.toggle("on", !!state.settings.bgm);
-  bg.textContent = state.settings.bgm ? "ON" : "OFF";
+  syncSoundUI();
   $("#set-reminder").value = state.settings.reminderTime || "";
   if (!Native.isNative) {
     $("#reminder-note").textContent = "通知はアプリ版（準備中）で届きます。時刻は保存されます";
@@ -1223,6 +1265,7 @@ function renderHistory() {
 // ---- ワークアウト実行 ----
 function startWorkout(workout) {
   autoPausedByVisibility = false;
+  $("#sound-popover").hidden = true; // 前回の開きっぱなしを持ち越さない
   Sound.init();
   Sound.enabled = state.settings.sound;
   Voice.useCtx(Sound.ctx);
@@ -1257,21 +1300,17 @@ function startWorkout(workout) {
   const engine = new WorkoutEngine(workout, state.settings.prepareSec, {
     onSegmentChange(seg, next) {
       // 「休憩」の単調な表示をやめ、次に何が来るかが分かるリッチな表示にする
-      // 仕上げプランク=「仕上げは」／全体の最後の種目=「最後は」／それ以外=「つぎは」
+      // 仕上げプランク=「仕上げは」／全体の最後の種目=「最後は」／それ以外=種目名のみ
+      // （「つぎは、」は下部・中央セリフと重複するため上部バナーからは削る。2026-07-23ルク指摘対応）
       const nextStyle = !next ? null : next.finisher ? "finisher" : (next.slot === next.total ? "last" : "next");
-      const restLabel = next
-        ? (nextStyle === "finisher" ? "仕上げは、プランク"
-          : nextStyle === "last" ? `最後は、${EXERCISES[next.exercise].name}`
-          : `つぎは、${EXERCISES[next.exercise].name}`)
-        : "お疲れさま！";
+      const restLabel = restBannerLabel(next ? nextStyle : null, next?.exercise);
       const label = { prepare: "準備して！", work: EXERCISES[seg.exercise].name, rest: restLabel }[seg.type];
       $("#run-phase").innerHTML =
         `<img class="run-phase-ico" src="assets/ui/icons/phase-${seg.type}.jpg" alt="">${label}`;
       $("#run-progress").textContent = `エクササイズ ${seg.slot}/${seg.total}`;
       $("#screen-run").className = `screen hud active phase-${seg.type}`;
-      $("#run-next").textContent = next
-        ? `次のエクササイズ：${EXERCISES[next.exercise].name}`
-        : "次：トレーニング終了";
+      // レスト中は上部バナー＋中央セリフで種目名が出るため、下部は非表示にして重複を減らす
+      $("#run-next").textContent = runNextLabel(seg.type, next);
 
       // 準備・休憩中は次にやる種目のお手本を先に見せる（タバタ方式）
       playSprite($("#run-chara"), seg.exercise);
@@ -1411,8 +1450,16 @@ function togglePause() {
   else resumeEngine();
 }
 
+// window.confirm()はネイティブ（Capacitor WKWebView）で機能しないことがあり、
+// 「←」で中断できなくなる実機バグの原因だった。アプリ内モーダルに置き換える（2026-07-23）。
 function quitWorkout() {
-  if (!confirm("修行を中断する？")) return;
+  $("#quit-modal").hidden = false;
+}
+function closeQuitModal() {
+  $("#quit-modal").hidden = true;
+}
+function confirmQuitWorkout() {
+  closeQuitModal();
   state.engine?.stop();
   autoPausedByVisibility = false;
   Voice.stop();
@@ -1507,6 +1554,8 @@ function showToast(msg, ms = 2200) {
 document.addEventListener("DOMContentLoaded", () => {
   $("#btn-pause").onclick = togglePause;
   $("#btn-quit").onclick = quitWorkout;
+  $("#btn-quit-confirm").onclick = confirmQuitWorkout;
+  $("#btn-quit-cancel").onclick = closeQuitModal;
   $("#btn-done-home").onclick = renderHome;
   $("#btn-catalog").onclick = renderCatalog;
   $("#btn-catalog-back").onclick = renderHome;
@@ -1549,22 +1598,8 @@ document.addEventListener("DOMContentLoaded", () => {
         : "おすすめを順繰りにしたよ");
     };
   });
-  $("#set-sound").onclick = () => {
-    state.settings.sound = !state.settings.sound;
-    Sound.enabled = state.settings.sound;
-    Voice.enabled = state.settings.sound;
-    if (!state.settings.sound) Voice.stop();
-    store.set("settings", state.settings);
-    renderMypage();
-  };
-  $("#set-bgm").onclick = () => {
-    state.settings.bgm = !state.settings.bgm;
-    Bgm.setEnabled(state.settings.bgm);
-    store.set("settings", state.settings);
-    // 設定画面から戻ったときに鳴るよう、ONにしたらその場でホームのBGMを流す
-    if (state.settings.bgm) Bgm.play("title");
-    renderMypage();
-  };
+  $("#set-sound").onclick = () => setVoiceEnabled(!state.settings.sound);
+  $("#set-bgm").onclick = () => setBgmEnabled(!state.settings.bgm);
   $("#btn-buy-shield").onclick = buyShield;
   $("#set-reminder").onchange = async (e) => {
     state.settings.reminderTime = e.target.value || "";
@@ -1615,16 +1650,19 @@ document.addEventListener("DOMContentLoaded", () => {
     if (preset) openDetail(preset, "home");
     else showToast("メニューを1つ選んで、今日の4分をはじめよう！");
   };
-  $("#btn-sound").onclick = () => {
-    state.settings.sound = !state.settings.sound;
-    Sound.enabled = state.settings.sound;
-    Voice.enabled = state.settings.sound;
-    if (!state.settings.sound) Voice.stop();
-    store.set("settings", state.settings);
-    $("#btn-sound").textContent = state.settings.sound ? "🔊" : "🔇";
+  // サウンドアイコン：タップでボイス/BGM個別トグルの小さなポップオーバーを開く（2026-07-23）
   Bgm.enabled = state.settings.bgm !== false;   // 既存ユーザー（設定に項目がない）も既定ON
+  $("#btn-sound").onclick = (e) => {
+    e.stopPropagation(); // documentのクリック監視で即閉じないように
+    toggleSoundPopover();
   };
-  $("#btn-sound").textContent = state.settings.sound ? "🔊" : "🔇";
+  $("#pop-toggle-voice").onclick = (e) => { e.stopPropagation(); setVoiceEnabled(!state.settings.sound); };
+  $("#pop-toggle-bgm").onclick = (e) => { e.stopPropagation(); setBgmEnabled(!state.settings.bgm); };
+  document.addEventListener("click", () => {
+    const pop = $("#sound-popover");
+    if (!pop.hidden) pop.hidden = true;
+  });
+  syncSoundUI();
   setPauseButtonUI(false); // 実行画面に入る前の初期状態（絵文字の一瞬表示を避ける）
 
   // 初回起動時の健康注意モーダル（マイページからいつでも再表示可）

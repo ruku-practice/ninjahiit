@@ -259,6 +259,18 @@
     </div>
   </div>
 
+  <!-- ワークアウト中断の確認（window.confirmはネイティブで効かないことがあるためアプリ内モーダルに統一） -->
+  <div id="quit-modal" class="modal-veil" hidden>
+    <div class="modal-card glass">
+      <h3>修行を中断する？</h3>
+      <p>ここまでの記録は保存されません。</p>
+      <div class="tut-choices">
+        <button id="btn-quit-confirm" class="detail-start-btn" type="button">中断してホームへ</button>
+        <button id="btn-quit-cancel" class="btn-ghost" type="button">つづける</button>
+      </div>
+    </div>
+  </div>
+
   <!-- チュートリアル動画の再生画面 -->
   <section id="screen-tutorial" class="screen hud">
     <div class="hud-env"></div>
@@ -445,6 +457,17 @@
         </div>
         <button id="btn-sound" class="hbtn" aria-label="サウンド">🔊</button>
       </header>
+
+      <div id="sound-popover" class="sound-pop glass" hidden>
+        <div class="sound-pop-row">
+          <span>🎤 ボイス（サクヤの声）</span>
+          <button id="pop-toggle-voice" class="set-toggle" type="button"></button>
+        </div>
+        <div class="sound-pop-row">
+          <span>🎵 BGM</span>
+          <button id="pop-toggle-bgm" class="set-toggle" type="button"></button>
+        </div>
+      </div>
 
       <div id="run-phase"></div>
       <div class="chara-stage chara-stage-run"><div id="run-chara" class="chara-box"></div></div>

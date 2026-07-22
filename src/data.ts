@@ -383,3 +383,28 @@ export function tutorialQueue(choice: "overview" | "detail" | "both" | "skip"): 
 export function pauseButtonState(paused: boolean): { icon: "pause" | "play"; label: string } {
   return paused ? { icon: "play", label: "再開" } : { icon: "pause", label: "一時停止" };
 }
+
+// ---- レスト中の重複表示の整理（2026-07-23 ルク指摘対応）----
+// 従来はレスト中に「上部バナー：つぎは、〇〇」「中央セリフ：つぎは、〇〇！」「下部：次のエクササイズ：〇〇」の
+// 3箇所で同じ種目名が重複していた。上部バナーは「つぎは、」を削って種目名だけにし（何をやるかは一目で分かる状態を維持）、
+// 下部の「次のエクササイズ：〇〇」はレスト中だけ非表示にする（ワーク中は従来どおり表示）。
+export type RestNextStyle = "finisher" | "last" | "next" | null;
+
+export function restBannerLabel(style: RestNextStyle, exKey?: string): string {
+  if (style === "finisher") return "仕上げは、プランク";
+  if (style === "last") return `最後は、${EXERCISES[exKey].name}`;
+  if (style === "next") return EXERCISES[exKey].name;
+  return "お疲れさま！";
+}
+
+export function runNextLabel(segType: "prepare" | "work" | "rest", next: { exercise: string } | null): string {
+  if (segType === "rest") return "";   // 上部バナー＋中央セリフと重複するため非表示
+  if (!next) return "次：トレーニング終了";
+  return `次のエクササイズ：${EXERCISES[next.exercise].name}`;
+}
+
+// ---- サウンドアイコン（2026-07-23）----
+// ボイス・BGMのどちらかがOFFなら🔇にして、消音状態が一目で分かるようにする
+export function soundIconState(voiceOn: boolean, bgmOn: boolean): "🔊" | "🔇" {
+  return voiceOn && bgmOn ? "🔊" : "🔇";
+}

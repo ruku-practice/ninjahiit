@@ -14,8 +14,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800;900&family=Baloo+2:wght@700;800&display=swap" rel="stylesheet">
-  <script type="module" crossorigin src="./bundle/index-D1C1OVli.js"></script>
-  <link rel="stylesheet" crossorigin href="./bundle/index-CVwoe6yg.css">
+  <script type="module" crossorigin src="./bundle/index-DfyyQsOo.js"></script>
+  <link rel="stylesheet" crossorigin href="./bundle/index-BF1Mlsqm.css">
 </head>
 <body>
 
@@ -260,6 +260,18 @@
     </div>
   </div>
 
+  <!-- ワークアウト中断の確認（window.confirmはネイティブで効かないことがあるためアプリ内モーダルに統一） -->
+  <div id="quit-modal" class="modal-veil" hidden>
+    <div class="modal-card glass">
+      <h3>修行を中断する？</h3>
+      <p>ここまでの記録は保存されません。</p>
+      <div class="tut-choices">
+        <button id="btn-quit-confirm" class="detail-start-btn" type="button">中断してホームへ</button>
+        <button id="btn-quit-cancel" class="btn-ghost" type="button">つづける</button>
+      </div>
+    </div>
+  </div>
+
   <!-- チュートリアル動画の再生画面 -->
   <section id="screen-tutorial" class="screen hud">
     <div class="hud-env"></div>
@@ -446,6 +458,17 @@
         </div>
         <button id="btn-sound" class="hbtn" aria-label="サウンド">🔊</button>
       </header>
+
+      <div id="sound-popover" class="sound-pop glass" hidden>
+        <div class="sound-pop-row">
+          <span>🎤 ボイス（サクヤの声）</span>
+          <button id="pop-toggle-voice" class="set-toggle" type="button"></button>
+        </div>
+        <div class="sound-pop-row">
+          <span>🎵 BGM</span>
+          <button id="pop-toggle-bgm" class="set-toggle" type="button"></button>
+        </div>
+      </div>
 
       <div id="run-phase"></div>
       <div class="chara-stage chara-stage-run"><div id="run-chara" class="chara-box"></div></div>
