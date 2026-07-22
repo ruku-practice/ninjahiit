@@ -185,9 +185,10 @@ p.kcal-note { text-align: center; }
 .hud-card.tint-blue::before, .hud-card.tint-blue .hud-prog-bar i, .hud-card.tint-blue .hud-card-go { background: var(--grad-blue); }
 .hud-card.tint-orange::before, .hud-card.tint-orange .hud-prog-bar i, .hud-card.tint-orange .hud-card-go { background: var(--grad-orange); }
 .hud-card-body { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
-/* 一覧カードの名前＝詳細/実行画面と同じ表記に統一したため、長い名前(脂肪バーニング等)でも
-   「…」で切れないように、はみ出す時だけ字を詰める（2026-07-22 ルク指示） */
-.hud-card-title { font-size: clamp(0.82rem, 3.6vw, 1.02rem); font-weight: 900; color: #1f2a44; line-height: 1.1;
+/* 一覧カードの名前＝詳細/実行画面と同じ表記に統一したため、長い名前(腕立て尽くし等)でも
+   「…」で切れないように、はみ出す時だけ字を詰める（2026-07-22 ルク指示）。
+   名前を短くした分、基準サイズを上げて読みやすくした（2026-07-23 ルク指示） */
+.hud-card-title { font-size: clamp(0.9rem, 4vw, 1.12rem); font-weight: 900; color: #1f2a44; line-height: 1.1;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .hud-card-prog { display: flex; align-items: center; gap: 5px; }
 .hud-prog-bar { flex: 1; height: 6px; border-radius: 999px; background: rgba(120,150,190,0.28); overflow: hidden; }

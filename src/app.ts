@@ -1073,7 +1073,7 @@ function speakHomeLine(key: string) {
 
 
 // メニュー名は一覧・詳細・実行画面で同じ表記に統一している（2026-07-22 ルク指示）。
-// ただし一覧カードの文字欄は約90pxしかなく、長い名前（脂肪バーニング等）は「…」で切れてしまう。
+// ただし一覧カードの文字欄は約90pxしかなく、長い名前（腕立て尽くし等）は「…」で切れてしまう。
 // 名前を短縮するのではなく、はみ出すカードだけ字を詰めて収める（下限11pxまで）。
 function fitCardTitles() {
   document.querySelectorAll<any>(".hud-card-title").forEach((el) => {

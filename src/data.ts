@@ -55,7 +55,7 @@ export const PRESETS = [
   },
   {
     id: "fat_burn",
-    title: "脂肪バーニング", short: "脂肪バーニング",
+    title: "脂肪バー忍", short: "脂肪バー忍",
     icon: "🔥", tint: "orange", pict: "dance",
     badge: "脂肪燃焼", desc: "燃やしきる・全身有酸素",
     workSec: 20, restSec: 10, rounds: 2, setRestSec: 0,
@@ -321,7 +321,7 @@ export const DAILY_MISSIONS = [
   { id: "beginner_hiit", label: "「初めてのHIIT」を完走する" },
   { id: "abs",           label: "「腹筋」を完走する" },
   { id: "lower",         label: "「下半身」を完走する" },
-  { id: "fat_burn",      label: "「脂肪バーニング」を完走する" },
+  { id: "fat_burn",      label: "「脂肪バー忍」を完走する" },
   { id: "any",           label: "どれか1つ、完走する" },
   { id: "body_make",     label: "「ボディメイキング」を完走する" },
   { id: "serious_hiit",  label: "「本気のHIIT」を完走する" },
