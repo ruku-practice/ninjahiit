@@ -1,12 +1,13 @@
 // NinjaHIIT アプリ本体：画面管理・スプライト再生・記録
 
 import {
-  EXERCISES, PRESETS, TRAINERS, VOICE_LINES, voiceLineFirst, voiceLineNext,
+  EXERCISES, PRESETS, TRAINERS, VOICE_LINES, quoteLines, voiceLineFirst, voiceLineNext,
+  TUTORIAL_VIDEOS, TUTORIAL_READY, shouldShowTutorialPrompt, tutorialQueue,
   DEFAULT_SETTINGS, estimateKcal, expForResult, rankInfo, WEEKLY_GOAL, voiceLineLast,
   MISSION_BONUS_EXP, missionForDate, streakBonusExp, HOME_TAP_KEYS, weekDoneArray,
   recommendWorkout, yesterdaySummary, shouldShowHealthNotice, pauseButtonState,
 } from "./data.ts";
-import { Sound, Voice } from "./audio.ts";
+import { Bgm, Sound, Voice } from "./audio.ts";
 import { WorkoutEngine } from "./timer.ts";
 import { Native } from "./native.ts";
 import { KOBAN_RATES, SHIELD_MAX, addKoban, kobanBalance } from "./points.ts";
@@ -70,6 +71,8 @@ function setCharaImage(el, src, fallbackLabel, frameIndex) {
     renderPlaceholder(el, fallbackLabel, frameIndex);
     return;
   }
+  // レイヤー分割キャラ表示中なら畳んでから1枚絵に戻す（最初のimgがレイヤーを掴まないように）
+  if (el.querySelector(".st-chara")) { el.innerHTML = ""; delete el.dataset.livePose; }
   let img = el.querySelector("img");
   if (!img) {
     el.innerHTML = "";
@@ -125,7 +128,88 @@ function playSprite(el, exerciseKey) {
 }
 
 function showPose(el, pose, label) {
+  if (showLiveChara(el, pose, label)) return;
   setCharaImage(el, `${trainer().dir}/${pose}.png`, label, 1);
+}
+
+// ---- レイヤー分割キャラ（See-throughで1枚絵を自動分割した live アセット）----
+// ホームの固定絵だけ、静止画の代わりに深度順レイヤーを重ねて表示し、
+// 呼吸・ポニーテールゆれ・頭のゆらぎ・まばたきのCSSアニメを当てる。
+// まばたきは目のレイヤーを一瞬つぶすと裏の肌（AIが補完した隠れ部分）が見える仕組み。
+// レイヤーが読み込めなければ従来の1枚絵に自動で戻す。
+// 各ポーズ: files=レイヤー(奥→手前)、aspect=切り抜きの縦横比、
+// bob=首のつけ根 / sway=ポニーテール結び目 / blink=目の中心（いずれも切り抜き内%座標。PSDのbboxから算出）
+const LIVE_POSES = {
+  "assets/characters/sakuya": {
+    joy_1: {
+      files: ["00_back_hair", "01_handwear", "02_footwear", "03_headwear", "04_legwear",
+        "05_topwear", "06_neck", "07_ears", "08_face", "09_nose", "10_mouth",
+        "11_eyewhite", "12_irides", "13_eyelash", "14_front_hair"],
+      aspect: "379 / 758", bob: "47.23% 35.22%", sway: "53.43% 24.01%", blink: "51.72% 25.99%",
+    },
+    joy_2: {
+      files: ["00_back_hair", "01_footwear", "02_legwear", "03_neck", "04_headwear",
+        "05_handwear", "06_topwear", "07_ears", "08_face", "09_mouth",
+        "10_nose", "11_eyewhite", "12_irides", "13_eyelash", "14_front_hair"],
+      aspect: "303 / 764", bob: "55.45% 33.38%", sway: "69.97% 10.47%", blink: "54.79% 23.69%",
+    },
+    joy_3: {
+      files: ["00_back_hair", "01_headwear", "02_footwear", "03_legwear", "04_topwear",
+        "05_ears", "06_face", "07_mouth", "08_nose", "09_eyewhite",
+        "10_irides", "11_eyelash", "12_handwear", "13_front_hair"],
+      aspect: "307 / 759", bob: "44.63% 33.33%", sway: "40.16% 21.52%", blink: "44.14% 25.43%",
+    },
+    joy_4: {
+      files: ["00_back_hair", "01_headwear", "02_footwear", "03_legwear", "04_topwear",
+        "05_ears", "06_face", "07_mouth", "08_nose", "09_eyewhite",
+        "10_irides", "11_handwear", "12_eyelash", "13_front_hair"],
+      aspect: "298 / 760", bob: "37.58% 31.18%", sway: "37.58% 22.04%", blink: "35.91% 23.42%",
+    },
+  },
+};
+// パーツ名→動きのクラス。st-sway=髪ゆれ、st-bob=頭のゆらぎ、st-blink=まばたき（imgに付与）
+const LIVE_PART_MOTION = {
+  back_hair: "st-sway",
+  headwear: "st-bob", ears: "st-bob", face: "st-bob", mouth: "st-bob", nose: "st-bob",
+  front_hair: "st-bob",
+  eyewhite: "st-bob st-blink", irides: "st-bob st-blink", eyelash: "st-bob st-blink",
+};
+let liveCharaBroken = false; // 一度でも読み込みに失敗したら以後は1枚絵で運用
+
+function showLiveChara(el, pose, label) {
+  if (liveCharaBroken || el.id !== "home-chara") return false;
+  const data = (LIVE_POSES[trainer().dir] || {})[pose];
+  if (!data) return false;
+  if (el.dataset.livePose === pose && el.querySelector(".st-chara")) return true; // 再構築するとアニメが頭出しされるので維持
+  const box = document.createElement("div");
+  box.className = "st-chara";
+  box.style.setProperty("--st-aspect", data.aspect);
+  box.style.setProperty("--st-bob-origin", data.bob);
+  box.style.setProperty("--st-sway-origin", data.sway);
+  box.style.setProperty("--st-blink-origin", data.blink);
+  for (const f of data.files) {
+    const part = f.slice(3); // "00_back_hair" → "back_hair"
+    const wrap = document.createElement("div");
+    wrap.className = `st-layer ${LIVE_PART_MOTION[part] || ""}`.trim();
+    const img = document.createElement("img");
+    img.alt = "";
+    img.onerror = () => {
+      // 連打でポーズを差し替えると読み込み途中のimgがabort→errorになるため、
+      // すでにDOMから外れたimgのerrorは無視する（本物の404はDOM接続中に発火する）
+      if (!img.isConnected) return;
+      // CDNやキャッシュの欠けで一部レイヤーが出ないと絵が壊れるので、丸ごと1枚絵へ退避
+      liveCharaBroken = true;
+      delete el.dataset.livePose;
+      setCharaImage(el, `${trainer().dir}/${pose}.png`, label, 1);
+    };
+    img.src = `${trainer().dir}/live/${pose}/${f}.webp`;
+    wrap.appendChild(img);
+    box.appendChild(wrap);
+  }
+  el.innerHTML = "";
+  el.appendChild(box);
+  el.dataset.livePose = pose;
+  return true;
 }
 
 // ---- ワークアウト一覧のサムネイル ----
@@ -404,6 +488,9 @@ function renderMypage() {
   const st = $("#set-sound");
   st.classList.toggle("on", !!state.settings.sound);
   st.textContent = state.settings.sound ? "ON" : "OFF";
+  const bg = $("#set-bgm");
+  bg.classList.toggle("on", !!state.settings.bgm);
+  bg.textContent = state.settings.bgm ? "ON" : "OFF";
   $("#set-reminder").value = state.settings.reminderTime || "";
   if (!Native.isNative) {
     $("#reminder-note").textContent = "通知はアプリ版（準備中）で届きます。時刻は保存されます";
@@ -845,7 +932,17 @@ function weekRecord() {
 // 戻り値はボイスキー（VOICE_LINESに表示文言、assets/audio/<trainer>/に音声がある）
 function homeGreetingKey(): string {
   const completed = state.history.filter(h => h.completed);
-  if (completed.length === 0) return "greet_first";
+  // 「はじめまして」は本当に初回の1回だけ（2026-07-22 ルク指示）。
+  // 以前は「完走履歴が0件の間ずっと」だったので、始めるまで何度も言われていた。
+  if (completed.length === 0 && !store.get("greeted_first", false)) {
+    store.set("greeted_first", true);
+    return "greet_first";
+  }
+  if (completed.length === 0) {
+    // まだ1回も完走していない人には、時間帯のあいさつで迎える
+    const h = new Date().getHours();
+    return h < 10 ? "greet_morning" : (h >= 20 ? "greet_night" : "greet_noon");
+  }
   const last = completed[completed.length - 1];
   const daysSince = Math.round(
     (new Date(todayStr() + "T00:00:00").getTime() - new Date(last.date + "T00:00:00").getTime()) / 86400000);
@@ -932,6 +1029,70 @@ function speakHomeLine(key: string) {
   Voice.play(key);
 }
 
+
+// メニュー名は一覧・詳細・実行画面で同じ表記に統一している（2026-07-22 ルク指示）。
+// ただし一覧カードの文字欄は約90pxしかなく、長い名前（脂肪バーニング等）は「…」で切れてしまう。
+// 名前を短縮するのではなく、はみ出すカードだけ字を詰めて収める（下限11pxまで）。
+function fitCardTitles() {
+  document.querySelectorAll<any>(".hud-card-title").forEach((el) => {
+    el.style.fontSize = "";
+    for (let fs = parseFloat(getComputedStyle(el).fontSize); el.scrollWidth > el.clientWidth + 1 && fs > 11; fs -= 0.5) {
+      el.style.fontSize = `${fs - 0.5}px`;
+    }
+  });
+}
+
+// ---- チュートリアル動画（初回1回だけ案内・以降はマイページからいつでも）----
+// 「両方見る」は概要→詳細を続けて再生する。キューが空になったら終了して前の画面へ戻る。
+let tutorialQueueRest: string[] = [];
+let tutorialReturnScreen = "screen-home";
+
+function playTutorial(key: string) {
+  const v = TUTORIAL_VIDEOS[key as keyof typeof TUTORIAL_VIDEOS];
+  if (!v) return;
+  const el = $("#tutorial-video") as HTMLVideoElement;
+  $("#tutorial-title").textContent = `チュートリアル：${v.title}`;
+  $("#tutorial-caption").textContent = v.note;
+  el.src = v.src;
+  el.currentTime = 0;
+  el.play().catch(() => { /* 自動再生できない環境ではユーザーが再生ボタンを押す */ });
+}
+
+function openTutorial(queue: string[], from = "screen-home") {
+  if (!queue.length) return;
+  tutorialReturnScreen = from;
+  tutorialQueueRest = queue.slice(1);
+  show("screen-tutorial");
+  playTutorial(queue[0]);
+}
+
+function closeTutorial() {
+  const el = $("#tutorial-video") as HTMLVideoElement;
+  el.pause();
+  el.removeAttribute("src");
+  el.load();
+  tutorialQueueRest = [];
+  show(tutorialReturnScreen);
+}
+
+// ホーム吹き出しの描画。改行ルールは data.ts の quoteLines() が決める（左寄せ・句読点で折り返し）。
+// innerHTMLは使わず要素を組み立てる（セリフは自前の定数だが、描画経路は素直に保つ）
+function renderQuote(el, key) {
+  const text = VOICE_LINES[key] || "";
+  el.textContent = "";
+  for (const segs of quoteLines(text)) {
+    const row = document.createElement("span");
+    row.className = "qrow";
+    for (const seg of segs) {
+      const s = document.createElement("span");
+      s.className = "qseg";
+      s.textContent = seg;
+      row.appendChild(s);
+    }
+    el.appendChild(row);
+  }
+}
+
 function nextHomeQuote() {
   spinHomeChara();
   const el = $("#home-quote");
@@ -941,7 +1102,7 @@ function nextHomeQuote() {
     let key = pick(HOME_TAP_KEYS);
     for (let i = 0; i < 5 && key === homeLineKey; i++) key = pick(HOME_TAP_KEYS);
     homeLineKey = key;
-    el.textContent = VOICE_LINES[key];
+    renderQuote(el, key);
   }
   speakHomeLine(homeLineKey);
   el.classList.remove("bubble-pop");
@@ -964,13 +1125,19 @@ function renderRecoCard() {
 // ---- ホーム画面 ----
 function renderHome() {
   stopCatalog();
+  Bgm.play("title");   // ホーム＝タイトル曲（ユーザー操作前は再生が拒否されるので、次のタップで鳴る）
   // ヒーローカードでは「迎えてくれる」joyポーズ（いいね）を表示
   showPose($("#home-chara"), "joy_2", trainer().name);
   homeLineKey = homeGreetingKey();
   homeGreetingSpoken = false;
-  $("#home-quote").textContent = VOICE_LINES[homeLineKey];
+  renderQuote($("#home-quote"), homeLineKey);
   maybeSpeakGreeting();
   for (let i = 1; i <= 4; i++) new Image().src = `${trainer().dir}/joy_${i}.png`;
+  // タップ切替時のチラつき防止：レイヤー版アセット（1ポーズ約60KB）も先読み
+  const livePoses = LIVE_POSES[trainer().dir] || {};
+  for (const [p, d] of Object.entries<any>(livePoses)) {
+    for (const f of d.files) new Image().src = `${trainer().dir}/live/${p}/${f}.webp`;
+  }
   renderStatusCard();
   renderRecoCard();
   const list = $("#preset-list");
@@ -996,6 +1163,7 @@ function renderHome() {
     li.onclick = () => openDetail(p, "home");
     list.appendChild(li);
   });
+  fitCardTitles();
   const tc = todayStats().count;
   const ms = missionStatus();
   $("#hud-ch-desc").textContent = ms.done
@@ -1181,25 +1349,34 @@ function startWorkout(workout) {
   state.engine = engine;
   $("#run-title").textContent = workout.title;
   setPauseButtonUI(false);
+  Bgm.play("workout");
   show("screen-run");
   engine.start();
 }
 
-// 一時停止ボタンのアイコン（絵文字⏸/▶をやめ、既存UIアイコンのトーンに合わせたインラインSVGへ。
-// 新規のAI画像生成はしない＝SVGで完結させる。currentColorなのでhud配色にもそのまま追従する）
-const ICON_PAUSE_SVG =
-  `<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">` +
-  `<rect x="6" y="5" width="4.4" height="14" rx="1.6" fill="currentColor"/>` +
-  `<rect x="13.6" y="5" width="4.4" height="14" rx="1.6" fill="currentColor"/></svg>`;
-const ICON_PLAY_SVG =
-  `<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">` +
-  `<path d="M8.5 5.6v12.8a1 1 0 0 0 1.53.85l10-6.4a1 1 0 0 0 0-1.7l-10-6.4a1 1 0 0 0-1.53.85Z" fill="currentColor"/></svg>`;
+// 一時停止ボタン（ルク選定＝案2「静かなオーロラリング」）。
+// 暗い芯＋白の細縁＋青緑グラデの回転リング。二本線↔三角は同じSVG内に両方置き、
+// aria-pressed（=一時停止中）でCSSがクロスフェードする＝毎回innerHTMLを組み直さない。
+// 新規のAI画像生成はなし＝SVGで完結。明るいhud背景でも暗い実行画面でも輪郭が沈まない。
+const PAUSE_BUTTON_SVG =
+  `<svg viewBox="0 0 96 96" aria-hidden="true" focusable="false">` +
+  `<defs><linearGradient id="pauseAuraStroke" x1="18" y1="16" x2="78" y2="80" gradientUnits="userSpaceOnUse">` +
+  `<stop stop-color="#a6fff1"/><stop offset=".5" stop-color="#5fc8ff"/><stop offset="1" stop-color="#ffd0bf"/>` +
+  `</linearGradient></defs>` +
+  `<circle class="aura-inner" cx="48" cy="48" r="33"/>` +
+  `<circle class="halo" cx="48" cy="48" r="33"/>` +
+  `<circle class="aura-ring" cx="48" cy="48" r="39"/>` +
+  `<g class="pause-icon">` +
+  `<rect class="mark" x="36" y="31" width="8" height="34" rx="4"/>` +
+  `<rect class="mark" x="52" y="31" width="8" height="34" rx="4"/></g>` +
+  `<g class="play-icon"><path class="mark" d="M39 30 67 48 39 66Z"/></g></svg>`;
 
 function setPauseButtonUI(paused: boolean) {
   const s = pauseButtonState(paused);
   const btn = $("#btn-pause");
   if (!btn) return;
-  btn.innerHTML = s.icon === "pause" ? ICON_PAUSE_SVG : ICON_PLAY_SVG;
+  if (!btn.querySelector("svg")) btn.innerHTML = PAUSE_BUTTON_SVG;
+  btn.setAttribute("aria-pressed", paused ? "true" : "false");
   btn.setAttribute("aria-label", s.label);
 }
 
@@ -1213,6 +1390,7 @@ function pauseEngine() {
   if (!e || e.finished || e.pausedAt !== null) return;
   e.pause();
   Voice.stop();
+  Bgm.pause();
   $("#run-chara video")?.pause();
   setPauseButtonUI(true);
 }
@@ -1221,6 +1399,7 @@ function resumeEngine() {
   const e = state.engine;
   if (!e || e.finished || e.pausedAt === null) return;
   e.resume();
+  Bgm.resume();
   playSprite($("#run-chara"), e.current.exercise);
   setPauseButtonUI(false);
 }
@@ -1378,6 +1557,14 @@ document.addEventListener("DOMContentLoaded", () => {
     store.set("settings", state.settings);
     renderMypage();
   };
+  $("#set-bgm").onclick = () => {
+    state.settings.bgm = !state.settings.bgm;
+    Bgm.setEnabled(state.settings.bgm);
+    store.set("settings", state.settings);
+    // 設定画面から戻ったときに鳴るよう、ONにしたらその場でホームのBGMを流す
+    if (state.settings.bgm) Bgm.play("title");
+    renderMypage();
+  };
   $("#btn-buy-shield").onclick = buyShield;
   $("#set-reminder").onchange = async (e) => {
     state.settings.reminderTime = e.target.value || "";
@@ -1435,6 +1622,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!state.settings.sound) Voice.stop();
     store.set("settings", state.settings);
     $("#btn-sound").textContent = state.settings.sound ? "🔊" : "🔇";
+  Bgm.enabled = state.settings.bgm !== false;   // 既存ユーザー（設定に項目がない）も既定ON
   };
   $("#btn-sound").textContent = state.settings.sound ? "🔊" : "🔇";
   setPauseButtonUI(false); // 実行画面に入る前の初期状態（絵文字の一瞬表示を避ける）
@@ -1443,11 +1631,37 @@ document.addEventListener("DOMContentLoaded", () => {
   $("#btn-health-ack").onclick = () => {
     store.set("health_notice_ack", true);
     $("#health-modal").hidden = true;
+    maybeAskTutorial();   // 健康注意を読み終えてから、チュートリアルの案内を出す（重ならないように）
   };
   $("#btn-health-notice-link").onclick = () => { $("#health-modal").hidden = false; };
   if (shouldShowHealthNotice(store.get("health_notice_ack", false))) {
     $("#health-modal").hidden = false;
   }
+
+  // チュートリアル動画：初回起動時に1回だけ聞く（選んでも選ばなくても、二度と出さない）
+  const tutorialAck = () => store.set("tutorial_prompt_ack", true);
+  const closeTutorialModal = () => { $("#tutorial-modal").hidden = true; };
+  $("#btn-tut-overview").onclick = () => { tutorialAck(); closeTutorialModal(); openTutorial(tutorialQueue("overview")); };
+  $("#btn-tut-detail").onclick = () => { tutorialAck(); closeTutorialModal(); openTutorial(tutorialQueue("detail")); };
+  $("#btn-tut-both").onclick = () => { tutorialAck(); closeTutorialModal(); openTutorial(tutorialQueue("both")); };
+  $("#btn-tut-skip").onclick = () => { tutorialAck(); closeTutorialModal(); };
+  $("#btn-tutorial-link").onclick = () => openTutorial(["overview"], "screen-mypage");
+  $("#btn-tut-play-overview").onclick = () => { tutorialQueueRest = []; playTutorial("overview"); };
+  $("#btn-tut-play-detail").onclick = () => { tutorialQueueRest = []; playTutorial("detail"); };
+  $("#btn-tutorial-back").onclick = closeTutorial;
+  ($("#tutorial-video") as HTMLVideoElement).addEventListener("ended", () => {
+    const next = tutorialQueueRest.shift();
+    if (next) playTutorial(next); // 「両方見る」の2本目へ
+  });
+  // 動画が未配置のうちは初回モーダルもマイページの導線も出さない（未完成の動画を触らせない）
+  $("#btn-tutorial-link").hidden = !TUTORIAL_READY;
+  function maybeAskTutorial() {
+    if (!$("#health-modal").hidden) return;   // 健康注意が出ている間は待つ
+    if (shouldShowTutorialPrompt(store.get("tutorial_prompt_ack", false), TUTORIAL_READY)) {
+      $("#tutorial-modal").hidden = false;
+    }
+  }
+  maybeAskTutorial();
 
   // ホームのバージョン表示：package.jsonのversionがViteのdefineで注入される
   $("#app-version").textContent = `v${__APP_VERSION__.split(".").slice(0, 2).join(".")}`;
@@ -1456,7 +1670,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // 開発時のみ：コンソールからの動作確認用フック（本番ビルドでは消える）
   if (import.meta.env.DEV) {
     (window as any).__dbg = {
-      state, startWorkout, renderCatalog, renderHome, renderDone, saveResult, Voice, nextHomeQuote, Sound,
+      state, startWorkout, renderCatalog, renderHome, renderDone, saveResult, Voice, nextHomeQuote, Sound, Bgm,
       flags: () => ({ homeGreetingSpoken, greetingAutoSpoken, homeLineKey }),
       // FIX-1/2/4/6 のヘッドレス検証用（クラウド未接続でもUIだけ確認できるようにする）
       renderFriendRows, renderRankRows, renderHiddenNinjaList, renderMypage, renderHistory, openDetail,

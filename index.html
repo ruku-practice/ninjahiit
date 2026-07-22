@@ -122,6 +122,15 @@
       <div class="set-card glass">
         <div class="set-row">
           <div class="set-info">
+            <b>BGM</b>
+            <small>ホームとワークアウト中に音楽を流します（サクヤの声が入ると自動で小さくなります）</small>
+          </div>
+          <button id="set-bgm" class="set-toggle"></button>
+        </div>
+      </div>
+      <div class="set-card glass">
+        <div class="set-row">
+          <div class="set-info">
             <b>応援ボイス</b>
             <small>ワークアウト中にサクヤが話しかける量</small>
           </div>
@@ -166,6 +175,15 @@
            cloud.tsの連携関数自体は将来復活のため残置。ここではUIを描画しない。 -->
 
       <div class="hud-sec">このアプリについて<i class="hud-slash"></i></div>
+      <button id="btn-tutorial-link" class="set-card glass set-link" type="button">
+        <div class="set-row">
+          <div class="set-info">
+            <b><img class="set-ico" src="assets/ui/icons/tutorial.png" alt="" width="20" height="20"> チュートリアル動画</b>
+            <small>使い方の概要・詳細を、いつでも見られます</small>
+          </div>
+          <span class="set-arrow">›</span>
+        </div>
+      </button>
       <button id="btn-health-notice-link" class="set-card glass set-link" type="button">
         <div class="set-row">
           <div class="set-info">
@@ -225,6 +243,40 @@
       <button id="btn-health-ack" class="detail-start-btn">わかった、はじめよう</button>
     </div>
   </div>
+
+  <!-- チュートリアル動画のおすすめ（初回起動時に1回だけ・以降は出ない。マイページからいつでも見られる） -->
+  <div id="tutorial-modal" class="modal-veil" hidden>
+    <div class="modal-card glass">
+      <img class="modal-ico-img" src="assets/ui/icons/tutorial.png" alt="" width="70" height="70">
+      <h3>チュートリアル動画を見ますか？</h3>
+      <p>使い方を、サクヤが動画で案内します。<br><b>あとからマイページでいつでも見られます。</b></p>
+      <div class="tut-choices">
+        <button id="btn-tut-overview" class="detail-start-btn" type="button">概要を見る<small>約1分</small></button>
+        <button id="btn-tut-detail" class="detail-start-btn" type="button">詳細を見る<small>約2分</small></button>
+        <button id="btn-tut-both" class="detail-start-btn" type="button">両方見る<small>続けて再生</small></button>
+        <button id="btn-tut-skip" class="btn-ghost" type="button">見ないで始める</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- チュートリアル動画の再生画面 -->
+  <section id="screen-tutorial" class="screen hud">
+    <div class="hud-env"></div>
+    <div class="hud-scroll">
+      <header class="detail-top">
+        <button id="btn-tutorial-back" class="hbtn-dark" aria-label="戻る">←</button>
+        <h2 id="tutorial-title">チュートリアル</h2>
+      </header>
+      <div class="tut-player">
+        <video id="tutorial-video" controls playsinline preload="metadata"></video>
+        <p id="tutorial-caption" class="tut-caption"></p>
+        <div class="tut-switch">
+          <button id="btn-tut-play-overview" class="btn-ghost" type="button">概要（約1分）</button>
+          <button id="btn-tut-play-detail" class="btn-ghost" type="button">詳細（約2分）</button>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <!-- メニュー詳細（開始確認） -->
   <section id="screen-detail" class="screen hud">
@@ -403,7 +455,7 @@
         <div class="hbar"><i id="hbar-fill"></i></div>
       </div>
 
-      <button id="btn-pause" aria-label="一時停止"></button>
+      <button id="btn-pause" type="button" class="btn-aura" aria-label="一時停止" aria-pressed="false"></button>
       <p id="run-next"></p>
   </section>
 

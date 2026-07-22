@@ -147,26 +147,30 @@ export const Voice: any = {
     if (!this.enabled || !this.ctx || !name) return;
     this._want = name;
     this._wantAt = performance.now();
+    const duckable = shouldDuckForVoice(name);
     const buf = this.buffers[name];
-    if (buf) { this._startBuf(buf, interrupt); return; }
+    if (buf) { this._startBuf(buf, interrupt, duckable); return; }
     this._load(name).then(() => {
       if (this._want !== name) return;                       // もっと新しいセリフ要求が出た
       if (performance.now() - this._wantAt > 3000) return;   // 遅すぎる（場面が変わった）
       const b = this.buffers[name];
-      if (b) this._startBuf(b, interrupt);
+      if (b) this._startBuf(b, interrupt, duckable);
     });
   },
 
-  _startBuf(buf, interrupt) {
+  _startBuf(buf, interrupt, duckable = true) {
     if (interrupt) this.stop();
     const src = this.ctx.createBufferSource();
     src.buffer = buf;
     const g = this.ctx.createGain();
     g.gain.value = VOICE_GAIN; // SEとの合算ヘッドルーム確保のため0.9倍
     src.connect(g).connect(getMasterBus(this.ctx).gain); // destination直結ではなくマスターバス経由
-    src.onended = () => { if (this.current === src) this.current = null; };
+    src.onended = () => {
+      if (this.current === src) { this.current = null; if (duckable) Bgm.duck(false); }
+    };
     try { src.start(); } catch (e) { return; }
     this.current = src;
+    if (duckable) Bgm.duck(true, buf.duration);   // 声の間はBGMを下げる（カウント音は除く）
   },
 
   // 候補配列からランダムに1つ再生し、選んだクリップ名を返す
@@ -178,5 +182,106 @@ export const Voice: any = {
     return name;
   },
 
-  stop() { if (this.current) { try { this.current.stop(); } catch (e) {} this.current = null; } },
+  stop() { if (this.current) { try { this.current.stop(); } catch (e) {} this.current = null; } Bgm.duck(false); },
+};
+
+// ---- BGM（2026-07-22 ルク指示：タイトル画面とワークアウトに音楽を敷く）----
+// 12分の長尺をWebAudioでdecodeするとメモリを大量に食う（float32で百MB級）ため、
+// BGMだけは <audio loop> のストリーミング再生にする。声が鳴っている間は音量を下げる（ダッキング）。
+export const BGM_TRACKS = { title: "assets/bgm/title.mp3", workout: "assets/bgm/workout.mp3" };
+export const BGM_VOLUME = 0.22;        // 通常の音量
+export const BGM_DUCK_VOLUME = 0.08;   // サクヤが喋っている間（聞き取りを最優先）
+const BGM_FADE_MS = 600;
+const BGM_DUCK_HOLD_MS = 450;          // 声が終わってもすぐ戻さない（連続するセリフでの音量の上下動を防ぐ）
+
+// この声ではBGMを下げない。「さん・に・いち」は0.3秒×3連発で、都度ダッキングすると
+// 音楽がポンピングして気持ち悪くなる（2026-07-22 ルク指摘のカウント違和感の原因）
+export function shouldDuckForVoice(name: string): boolean {
+  return !/^count_/.test(String(name || ""));
+}
+
+// 音量を滑らかに変える（曲の切り替わり・ダッキングのプツッを防ぐ）
+export function bgmFadeSteps(from: number, to: number, ms = BGM_FADE_MS, stepMs = 40): number[] {
+  const n = Math.max(1, Math.round(ms / stepMs));
+  return Array.from({ length: n }, (_, i) => from + (to - from) * ((i + 1) / n));
+}
+
+export const Bgm: any = {
+  enabled: true,          // 設定のBGMトグル
+  el: null,               // HTMLAudioElement
+  track: null,            // 再生中のトラック名（"title" | "workout"）
+  ducked: false,
+  _timer: null,
+
+  _audio() {
+    if (!this.el) {
+      const el = new Audio();
+      el.loop = true;
+      el.preload = "none";
+      el.volume = 0;
+      this.el = el;
+    }
+    return this.el;
+  },
+
+  _fadeTo(target, ms = BGM_FADE_MS) {
+    const el = this._audio();
+    clearInterval(this._timer);
+    const steps = bgmFadeSteps(el.volume, target, ms);
+    let i = 0;
+    this._timer = setInterval(() => {
+      el.volume = Math.min(1, Math.max(0, steps[i++]));
+      if (i >= steps.length) clearInterval(this._timer);
+    }, 40);
+  },
+
+  // 指定トラックを再生（同じ曲なら鳴らし直さない）。ユーザー操作より前だと再生が拒否されるが、
+  // その場合は例外を握りつぶす（次のタップで鳴る）
+  play(track) {
+    if (!this.enabled || !BGM_TRACKS[track]) return;
+    const el = this._audio();
+    if (this.track === track && !el.paused) return;
+    if (this.track !== track) {
+      el.src = BGM_TRACKS[track];
+      el.currentTime = 0;
+      this.track = track;
+    }
+    el.volume = 0;
+    el.play().then(() => this._fadeTo(this.ducked ? BGM_DUCK_VOLUME : BGM_VOLUME)).catch(() => {});
+  },
+
+  stop() {
+    clearInterval(this._timer);
+    if (!this.el) return;
+    this.el.pause();
+    this.el.volume = 0;
+    this.track = null;
+  },
+
+  pause() { if (this.el) this.el.pause(); },
+  resume() { if (this.enabled && this.el && this.track) this.el.play().catch(() => {}); },
+
+  // サクヤの声の間だけ音量を下げる。戻すのはホールド時間ぶん待ってから＝
+  // セリフが連続しても音量が上下にバタつかない
+  _unduckTimer: null,
+  // maxSec: その声の長さ。onendedが来ない場合（再生できなかった等）でも必ず戻すための保険。
+  // これがないと、起動直後の自動あいさつが鳴らなかった端末でBGMが下がりっぱなしになる
+  duck(on, maxSec = 0) {
+    clearTimeout(this._unduckTimer);
+    if (on) {
+      this.ducked = true;
+      if (this.el && !this.el.paused) this._fadeTo(BGM_DUCK_VOLUME, 200);
+      this._unduckTimer = setTimeout(() => this.duck(false), (maxSec > 0 ? maxSec * 1000 : 6000) + BGM_DUCK_HOLD_MS);
+      return;
+    }
+    this._unduckTimer = setTimeout(() => {
+      this.ducked = false;
+      if (this.el && !this.el.paused) this._fadeTo(BGM_VOLUME, 500);
+    }, BGM_DUCK_HOLD_MS);
+  },
+
+  setEnabled(on) {
+    this.enabled = !!on;
+    if (!on) this.stop();
+  },
 };

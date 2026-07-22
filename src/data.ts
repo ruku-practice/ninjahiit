@@ -30,7 +30,7 @@ export const EXERCISES = {
 export const PRESETS = [
   {
     id: "beginner_hiit",
-    title: "初めてのHIIT", short: "はじめて",
+    title: "足中心", short: "足中心",
     icon: "🌱", tint: "pink", pict: "stretch",
     badge: "初心者おすすめ", desc: "ゆるめ・まずはここから",
     workSec: 20, restSec: 20, rounds: 1, setRestSec: 0,
@@ -55,7 +55,7 @@ export const PRESETS = [
   },
   {
     id: "fat_burn",
-    title: "脂肪バーニング", short: "脂肪バーン",
+    title: "脂肪バーニング", short: "脂肪バーニング",
     icon: "🔥", tint: "orange", pict: "dance",
     badge: "脂肪燃焼", desc: "燃やしきる・全身有酸素",
     workSec: 20, restSec: 10, rounds: 2, setRestSec: 0,
@@ -63,7 +63,7 @@ export const PRESETS = [
   },
   {
     id: "body_make",
-    title: "ボディメイキング", short: "引き締め",
+    title: "引き締め", short: "引き締め",
     icon: "✨", tint: "purple", pict: "dumbbell",
     badge: "引き締め", desc: "全身を引き締める",
     workSec: 20, restSec: 10, rounds: 1, setRestSec: 0,
@@ -72,7 +72,7 @@ export const PRESETS = [
   },
   {
     id: "serious_hiit",
-    title: "本気のHIIT", short: "本気",
+    title: "本気", short: "本気",
     icon: "💥", tint: "orange", pict: "dance",
     badge: "ハード", desc: "心拍MAX・追い込む",
     workSec: 20, restSec: 10, rounds: 2, setRestSec: 0,
@@ -80,7 +80,7 @@ export const PRESETS = [
   },
   {
     id: "super_ninja",
-    title: "スーパーニンジャ", short: "超忍者",
+    title: "超忍者", short: "超忍者",
     icon: "🥷", tint: "teal", pict: "run",
     badge: "上級・全部入り", desc: "全種目チャレンジ",
     workSec: 20, restSec: 10, rounds: 1, setRestSec: 0,
@@ -89,7 +89,7 @@ export const PRESETS = [
   },
   {
     id: "pushup_fest",
-    title: "プッシュアップ尽くし", short: "腕立て尽くし",
+    title: "腕立て尽くし", short: "腕立て尽くし",
     icon: "🔺", tint: "blue", pict: "dumbbell",
     badge: "上半身集中", desc: "腕立てバリエーション制覇",
     workSec: 20, restSec: 10, rounds: 2, setRestSec: 0,
@@ -106,16 +106,16 @@ export const TRAINERS = {
     voiceDir: "assets/audio/sakuya",
     quotes: {
       home: [
-        "今日も一緒に忍ぼうね。",
-        "4分だけ、がんばってみない？",
-        "無理はしないで。でも、少しだけ前へ。",
-        "今日はどのメニューにする？",
-        "水分補給も忍びの心得だよ。",
-        "フォームが一番の近道だからね。",
-        "休むのも修行のうち。でも今日は動く？",
-        "小判、けっこう貯まってきたね。",
-        "ストレッチしてからいこうか。",
-        "昨日のきみより、今日のきみ。",
+        "今日も一緒に\n忍ぼうね！",
+        "4分だけ、\nがんばってみない？",
+        "無理はしないで。\nでも、少しだけ前へ。",
+        "今日は、\nどのメニューにする？",
+        "水分補給も\n忍びの心得だよ！",
+        "休むのも修行のうち。\nでも今日は動く？",
+        "ストレッチしてから\nいこうか！",
+        "昨日のきみより、\n今日のきみ！",
+        "深呼吸して。\nよし、いい顔だね！",
+        "きみのペースで、\nいいんだよ！",
       ],
       prepare: [
         "次は「{exercise}」だよ。ついてきて！",
@@ -153,26 +153,24 @@ export const TRAINERS = {
 // 新しいクリップを追加したら必ずここにも書く。first_/next_ は種目名入りのためテンプレートで持つ
 export const VOICE_LINES = {
   // ホーム（タップセリフ）
-  home_1: "今日も一緒に忍ぼうね。",
-  home_2: "4分だけ、がんばってみない？",
-  home_3: "無理はしないで。でも、少しだけ前へ。",
-  home_4: "今日はどのメニューにする？",
-  home_5: "水分補給も忍びの心得だよ。",
-  home_6: "フォームが一番の近道だからね。",
-  home_7: "休むのも修行のうち。でも今日は動く？",
-  home_8: "小判、けっこう貯まってきたね。",
-  home_9: "ストレッチしてからいこうか。",
-  home_10: "昨日のきみより、今日のきみ。",
-  home_11: "深呼吸して。よし、いい顔だね。",
-  home_12: "きみのペースでいいんだよ。",
+  home_1: "今日も一緒に\n忍ぼうね！",
+  home_2: "4分だけ、\nがんばってみない？",
+  home_3: "無理はしないで。\nでも、少しだけ前へ。",
+  home_4: "今日は、\nどのメニューにする？",
+  home_5: "水分補給も\n忍びの心得だよ！",
+  home_7: "休むのも修行のうち。\nでも今日は動く？",
+  home_9: "ストレッチしてから\nいこうか！",
+  home_10: "昨日のきみより、\n今日のきみ！",
+  home_11: "深呼吸して。\nよし、いい顔だね！",
+  home_12: "きみのペースで、\nいいんだよ！",
   // ホーム（ログイン状況別あいさつ）
-  greet_first: "はじめまして。今日から一緒に、4分だけ。",
-  greet_comeback: "久しぶりだね。おかえり。また一緒にやろう。",
-  greet_streak: "今日も来てくれたね。うれしいよ。",
-  greet_morning: "おはよう。朝の4分、いってみる？",
-  greet_noon: "こんにちは。ちょっと体を動かして、切り替えよう。",
-  greet_night: "今日もお疲れさま。寝る前に少しだけ動く？",
-  poke_received: "なかまから、手裏剣が届いてるよ。",
+  greet_first: "はじめまして。\n今日から一緒に、\n4分だけ。",
+  greet_comeback: "久しぶりだね。おかえり！\nまた一緒にやろう！",
+  greet_streak: "今日も来てくれたね。\nうれしいよ。",
+  greet_morning: "おはよう！\n朝の4分、いってみる？",
+  greet_noon: "こんにちは！\nちょっと体を動かして、\n切り替えよう！",
+  greet_night: "今日もお疲れ様！\n寝る前に少しだけ動く？",
+  poke_received: "なかまから、\n手裏剣が届いてるよ。",
   // ロングワーク（30秒以上）の応援
   half_1: "はんぶん来たよ！",
   half_2: "折り返し！その調子！",
@@ -185,7 +183,12 @@ export const VOICE_LINES = {
   rest_1: "ふぅ。お水飲んでね。", rest_2: "よく動けてるよ。次もいこう。",
   finish_1: "お疲れさま！ 今日もよく頑張ったね。", finish_2: "完走、お見事！ ゆっくり休んでね。",
 };
-export const HOME_TAP_KEYS = Array.from({ length: 12 }, (_, i) => `home_${i + 1}`);
+// ホームのタップセリフ（実在するクリップだけを明示。home_6/home_8は2026-07-22にルク判断で廃止＝
+// 連番生成だと欠番を拾って無音になるため、リストで持つ）
+export const HOME_TAP_KEYS = [
+  "home_1", "home_2", "home_3", "home_4", "home_5",
+  "home_7", "home_9", "home_10", "home_11", "home_12",
+];
 
 export const voiceLineFirst = (exKey) => `最初は、${EXERCISES[exKey].name}！`;
 export const voiceLineNext = (exKey) => `つぎは、${EXERCISES[exKey].name}！`;
@@ -193,9 +196,10 @@ export const voiceLineLast = (exKey) => `最後は、${EXERCISES[exKey].name}！
 
 // plankSec: 仕上げプランク（全ワークアウト末尾に追加）0=なし / 30 / 60
 // reminderTime: 毎日のリマインダー通知 "HH:MM"（空文字=オフ。通知はネイティブ版のみ）
+// bgm: BGM（ホーム／ワークアウト）のオンオフ
 // cheer: 応援ボイスの量 many=多め（従来） / normal=普通（あと10秒＋3-2-1のみ） / few=少なめ（3-2-1のみ）
 // recommendMode: ホームの「今日のおすすめ」の選び方 sequential=順繰り（既定） / random_undone=ランダム（やってない優先）
-export const DEFAULT_SETTINGS = { trainer: "sakuya", sound: true, prepareSec: 10, plankSec: 0, reminderTime: "", cheer: "normal", recommendMode: "sequential" };
+export const DEFAULT_SETTINGS = { trainer: "sakuya", sound: true, bgm: true, prepareSec: 10, plankSec: 0, reminderTime: "", cheer: "normal", recommendMode: "sequential" };
 
 // カロリー概算（METs 8.0 × 体重60kg 想定のざっくり値）
 export function estimateKcal(totalWorkSec) {
@@ -334,6 +338,44 @@ export function missionForDate(dateStr) {
 // ack: localStorageから読んだ既読フラグ（trueのみ既読扱い）。未設定・null・不正値は「未読」＝表示する
 export function shouldShowHealthNotice(ack: unknown): boolean {
   return ack !== true;
+}
+
+// ---- ホーム吹き出しの改行（2026-07-22 ルクのレビュー結果）----
+// 吹き出しは左寄せ・幅は中身に合わせて縮む（CSS: width:fit-content）。
+// 改行位置はセリフ側の \n で全部指定済み＝どこで折り返るかが確定するので、
+// 吹き出しに無駄な余白が出ない（自動折り返し任せだと列幅いっぱいに広がってしまう）。
+// 戻り値は「物理行 × その行の中のかたまり」。
+export function quoteLines(text: string): string[][] {
+  // 物理行（\n区切り）→ さらに句読点の直後で「かたまり」に割る。
+  // かたまりはinline-blockで並べるので、万一はみ出しても語の途中では切れない。
+  return String(text ?? "").split("\n")
+    .map((row) => row.split(/(?<=[、。！？])/).filter((s) => s.length > 0));
+}
+
+// ---- チュートリアル動画（2026-07-22 ルク指示）----
+// 初回起動時に1回だけ「見ますか？」を出し、以降は出さない。マイページからいつでも見られる。
+// src は動画の置き場所。ファイルが用意できるまでは空文字にしておき、空なら初回モーダルを出さない
+// （＝動画ができてからURLを入れるだけで有効になる）。
+// 動画ファイルを app/public/assets/videos/tutorial/ に置いたら true にする。
+// falseの間は初回モーダルもマイページの導線も出さない（未完成の動画を触らせないため）。
+export const TUTORIAL_READY = true;   // 動作確認用に一時的にtrue（初稿動画を配置済み）
+
+export const TUTORIAL_VIDEOS = {
+  overview: { title: "概要", note: "約1分でざっくり", src: "assets/videos/tutorial/overview.mp4" },
+  detail: { title: "詳細", note: "約2分でしっかり", src: "assets/videos/tutorial/detail.mp4" },
+};
+
+// 初回のチュートリアル案内を出すか。ack=案内済みフラグ（一度trueになったら二度と出さない）
+export function shouldShowTutorialPrompt(ack: unknown, videosReady: boolean): boolean {
+  return videosReady && ack !== true;
+}
+
+// 選択肢 → 再生する動画の並び（両方=概要→詳細の順に続けて再生）
+export function tutorialQueue(choice: "overview" | "detail" | "both" | "skip"): string[] {
+  if (choice === "overview") return ["overview"];
+  if (choice === "detail") return ["detail"];
+  if (choice === "both") return ["overview", "detail"];
+  return [];
 }
 
 // ---- 一時停止ボタンの表示状態（純粋関数）----
