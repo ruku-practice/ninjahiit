@@ -124,6 +124,24 @@ export const Native: any = {
     if (a) try { await a.setBgmVolume({ volume, fadeMs }); } catch (e) {}
   },
 
+  // ---- 声と効果音（iOSはネイティブ再生。ブラウザ/PWAはWeb Audioにフォールバック）----
+  // Web Audioはマナーモードで黙る（WebContentプロセスのセッションが .ambient になるため。
+  // アプリ側からは変えられないことを実機で確認済み）。声はこの製品の主役なので移設した。
+  // playVoice の戻り値 duration は、BGMのダッキング時間に使う
+  async voicePlay(name: string, dir: string, volume: number, interrupt: boolean) {
+    const a = this.plugin("AudioSessionBridge");
+    if (!a) return null;
+    try { return await a.playVoice({ name, dir, volume, interrupt }); } catch (e) { return null; }
+  },
+  async voiceStop() {
+    const a = this.plugin("AudioSessionBridge");
+    if (a) try { await a.stopVoice(); } catch (e) {}
+  },
+  async sePlay(name: string) {
+    const a = this.plugin("AudioSessionBridge");
+    if (a) try { await a.playSe({ name }); } catch (e) {}
+  },
+
   // ---- ホーム画面ウィジェット連携（iOSのみ。WidgetBridgeカスタムプラグイン） ----
   // streak等をApp Group経由でウィジェットに渡し、タイムラインを更新させる
   // weekDone: 週間実施ドット（月〜日7要素・任意）。SakuyaWidget.swiftのparseWeekDone()が

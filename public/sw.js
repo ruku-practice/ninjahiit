@@ -1,5 +1,5 @@
 // NinjaHIIT Service Worker — キャッシュファーストでオフライン動作
-const CACHE = "ninjahiit-play-v809";
+const CACHE = "ninjahiit-play-v810";
 // Viteビルド後はJS/CSSがハッシュ付きファイル名になるため、precacheは骨格のみ。
 // バンドルやメディアは下のfetchハンドラ（キャッシュ優先＋バックグラウンド更新）が拾う
 const CORE = [

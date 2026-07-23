@@ -71,6 +71,10 @@ export const Sound: any = {
   enabled: true,
 
   init() {
+    // ネイティブは声もSEもAVAudioPlayerで鳴らすのでAudioContextを作らない。
+    // 作らなければWebContentプロセス側のオーディオセッションも立ち上がらず、
+    // マナーモードやNow Playingの影響を根本から受けない。
+    if (Native.hasBgm) return;
     if (!this.ctx) {
       const AC = window.AudioContext || (window as any).webkitAudioContext;
       this.ctx = new AC();
@@ -91,8 +95,9 @@ export const Sound: any = {
     } catch (e) {}
   },
 
-  // ユーザー操作より前かどうか（未解錠＝suspended）。解錠済みなら interrupted でも発話を試してよい
-  unlocked() { return !!this.ctx && this.ctx.state !== "suspended"; },
+  // ユーザー操作より前かどうか（未解錠＝suspended）。解錠済みなら interrupted でも発話を試してよい。
+  // ネイティブはAudioContextを使わず、ユーザー操作の解錠も要らないので常に鳴らせる
+  unlocked() { return Native.hasBgm || (!!this.ctx && this.ctx.state !== "suspended"); },
 
   // 鳴らし始めた（＝これから鳴る予定の）オシレータ。stopAll()で確実に黙らせるために保持する
   _live: [],
@@ -121,10 +126,19 @@ export const Sound: any = {
     for (const osc of this._live.splice(0)) { try { osc.stop(); } catch (e) {} }
   },
 
-  countTick() { this._tone(880, 120, "square", SE_GAINS.countTick); },          // 残り3,2,1秒
-  workStart() { this._tone(660, 90, "sine", SE_GAINS.workStart1); this._tone(990, 220, "sine", SE_GAINS.workStart2, 0.1); }, // ワーク開始
-  restStart() { this._tone(520, 300, "sine", SE_GAINS.restStart); },              // 休憩開始
-  finish()    { [523, 659, 784, 1047].forEach((f, i) => this._tone(f, 260, "sine", SE_GAINS.finish, i * 0.15)); },
+  // ネイティブ(iOS)ではWAVをAVAudioPlayerで鳴らす。Web Audioのままだとマナーモードで黙るため
+  // （2026-07-23 ルク決裁「A」）。WAVは tools/gen_se.mjs が下のオシレータ定義と同じ波形・
+  // 同じ音量エンベロープで焼き出しているので音色は変わらない。
+  _se(name, webTones) {
+    if (!this.enabled) return;
+    if (Native.hasBgm) { Native.sePlay(name); return; }
+    webTones();
+  },
+
+  countTick() { this._se("count_tick", () => this._tone(880, 120, "square", SE_GAINS.countTick)); },          // 残り3,2,1秒
+  workStart() { this._se("work_start", () => { this._tone(660, 90, "sine", SE_GAINS.workStart1); this._tone(990, 220, "sine", SE_GAINS.workStart2, 0.1); }); }, // ワーク開始
+  restStart() { this._se("rest_start", () => this._tone(520, 300, "sine", SE_GAINS.restStart)); },              // 休憩開始
+  finish()    { this._se("finish", () => [523, 659, 784, 1047].forEach((f, i) => this._tone(f, 260, "sine", SE_GAINS.finish, i * 0.15))); },
 };
 
 // mp3エンコーダのpriming無音（実測: ffprobe start_time≒0.023秒、48kHzで約1104サンプル）を
@@ -188,14 +202,16 @@ export const Voice: any = {
   },
 
   // 使う分をまとめて先読み（キャッシュから即返る）
-  preload(names) { if (this.ctx) names.forEach((n) => this._load(n)); },
+  preload(names) { if (Native.hasBgm) return; if (this.ctx) names.forEach((n) => this._load(n)); },
 
   // name を再生。未ロードならロード完了後に再生する（ただし3秒以内かつ最新の要求のみ。
   // 古い要求が後から鳴る事故を防ぐ）。interrupt=trueで前の声を止める
   play(name, interrupt = true) {
-    if (!this.enabled || !this.ctx || !name) return;
+    if (!this.enabled || !name) return;
+    if (!this.ctx && !Native.hasBgm) return;                 // Webはユーザー操作でctxが出来るまで鳴らせない
     this._want = name;
     this._wantAt = performance.now();
+    if (Native.hasBgm) { this._dispatch(name, interrupt); return; }
     // interruptedのまま鳴らしても無音になるだけなので、復帰を待ってから発話する。
     // 下の鮮度チェック（3秒／最新要求のみ）が効くので、復帰が遅れて場面が変わった場合は
     // 自動的に見送られる。
@@ -211,6 +227,15 @@ export const Voice: any = {
     if (this._want !== name) return;                         // もっと新しいセリフ要求が出た
     if (performance.now() - this._wantAt > 3000) return;     // 遅すぎる（場面が変わった）
     const duckable = shouldDuckForVoice(name);
+    // ネイティブは先読み・decode不要。durationが返るのでダッキングもそのまま繋がる
+    if (Native.hasBgm) {
+      if (duckable) Bgm.duck(true);                          // 長さはduration取得後に上書きする
+      Native.voicePlay(name, this.base.replace(/\/$/, ""), VOICE_GAIN, interrupt).then((r) => {
+        if (!r || !r.ok) { if (duckable) Bgm.duck(false); return; }
+        if (duckable) Bgm.duck(true, r.duration);
+      });
+      return;
+    }
     const buf = this.buffers[name];
     if (buf) { this._startBuf(buf, interrupt, duckable); return; }
     this._load(name).then(() => {
@@ -245,7 +270,11 @@ export const Voice: any = {
     return name;
   },
 
-  stop() { if (this.current) { try { this.current.stop(); } catch (e) {} this.current = null; } Bgm.duck(false); },
+  stop() {
+    if (Native.hasBgm) Native.voiceStop();
+    if (this.current) { try { this.current.stop(); } catch (e) {} this.current = null; }
+    Bgm.duck(false);
+  },
 };
 
 // ---- BGM（2026-07-22 ルク指示：タイトル画面とワークアウトに音楽を敷く）----
