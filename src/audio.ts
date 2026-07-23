@@ -48,6 +48,20 @@ function getMasterBus(ctx) {
   return masterBus;
 }
 
+// WebKitは、WebView内で鳴っているのがWeb Audioだけになるとセッションを .ambient へ張り替える。
+// .ambient はマナーモード（消音スイッチ）で黙るカテゴリなので、声とSEだけが止まる
+// （2026-07-23 実機：BGMをネイティブ再生へ移した結果、BGMは鳴り続け声だけ消えた。
+//  <audio>を使わないかくれんぼパズルがマナーモードで黙るのと同じ現象）。
+// Spotifyの中断と違い、これは取り返しがつく——カテゴリを .playback に戻せば以後の再生に効く。
+// AudioContextがrunningになった時と、発話のたび（2秒に1回まで間引く）に張り直す。
+let lastMixAt = -Infinity;
+function reassertPlaybackCategory(force = false) {
+  const now = performance.now();
+  if (!force && now - lastMixAt < 2000) return;
+  lastMixAt = now;
+  Native.applyAudioMix();
+}
+
 export const Sound: any = {
   ctx: null,
   enabled: true,
@@ -56,6 +70,10 @@ export const Sound: any = {
     if (!this.ctx) {
       const AC = window.AudioContext || (window as any).webkitAudioContext;
       this.ctx = new AC();
+      // runningになるたびにカテゴリを張り直す（下のreassertPlaybackCategoryのコメント参照）
+      this.ctx.onstatechange = () => {
+        if (this.ctx && this.ctx.state === "running") reassertPlaybackCategory(true);
+      };
     }
     this.ensureRunning();
   },
@@ -67,7 +85,10 @@ export const Sound: any = {
   // 復帰はユーザー操作や割り込み終了の後でないと成功しないので、その都度おだやかに試す。
   ensureRunning() {
     if (!this.ctx || this.ctx.state === "running") return;
-    try { const p = this.ctx.resume(); if (p && p.catch) p.catch(() => {}); } catch (e) {}
+    try {
+      const p = this.ctx.resume();
+      if (p && p.then) p.then(() => reassertPlaybackCategory(true)).catch(() => {});
+    } catch (e) {}
   },
 
   // ユーザー操作より前かどうか（未解錠＝suspended）。解錠済みなら interrupted でも発話を試してよい
@@ -176,6 +197,7 @@ export const Voice: any = {
   _dispatch(name, interrupt) {
     if (this._want !== name) return;                         // もっと新しいセリフ要求が出た
     if (performance.now() - this._wantAt > 3000) return;     // 遅すぎる（場面が変わった）
+    reassertPlaybackCategory();                              // マナーモードで黙らないよう保険
     const duckable = shouldDuckForVoice(name);
     const buf = this.buffers[name];
     if (buf) { this._startBuf(buf, interrupt, duckable); return; }
