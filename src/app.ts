@@ -123,9 +123,19 @@ function playSprite(el, exerciseKey) {
   }
   // src差し替え直後は読み込み中でplay()が拒否されるため、まず即時に試し、
   // 失敗したら再生可能になった時点でもう一度再生する
-  const tryPlay = () => video.play().catch(() => {});
+  const tryPlay = () => retryPlayVideo(video);
   tryPlay();
   video.addEventListener("canplay", tryPlay, { once: true });
+}
+
+// バックグラウンド復帰直後の video.play() はWKWebViewに拒否されることがある。srcは変わらないので
+// canplayも再発火せず、タイムゲージだけ進んでお手本動画が止まって見える（2026-07-23 ルク実機報告・UT B-7）。
+// 拒否は一時的なので、短い間隔で数回だけ再試行する。
+function retryPlayVideo(video, tries = 4) {
+  if (!video) return;
+  video.play().catch(() => {
+    if (tries > 0) setTimeout(() => retryPlayVideo(video, tries - 1), 250);
+  });
 }
 
 function showPose(el, pose, label) {
@@ -2002,6 +2012,10 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       // 復帰時にAudioContextがinterruptedのまま残ることがある（他アプリ再生・電話など）
       Sound.ensureRunning();
+      // 実行中なら、止まって見えるお手本動画を鳴らし直す（手動一時停止中は触らない）
+      if (state.engine && !state.engine.finished && state.engine.pausedAt === null) {
+        retryPlayVideo($("#run-chara video"));
+      }
       if (state.engine && !state.engine.finished) acquireWakeLock();
     }
   });

@@ -90,6 +90,33 @@ export const Native: any = {
     try { return await a.applyMixWithOthers(); } catch (e) { return null; }
   },
 
+  // ---- BGM（iOSはネイティブ再生。ブラウザ/PWAはWeb側の<audio>にフォールバック）----
+  // WKWebViewの<audio>はWebKitが「このアプリの音楽再生」としてOSに登録してしまい、
+  // 他アプリの中断・Now Playingへの露出・マナーモードの食い違いが起きる。抑止不能なので
+  // ネイティブでは<audio>を使わずAVAudioPlayerへ委譲する。hasBgm=false なら従来経路。
+  get hasBgm() { return !!this.plugin("AudioSessionBridge"); },
+  async bgmPlay(track: string, volume: number) {
+    const a = this.plugin("AudioSessionBridge");
+    if (!a) return false;
+    try { await a.playBgm({ track, volume }); return true; } catch (e) { return false; }
+  },
+  async bgmStop() {
+    const a = this.plugin("AudioSessionBridge");
+    if (a) try { await a.stopBgm(); } catch (e) {}
+  },
+  async bgmPause() {
+    const a = this.plugin("AudioSessionBridge");
+    if (a) try { await a.pauseBgm(); } catch (e) {}
+  },
+  async bgmResume() {
+    const a = this.plugin("AudioSessionBridge");
+    if (a) try { await a.resumeBgm(); } catch (e) {}
+  },
+  async bgmVolume(volume: number, fadeMs: number) {
+    const a = this.plugin("AudioSessionBridge");
+    if (a) try { await a.setBgmVolume({ volume, fadeMs }); } catch (e) {}
+  },
+
   // ---- ホーム画面ウィジェット連携（iOSのみ。WidgetBridgeカスタムプラグイン） ----
   // streak等をApp Group経由でウィジェットに渡し、タイムラインを更新させる
   // weekDone: 週間実施ドット（月〜日7要素・任意）。SakuyaWidget.swiftのparseWeekDone()が

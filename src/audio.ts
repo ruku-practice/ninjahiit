@@ -264,10 +264,22 @@ export const Bgm: any = {
     }, 40);
   },
 
+  // ネイティブ(iOS)ではAVAudioPlayerへ委譲する。理由＝WKWebViewの<audio>はWebKitが
+  // 「このアプリの音楽再生」としてOSに登録してしまい、⑴非mixingセッションがactivateされた
+  // 瞬間にSpotify等が"中断"され（あとからカテゴリを張り直しても他アプリの再生は戻せない）
+  // ⑵バックグラウンドでNow Playingに出る ⑶マナーモードの扱いが声と食い違う、の3つが起きる。
+  // どれもWeb側から抑止する手段がない（2026-07-23 ルク実機報告・かくれんぼパズルとの比較で確認）。
+  get _useNative() { return Native.hasBgm; },
+
   // 指定トラックを再生（同じ曲なら鳴らし直さない）。ユーザー操作より前だと再生が拒否されるが、
   // その場合は例外を握りつぶす（次のタップで鳴る）
   play(track) {
     if (!this.enabled || !BGM_TRACKS[track]) return;
+    if (this._useNative) {
+      this.track = track;
+      Native.bgmPlay(track, this.ducked ? BGM_DUCK_VOLUME : BGM_VOLUME);
+      return;
+    }
     const el = this._audio();
     if (this.track === track && !el.paused) return;
     if (this.track !== track) {
@@ -276,28 +288,27 @@ export const Bgm: any = {
       this.track = track;
     }
     el.volume = 0;
-    el.play().then(() => { this._fadeTo(this.ducked ? BGM_DUCK_VOLUME : BGM_VOLUME); this._reclaimSession(); }).catch(() => {});
-  },
-
-  // iOSのWKWebViewは<audio>が鳴り始めるとAVAudioSessionのカテゴリを非mixingの.playbackへ
-  // 張り替え、SpotifyやPodcastを止めてしまう（2026-07-23 ルク実機報告）。抑止できないので
-  // 鳴らした直後に .playback+.mixWithOthers を張り直す。WebKitの張り替えはplay()解決より
-  // わずかに遅れて起きることがあるため、少し置いてもう一度かける。
-  _reclaimSession() {
-    Native.applyAudioMix();
-    setTimeout(() => Native.applyAudioMix(), 400);
+    el.play().then(() => this._fadeTo(this.ducked ? BGM_DUCK_VOLUME : BGM_VOLUME)).catch(() => {});
   },
 
   stop() {
     clearInterval(this._timer);
+    this.track = null;
+    if (this._useNative) { Native.bgmStop(); return; }
     if (!this.el) return;
     this.el.pause();
     this.el.volume = 0;
-    this.track = null;
   },
 
-  pause() { if (this.el) this.el.pause(); },
-  resume() { if (this.enabled && this.el && this.track) this.el.play().then(() => this._reclaimSession()).catch(() => {}); },
+  pause() {
+    if (this._useNative) { Native.bgmPause(); return; }
+    if (this.el) this.el.pause();
+  },
+  resume() {
+    if (!this.enabled || !this.track) return;
+    if (this._useNative) { Native.bgmResume(); return; }
+    if (this.el) this.el.play().catch(() => {});
+  },
 
   // サクヤの声の間だけ音量を下げる。戻すのはホールド時間ぶん待ってから＝
   // セリフが連続しても音量が上下にバタつかない
@@ -308,14 +319,20 @@ export const Bgm: any = {
     clearTimeout(this._unduckTimer);
     if (on) {
       this.ducked = true;
-      if (this.el && !this.el.paused) this._fadeTo(BGM_DUCK_VOLUME, 200);
+      this._setVolume(BGM_DUCK_VOLUME, 200);
       this._unduckTimer = setTimeout(() => this.duck(false), (maxSec > 0 ? maxSec * 1000 : 6000) + BGM_DUCK_HOLD_MS);
       return;
     }
     this._unduckTimer = setTimeout(() => {
       this.ducked = false;
-      if (this.el && !this.el.paused) this._fadeTo(BGM_VOLUME, 500);
+      this._setVolume(BGM_VOLUME, 500);
     }, BGM_DUCK_HOLD_MS);
+  },
+
+  // ネイティブはAVAudioPlayerのfadeDurationで、Webは従来のsetIntervalフェードで音量を変える
+  _setVolume(target, ms) {
+    if (this._useNative) { if (this.track) Native.bgmVolume(target, ms); return; }
+    if (this.el && !this.el.paused) this._fadeTo(target, ms);
   },
 
   setEnabled(on) {
