@@ -8,7 +8,7 @@ import {
   recommendWorkout, yesterdaySummary, shouldShowHealthNotice, pauseButtonState,
   restBannerLabel, runNextLabel, soundIconState, fitFontSize, shareImageFileName,
 } from "./data.ts";
-import { Bgm, Sound, Voice, reassertPlaybackCategory, audioSessionState } from "./audio.ts";
+import { Bgm, Sound, Voice, refreshAudioSessionState, audioSessionState } from "./audio.ts";
 import { WorkoutEngine } from "./timer.ts";
 import { Native } from "./native.ts";
 import { KOBAN_RATES, SHIELD_MAX, addKoban, kobanBalance, kobanLedger, canEarnPokeKoban } from "./points.ts";
@@ -1975,12 +1975,12 @@ document.addEventListener("DOMContentLoaded", () => {
   if (Native.hasBgm) {
     setInterval(() => {
       if (document.visibilityState !== "visible") return;
-      reassertPlaybackCategory();   // WebKitに張り替えられても1秒以内に取り返す
+      refreshAudioSessionState();   // 読み取りのみ。セッションには触れない
       const a = audioSessionState;
       $("#app-version").textContent = a.category
         ? `v${__APP_VERSION__} ・ ${a.category}${a.mix ? "+mix" : ""}${a.other ? " ・ 他アプリ再生中" : ""}`
         : `v${__APP_VERSION__}`;
-    }, 1000);
+    }, 3000);
   }
   recordFirstLaunch();
 

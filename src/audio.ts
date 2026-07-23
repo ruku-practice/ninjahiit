@@ -54,14 +54,10 @@ function getMasterBus(ctx) {
 //  <audio>を使わないかくれんぼパズルがマナーモードで黙るのと同じ現象）。
 // Spotifyの中断と違い、これは取り返しがつく——カテゴリを .playback に戻せば以後の再生に効く。
 // AudioContextがrunningになった時と、発話のたび（2秒に1回まで間引く）に張り直す。
-let lastMixAt = -Infinity;
-// 直近に実測したカテゴリ（実機での切り分け用。ホームのバージョン表示に出す）
+// 直近に読み取ったカテゴリ（表示・切り分け用。セッションには触れない）
 export const audioSessionState: any = { category: "", mix: null, other: null };
-export function reassertPlaybackCategory(force = false) {
-  const now = performance.now();
-  if (!force && now - lastMixAt < 900) return;
-  lastMixAt = now;
-  const p = Native.applyAudioMix();
+export function refreshAudioSessionState() {
+  const p = Native.audioState();
   if (p && p.then) p.then((r) => {
     if (!r) return;
     audioSessionState.category = String(r.category || "").replace("AVAudioSessionCategory", "");
@@ -78,10 +74,6 @@ export const Sound: any = {
     if (!this.ctx) {
       const AC = window.AudioContext || (window as any).webkitAudioContext;
       this.ctx = new AC();
-      // runningになるたびにカテゴリを張り直す（下のreassertPlaybackCategoryのコメント参照）
-      this.ctx.onstatechange = () => {
-        if (this.ctx && this.ctx.state === "running") reassertPlaybackCategory(true);
-      };
     }
     this.ensureRunning();
   },
@@ -95,7 +87,7 @@ export const Sound: any = {
     if (!this.ctx || this.ctx.state === "running") return;
     try {
       const p = this.ctx.resume();
-      if (p && p.then) p.then(() => reassertPlaybackCategory(true)).catch(() => {});
+      if (p && p.catch) p.catch(() => {});
     } catch (e) {}
   },
 
@@ -218,7 +210,6 @@ export const Voice: any = {
   _dispatch(name, interrupt) {
     if (this._want !== name) return;                         // もっと新しいセリフ要求が出た
     if (performance.now() - this._wantAt > 3000) return;     // 遅すぎる（場面が変わった）
-    reassertPlaybackCategory();                              // マナーモードで黙らないよう保険
     const duckable = shouldDuckForVoice(name);
     const buf = this.buffers[name];
     if (buf) { this._startBuf(buf, interrupt, duckable); return; }
@@ -232,9 +223,6 @@ export const Voice: any = {
 
   _startBuf(buf, interrupt, duckable = true) {
     if (interrupt) this.stop();
-    // WebKitはソース開始のタイミングでもセッションを更新することがある。開始前に張るだけだと
-    // 後出しで上書きされるため、開始後にもう一度張る（2026-07-23実機：マナーモードで声だけ黙る）
-    setTimeout(() => reassertPlaybackCategory(true), 0);
     const src = this.ctx.createBufferSource();
     src.buffer = buf;
     const g = this.ctx.createGain();

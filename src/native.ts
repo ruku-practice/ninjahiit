@@ -81,9 +81,16 @@ export const Native: any = {
   },
 
   // ---- オーディオセッション（iOSのみ。AudioSessionBridgeカスタムプラグイン） ----
-  // WKWebViewは<audio>が鳴り始めるとAVAudioSessionのカテゴリを非mixingの.playbackへ張り替え、
-  // 他アプリ（Spotify/Podcast）を止めてしまう。抑止はできないので、鳴らした直後に張り直す。
-  // 戻り値は実際に効いているカテゴリ（実機での切り分け用）。Web/未実装環境ではnull。
+  // 対象はアプリ本体プロセスのセッションのみ。WKWebViewの中身は別プロセス（WebContent）で動き
+  // 独自のセッションを持つため、Web Audio（声・SE）のマナーモード挙動はここからは変えられない
+  // （2026-07-23実機で確認済み。詳細は AudioSessionBridge.swift の冒頭コメント）。
+  // 読み取り専用（表示・切り分け用）。セッションには触れないので再生に割り込まない
+  async audioState() {
+    const a = this.plugin("AudioSessionBridge");
+    if (!a) return null;
+    try { return await a.getState(); } catch (e) { return null; }
+  },
+
   async applyAudioMix() {
     const a = this.plugin("AudioSessionBridge");
     if (!a) return null;
