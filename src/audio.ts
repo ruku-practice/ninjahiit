@@ -1,3 +1,5 @@
+import { Native } from "./native.ts";
+
 // 効果音：Web Audio APIのオシレータのみで生成（音声ファイル不要・オフライン動作）
 // サクヤの声：事前生成mp3をdecodeAudioDataでバッファ化して再生。
 //
@@ -55,8 +57,21 @@ export const Sound: any = {
       const AC = window.AudioContext || (window as any).webkitAudioContext;
       this.ctx = new AC();
     }
-    if (this.ctx.state === "suspended") this.ctx.resume();
+    this.ensureRunning();
   },
+
+  // iOSのWebKitには標準にない "interrupted" 状態があり、他アプリが音を出し始めた時などに
+  // AudioContextがそこへ落ちる。以前は "suspended" しか見ていなかったため、一度落ちると
+  // 復帰を試みないまま効果音もセリフも永久に無音になっていた
+  // （2026-07-23 ルク実機報告：Spotify再生中はサクヤのセリフも鳴らない）。
+  // 復帰はユーザー操作や割り込み終了の後でないと成功しないので、その都度おだやかに試す。
+  ensureRunning() {
+    if (!this.ctx || this.ctx.state === "running") return;
+    try { const p = this.ctx.resume(); if (p && p.catch) p.catch(() => {}); } catch (e) {}
+  },
+
+  // ユーザー操作より前かどうか（未解錠＝suspended）。解錠済みなら interrupted でも発話を試してよい
+  unlocked() { return !!this.ctx && this.ctx.state !== "suspended"; },
 
   _tone(freq, durMs, type = "sine", gain = 0.25, when = 0) {
     if (!this.enabled || !this.ctx) return;
@@ -147,6 +162,20 @@ export const Voice: any = {
     if (!this.enabled || !this.ctx || !name) return;
     this._want = name;
     this._wantAt = performance.now();
+    // interruptedのまま鳴らしても無音になるだけなので、復帰を待ってから発話する。
+    // 下の鮮度チェック（3秒／最新要求のみ）が効くので、復帰が遅れて場面が変わった場合は
+    // 自動的に見送られる。
+    if (this.ctx.state !== "running") {
+      let p = null;
+      try { p = this.ctx.resume(); } catch (e) {}
+      if (p && p.then) { p.then(() => this._dispatch(name, interrupt)).catch(() => {}); return; }
+    }
+    this._dispatch(name, interrupt);
+  },
+
+  _dispatch(name, interrupt) {
+    if (this._want !== name) return;                         // もっと新しいセリフ要求が出た
+    if (performance.now() - this._wantAt > 3000) return;     // 遅すぎる（場面が変わった）
     const duckable = shouldDuckForVoice(name);
     const buf = this.buffers[name];
     if (buf) { this._startBuf(buf, interrupt, duckable); return; }
@@ -247,7 +276,16 @@ export const Bgm: any = {
       this.track = track;
     }
     el.volume = 0;
-    el.play().then(() => this._fadeTo(this.ducked ? BGM_DUCK_VOLUME : BGM_VOLUME)).catch(() => {});
+    el.play().then(() => { this._fadeTo(this.ducked ? BGM_DUCK_VOLUME : BGM_VOLUME); this._reclaimSession(); }).catch(() => {});
+  },
+
+  // iOSのWKWebViewは<audio>が鳴り始めるとAVAudioSessionのカテゴリを非mixingの.playbackへ
+  // 張り替え、SpotifyやPodcastを止めてしまう（2026-07-23 ルク実機報告）。抑止できないので
+  // 鳴らした直後に .playback+.mixWithOthers を張り直す。WebKitの張り替えはplay()解決より
+  // わずかに遅れて起きることがあるため、少し置いてもう一度かける。
+  _reclaimSession() {
+    Native.applyAudioMix();
+    setTimeout(() => Native.applyAudioMix(), 400);
   },
 
   stop() {
@@ -259,7 +297,7 @@ export const Bgm: any = {
   },
 
   pause() { if (this.el) this.el.pause(); },
-  resume() { if (this.enabled && this.el && this.track) this.el.play().catch(() => {}); },
+  resume() { if (this.enabled && this.el && this.track) this.el.play().then(() => this._reclaimSession()).catch(() => {}); },
 
   // サクヤの声の間だけ音量を下げる。戻すのはホールド時間ぶん待ってから＝
   // セリフが連続しても音量が上下にバタつかない

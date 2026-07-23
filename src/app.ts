@@ -842,7 +842,7 @@ async function checkPokes() {
   showToast(`🥷 ${first.from_name}から手裏剣：「${msg}」${extra}${kobanText}`, 5000);
   try {
     Sound.init();
-    if (Sound.ctx && Sound.ctx.state === "running" && state.settings.sound) {
+    if (Sound.unlocked() && state.settings.sound) {   // interruptedでもVoice側で復帰を試みる
       Voice.useCtx(Sound.ctx);
       Voice.setBase(trainer().voiceDir);
       Voice.enabled = true;
@@ -1071,7 +1071,7 @@ function maybeSpeakGreeting() {
   if (greetingAutoSpoken) return;
   try {
     Sound.init(); // 未解錠ならsuspendedのままになるだけで害はない
-    if (Sound.ctx && Sound.ctx.state === "running") {
+    if (Sound.unlocked()) {   // interruptedでもVoice側で復帰を試みる
       greetingAutoSpoken = true;
       homeGreetingSpoken = true;
       speakHomeLine(homeLineKey);
@@ -1566,7 +1566,7 @@ function renderDone(workout, totalWorkSec) {
     (state.lastStreakBonus ? `<li>🔥 連続${streakDays()}日ボーナス ＋${state.lastStreakBonus}修行値込み</li>` : "") +
     `<li>${s > 0 ? `🔥 ${s}日連続` : "また明日も待ってるよ"}</li>`;
   const text = encodeURIComponent(
-    `${trainer().name}と一緒に「${workout.title}」完走した！🥷 #毎日筋トレ #CryptoNinja`);
+    `${trainer().name}と一緒に「${workout.title}」完走した！🥷 #4分筋トレ #CryptoNinja`);
   $("#btn-share").href = `https://twitter.com/intent/tweet?text=${text}`;
   show("screen-done");
   renderDonePokeSection();
@@ -1751,7 +1751,7 @@ async function buildShareImageBlob(): Promise<Blob> {
   // フッター
   ctx.font = `800 30px ${FONT}`;
   ctx.fillStyle = "rgba(31,42,68,0.72)";
-  ctx.fillText(`${trainer().name}と毎日筋トレ　#毎日筋トレ #CryptoNinja`, SHARE_W / 2, SHARE_H - 46);
+  ctx.fillText(`${trainer().name}と4分筋トレ　#4分筋トレ #CryptoNinja`, SHARE_W / 2, SHARE_H - 46);
 
   return new Promise((resolve, reject) => {
     cv.toBlob((b) => b ? resolve(b) : reject(new Error("toBlob failed")), "image/png");
@@ -2000,6 +2000,8 @@ document.addEventListener("DOMContentLoaded", () => {
       } else {
         Bgm.resume();   // ワークアウト中の復帰はresumeEngine側でBGMも戻る
       }
+      // 復帰時にAudioContextがinterruptedのまま残ることがある（他アプリ再生・電話など）
+      Sound.ensureRunning();
       if (state.engine && !state.engine.finished) acquireWakeLock();
     }
   });

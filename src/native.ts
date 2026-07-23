@@ -80,6 +80,16 @@ export const Native: any = {
     } catch (e) { return false; }
   },
 
+  // ---- オーディオセッション（iOSのみ。AudioSessionBridgeカスタムプラグイン） ----
+  // WKWebViewは<audio>が鳴り始めるとAVAudioSessionのカテゴリを非mixingの.playbackへ張り替え、
+  // 他アプリ（Spotify/Podcast）を止めてしまう。抑止はできないので、鳴らした直後に張り直す。
+  // 戻り値は実際に効いているカテゴリ（実機での切り分け用）。Web/未実装環境ではnull。
+  async applyAudioMix() {
+    const a = this.plugin("AudioSessionBridge");
+    if (!a) return null;
+    try { return await a.applyMixWithOthers(); } catch (e) { return null; }
+  },
+
   // ---- ホーム画面ウィジェット連携（iOSのみ。WidgetBridgeカスタムプラグイン） ----
   // streak等をApp Group経由でウィジェットに渡し、タイムラインを更新させる
   // weekDone: 週間実施ドット（月〜日7要素・任意）。SakuyaWidget.swiftのparseWeekDone()が
@@ -122,7 +132,7 @@ export const Native: any = {
       if (!plan.length) return "off"; // 今日はもう完走済み＆明日以降の枠も無い等（daysAheadを極端に小さくした場合のみ）
       await ln.schedule({ notifications: plan.map((p) => ({
         id: p.id,
-        title: "サクヤと毎日筋トレ",
+        title: "サクヤと4分筋トレ",
         body: p.body,
         schedule: { at: p.at, allowWhileIdle: true },
       })) });
