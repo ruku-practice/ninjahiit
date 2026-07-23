@@ -138,6 +138,21 @@ function retryPlayVideo(video, tries = 4) {
   });
 }
 
+// 復帰時は play() が成功してもフレームが進まないことがある（バックグラウンド中にデコーダが
+// 解放され、要素は再生中のつもりなのに絵が止まったまま＝v0.75.1でも再現した）。
+// 「鳴らせたか」ではなく「実際に時間が進んだか」で判定し、進んでいなければload()からやり直す。
+function ensureVideoPlaying(video) {
+  if (!video) return;
+  const before = video.currentTime;
+  retryPlayVideo(video);
+  setTimeout(() => {
+    if (!video.isConnected) return;
+    if (!video.paused && video.currentTime !== before) return;  // 進んでいる＝健全
+    video.load();                                               // デコーダを作り直す（頭出しになる）
+    retryPlayVideo(video);
+  }, 500);
+}
+
 function showPose(el, pose, label) {
   if (showLiveChara(el, pose, label)) return;
   setCharaImage(el, `${trainer().dir}/${pose}.png`, label, 1);
@@ -1483,6 +1498,7 @@ function resumeEngine() {
   e.resume();
   Bgm.resume();
   playSprite($("#run-chara"), e.current.exercise);
+  ensureVideoPlaying($("#run-chara video"));   // 同じ種目だとsrcが変わらずload()が走らないため
   setPauseButtonUI(false);
 }
 
@@ -2028,7 +2044,7 @@ document.addEventListener("DOMContentLoaded", () => {
       Sound.ensureRunning();
       // 実行中なら、止まって見えるお手本動画を鳴らし直す（手動一時停止中は触らない）
       if (state.engine && !state.engine.finished && state.engine.pausedAt === null) {
-        retryPlayVideo($("#run-chara video"));
+        ensureVideoPlaying($("#run-chara video"));
       }
       if (state.engine && !state.engine.finished) acquireWakeLock();
     }
