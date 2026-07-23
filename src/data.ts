@@ -30,12 +30,16 @@ export const EXERCISES = {
 export const PRESETS = [
   {
     id: "beginner_hiit",
-    title: "足中心", short: "足中心",
+    title: "ゆるめHIIT", short: "ゆるめHIIT",
     icon: "🌱", tint: "pink", pict: "stretch",
     badge: "初心者おすすめ", desc: "ゆるめ・まずはここから",
-    workSec: 20, restSec: 20, rounds: 1, setRestSec: 0,
-    exercises: ["forward_lunge", "side_lunge", "backward_lunge", "squat",
-      "kickback_right", "kickback_left", "butt_bridge", "squat"],
+    // レスト20→10秒（2026-07-23ルク決裁）。所要 約5.2分→4.0分ちょうどで他メニューとテンポが揃う。
+    // 「ゆるめ」らしさは種目選び（ジャンプ種目ゼロ・床種目3つ）で担保する。
+    // 並びは「馴染みのあるスクワットで入る→立ち5種目→床3種目」＝立ち座りの往復を1回だけにし、
+    // 最後を床種目にしてクールダウン的に終える（10秒レストで立ったり寝たりを繰り返さないため）。
+    workSec: 20, restSec: 10, rounds: 1, setRestSec: 0,
+    exercises: ["squat", "forward_lunge", "side_lunge", "backward_lunge", "squat",
+      "kickback_right", "kickback_left", "butt_bridge"],
   },
   {
     id: "abs",
