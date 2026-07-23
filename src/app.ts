@@ -8,7 +8,7 @@ import {
   recommendWorkout, yesterdaySummary, shouldShowHealthNotice, pauseButtonState,
   restBannerLabel, runNextLabel, soundIconState, fitFontSize, shareImageFileName,
 } from "./data.ts";
-import { Bgm, Sound, Voice } from "./audio.ts";
+import { Bgm, Sound, Voice, reassertPlaybackCategory, audioSessionState } from "./audio.ts";
 import { WorkoutEngine } from "./timer.ts";
 import { Native } from "./native.ts";
 import { KOBAN_RATES, SHIELD_MAX, addKoban, kobanBalance, kobanLedger, canEarnPokeKoban } from "./points.ts";
@@ -1969,6 +1969,18 @@ document.addEventListener("DOMContentLoaded", () => {
   // ホームのバージョン表示：package.jsonのversionがViteのdefineで注入される
   // パッチ番号まで出す（実機でどのビルドが動いているか切り分けるため。2026-07-23）
   $("#app-version").textContent = `v${__APP_VERSION__}`;
+  // 実機の音まわりを目視で切り分けられるよう、実際に効いているAVAudioSessionのカテゴリを併記する
+  // （マナーモードで声だけ黙る件の調査用。Web/ブラウザでは何も出ない）
+  if (Native.hasBgm) {
+    setInterval(() => {
+      if (document.visibilityState !== "visible") return;
+      reassertPlaybackCategory();   // WebKitに張り替えられても1秒以内に取り返す
+      const a = audioSessionState;
+      $("#app-version").textContent = a.category
+        ? `v${__APP_VERSION__} ・ ${a.category}${a.mix ? "+mix" : ""}${a.other ? " ・ 他アプリ再生中" : ""}`
+        : `v${__APP_VERSION__}`;
+    }, 1000);
+  }
   recordFirstLaunch();
 
   // 開発時のみ：コンソールからの動作確認用フック（本番ビルドでは消える）

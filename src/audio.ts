@@ -55,11 +55,19 @@ function getMasterBus(ctx) {
 // Spotifyの中断と違い、これは取り返しがつく——カテゴリを .playback に戻せば以後の再生に効く。
 // AudioContextがrunningになった時と、発話のたび（2秒に1回まで間引く）に張り直す。
 let lastMixAt = -Infinity;
-function reassertPlaybackCategory(force = false) {
+// 直近に実測したカテゴリ（実機での切り分け用。ホームのバージョン表示に出す）
+export const audioSessionState: any = { category: "", mix: null, other: null };
+export function reassertPlaybackCategory(force = false) {
   const now = performance.now();
-  if (!force && now - lastMixAt < 2000) return;
+  if (!force && now - lastMixAt < 900) return;
   lastMixAt = now;
-  Native.applyAudioMix();
+  const p = Native.applyAudioMix();
+  if (p && p.then) p.then((r) => {
+    if (!r) return;
+    audioSessionState.category = String(r.category || "").replace("AVAudioSessionCategory", "");
+    audioSessionState.mix = !!r.mixWithOthers;
+    audioSessionState.other = !!r.otherAudioPlaying;
+  });
 }
 
 export const Sound: any = {
@@ -211,6 +219,9 @@ export const Voice: any = {
 
   _startBuf(buf, interrupt, duckable = true) {
     if (interrupt) this.stop();
+    // WebKitはソース開始のタイミングでもセッションを更新することがある。開始前に張るだけだと
+    // 後出しで上書きされるため、開始後にもう一度張る（2026-07-23実機：マナーモードで声だけ黙る）
+    setTimeout(() => reassertPlaybackCategory(true), 0);
     const src = this.ctx.createBufferSource();
     src.buffer = buf;
     const g = this.ctx.createGain();

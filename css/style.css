@@ -138,7 +138,10 @@ p.kcal-note { text-align: center; }
 
 /* 本体：左サクヤ（反射）＋右メニュー */
 .hud-body { display: flex; gap: 4px; align-items: flex-start; }
-.hud-companion { flex: 0 0 52%; position: sticky; top: 6px; align-self: flex-start; display: flex; flex-direction: column; align-items: center; }
+/* min-width:0 が要。flexアイテムの既定 min-width:auto だと、幅の広いジャンプポーズ(joy_1)の
+   最小内容幅に押されて列が52%より太くなり、そのポーズの時だけ右のメニューが縮んでいた
+   （2026-07-23 ルク指摘） */
+.hud-companion { flex: 0 0 52%; min-width: 0; position: sticky; top: 6px; align-self: flex-start; display: flex; flex-direction: column; align-items: center; }
 /* joyポーズは縦横比がまちまち（ジャンプのjoy_1だけ横に広い＝幅基準だと背が低くなる）で、
    幅100%で並べると表示高さが367px⇔446pxと動き、下の吹き出しが上下に飛んでいた。
    ジャンプ画像(478×960)の比率で枠の高さを固定し、画像は高さ基準で揃える＝
@@ -147,10 +150,14 @@ p.kcal-note { text-align: center; }
   min-height: 0; width: 100%; aspect-ratio: 478 / 960;
   display: flex; align-items: flex-end; justify-content: center;
 }
+/* 高さは枠の86%に抑える。理由は2つ（2026-07-23 ルク指示）：
+   ⑴ジャンプのjoy_1は横に広く、高さ100%だと幅が枠いっぱいまで出てメニューに干渉していた。
+     86%にするとjoy_1の幅が他ポーズの従来幅とほぼ揃い、どのポーズでも枠内に収まる。
+   ⑵枠の高さ（＝吹き出しの位置）は変えずに、下揃えのまま髪の頂点だけが下がる＝
+     「今日のおすすめ」バーとサクヤの間の詰まりが解消する。 */
 .hud-companion .chara-box img {
-  height: 100%; width: auto; object-fit: contain;
-  max-width: 116%; max-height: 100%; /* 基底の .chara-box img の max-height:220px を打ち消す */
-  margin-left: -8%;
+  height: 86%; width: auto; object-fit: contain;
+  max-width: 100%; max-height: 86%; /* 基底の .chara-box img の max-height:220px を打ち消す */
   filter: drop-shadow(0 16px 14px rgba(30,50,90,0.30));
   -webkit-box-reflect: below 0 linear-gradient(transparent 62%, rgba(255,255,255,0.28));
   animation: none; /* ふわふわ停止：床にどっしり立たせる */
@@ -970,7 +977,7 @@ p.kcal-note { text-align: center; }
   animation: st-breath 4s ease-in-out infinite;
 }
 .hud-companion .chara-box .st-chara {
-  margin-left: -8%;
+  height: 86%; max-width: 100%;   /* 1枚絵の<img>と同じ寸法規則（上のコメント参照） */
   filter: drop-shadow(0 16px 14px rgba(30,50,90,0.30));
   -webkit-box-reflect: below 0 linear-gradient(transparent 62%, rgba(255,255,255,0.28));
 }
