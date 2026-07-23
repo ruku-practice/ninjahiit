@@ -54,18 +54,6 @@ function getMasterBus(ctx) {
 //  <audio>を使わないかくれんぼパズルがマナーモードで黙るのと同じ現象）。
 // Spotifyの中断と違い、これは取り返しがつく——カテゴリを .playback に戻せば以後の再生に効く。
 // AudioContextがrunningになった時と、発話のたび（2秒に1回まで間引く）に張り直す。
-// 直近に読み取ったカテゴリ（表示・切り分け用。セッションには触れない）
-export const audioSessionState: any = { category: "", mix: null, other: null };
-export function refreshAudioSessionState() {
-  const p = Native.audioState();
-  if (p && p.then) p.then((r) => {
-    if (!r) return;
-    audioSessionState.category = String(r.category || "").replace("AVAudioSessionCategory", "");
-    audioSessionState.mix = !!r.mixWithOthers;
-    audioSessionState.other = !!r.otherAudioPlaying;
-  });
-}
-
 export const Sound: any = {
   ctx: null,
   enabled: true,

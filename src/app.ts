@@ -8,7 +8,7 @@ import {
   recommendWorkout, yesterdaySummary, shouldShowHealthNotice, pauseButtonState,
   restBannerLabel, runNextLabel, soundIconState, fitFontSize, shareImageFileName,
 } from "./data.ts";
-import { Bgm, Sound, Voice, refreshAudioSessionState, audioSessionState } from "./audio.ts";
+import { Bgm, Sound, Voice } from "./audio.ts";
 import { WorkoutEngine } from "./timer.ts";
 import { Native } from "./native.ts";
 import { KOBAN_RATES, SHIELD_MAX, addKoban, kobanBalance, kobanLedger, canEarnPokeKoban } from "./points.ts";
@@ -139,17 +139,33 @@ function retryPlayVideo(video, tries = 4) {
 }
 
 // 復帰時は play() が成功してもフレームが進まないことがある（バックグラウンド中にデコーダが
-// 解放され、要素は再生中のつもりなのに絵が止まったまま＝v0.75.1でも再現した）。
-// 「鳴らせたか」ではなく「実際に時間が進んだか」で判定し、進んでいなければload()からやり直す。
+// 解放され、要素は再生中のつもりなのに絵が止まったまま＝v0.75.1・v0.75.2で再現）。
+// 「鳴らせたか」ではなく「実際に再生位置が進んだか」で判定し、段階的に強い手を打つ：
+//   ①play()の再試行 → ②load()でデコーダを作り直す → ③<video>要素ごと作り直す
+// ③まで要るのは、WebContentプロセス側でデコーダが失われるとload()でも絵が戻らないため
+// （2026-07-23 ルク実機：タイムゲージは進むのに絵だけ止まったまま）。
+function videoProgressing(video, before) {
+  return !!video && !video.paused && video.currentTime !== before;
+}
+
 function ensureVideoPlaying(video) {
   if (!video) return;
   const before = video.currentTime;
   retryPlayVideo(video);
   setTimeout(() => {
-    if (!video.isConnected) return;
-    if (!video.paused && video.currentTime !== before) return;  // 進んでいる＝健全
-    video.load();                                               // デコーダを作り直す（頭出しになる）
+    if (!video.isConnected || videoProgressing(video, before)) return;
+    const t2 = video.currentTime;
+    video.load();                 // ②デコーダを作り直す（頭出しになる）
     retryPlayVideo(video);
+    setTimeout(() => {
+      if (!video.isConnected || videoProgressing(video, t2)) return;
+      // ③要素ごと作り直して新しいデコーダを割り当てる
+      const e = state.engine;
+      const box = $("#run-chara");
+      if (!e || e.finished || !box || !box.contains(video)) return;
+      box.innerHTML = "";
+      playSprite(box, e.current.exercise);
+    }, 600);
   }, 500);
 }
 
@@ -1986,18 +2002,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // ホームのバージョン表示：package.jsonのversionがViteのdefineで注入される
   // パッチ番号まで出す（実機でどのビルドが動いているか切り分けるため。2026-07-23）
   $("#app-version").textContent = `v${__APP_VERSION__}`;
-  // 実機の音まわりを目視で切り分けられるよう、実際に効いているAVAudioSessionのカテゴリを併記する
-  // （マナーモードで声だけ黙る件の調査用。Web/ブラウザでは何も出ない）
-  if (Native.hasBgm) {
-    setInterval(() => {
-      if (document.visibilityState !== "visible") return;
-      refreshAudioSessionState();   // 読み取りのみ。セッションには触れない
-      const a = audioSessionState;
-      $("#app-version").textContent = a.category
-        ? `v${__APP_VERSION__} ・ ${a.category}${a.mix ? "+mix" : ""}${a.other ? " ・ 他アプリ再生中" : ""}`
-        : `v${__APP_VERSION__}`;
-    }, 3000);
-  }
   recordFirstLaunch();
 
   // 開発時のみ：コンソールからの動作確認用フック（本番ビルドでは消える）
