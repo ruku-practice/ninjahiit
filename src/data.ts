@@ -266,17 +266,31 @@ export function weekDoneArray(history: { date: string; completed: boolean }[], n
 }
 
 // ---- 昨日の実績・今日のおすすめ（ホーム用・純粋関数）----
-// 昨日(JST)に完走した記録があれば振り返りメッセージを、なければ責めない一言を返す
+// ホーム上部の一言。状況を4つに分けて出し分ける（2026-07-23 UT指摘への対応）。
+//   first  : 完走履歴が1件も無い＝初回。「昨日サボったね」と言わない
+//   today  : 今日すでに完走済み。今日の事実を無視して「今日から4分、どう？」と誘わない
+//   done   : 昨日完走した → 振り返り
+//   rest   : 昨日はお休み（履歴はある）→ 責めない一言
+// kindは表示に使わないが、テストと将来の出し分けのために返す。
 export function yesterdaySummary(
   history: { date: string; workoutId?: string; title?: string; completed: boolean }[],
   now: Date = new Date()
-): { done: boolean; title: string | null; message: string } {
+): { done: boolean; title: string | null; message: string; kind: "first" | "today" | "done" | "rest" } {
+  const done = history.filter((h) => h.completed);
+  if (!done.length) {
+    return { done: false, title: null, message: "はじめの1本、いっしょにやってみよう。", kind: "first" };
+  }
+  const todayHit = done.find((h) => h.date === ymd(now));
+  if (todayHit) {
+    const t = PRESETS.find((p) => p.id === todayHit.workoutId)?.title || todayHit.title || "クイック";
+    return { done: true, title: t, message: `今日は${t}、おつかれさま！`, kind: "today" };
+  }
   const y = new Date(now);
   y.setDate(now.getDate() - 1);
-  const hit = history.find((h) => h.completed && h.date === ymd(y));
-  if (!hit) return { done: false, title: null, message: "昨日はお休みだったね。今日から4分、どう？" };
+  const hit = done.find((h) => h.date === ymd(y));
+  if (!hit) return { done: false, title: null, message: "昨日はお休みだったね。今日から4分、どう？", kind: "rest" };
   const title = PRESETS.find((p) => p.id === hit.workoutId)?.title || hit.title || "クイック";
-  return { done: true, title, message: `昨日は${title}、おつかれさま！` };
+  return { done: true, title, message: `昨日は${title}、おつかれさま！`, kind: "done" };
 }
 
 // 今日のおすすめメニュー（サクヤの提案として提示。数字よりサクヤ）。
@@ -318,16 +332,23 @@ export function recommendWorkout(
 export const MISSION_BONUS_EXP = 50;
 export const DAILY_MISSIONS = [
   { id: "any",           label: "どれか1つ、完走する" },
-  { id: "beginner_hiit", label: "「初めてのHIIT」を完走する" },
-  { id: "abs",           label: "「腹筋」を完走する" },
-  { id: "lower",         label: "「下半身」を完走する" },
-  { id: "fat_burn",      label: "「脂肪バー忍」を完走する" },
+  { id: "beginner_hiit", label: "" },
+  { id: "abs",           label: "" },
+  { id: "lower",         label: "" },
+  { id: "fat_burn",      label: "" },
   { id: "any",           label: "どれか1つ、完走する" },
-  { id: "body_make",     label: "「ボディメイキング」を完走する" },
-  { id: "serious_hiit",  label: "「本気のHIIT」を完走する" },
-  { id: "super_ninja",   label: "「スーパーニンジャ」を完走する" },
+  { id: "body_make",     label: "" },
+  { id: "serious_hiit",  label: "" },
+  { id: "super_ninja",   label: "" },
   { id: "any2",          label: "2回完走する（休みながらでOK）" },
 ];
+// メニュー名の任務ラベルはPRESETSの正本から流し込む。
+// 直書きしていた頃はメニュー改名にラベルが追従せず、「初めてのHIIT」「ボディメイキング」
+// 「本気のHIIT」「スーパーニンジャ」という現存しない名前を任務に出していた（2026-07-23 UT）。
+for (const m of DAILY_MISSIONS) {
+  const p = PRESETS.find((x) => x.id === m.id);
+  if (p) m.label = `「${p.title}」を完走する`;
+}
 export function missionForDate(dateStr) {
   let h = 0;
   for (const c of dateStr) h = (h * 31 + c.charCodeAt(0)) >>> 0;

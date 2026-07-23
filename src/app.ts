@@ -1199,9 +1199,10 @@ function renderHome() {
   stopCatalog();
   Bgm.play("title");   // ホーム＝タイトル曲（ユーザー操作前は再生が拒否されるので、次のタップで鳴る）
   homeLineKey = homeGreetingKey();
-  // ヒーローカードは「迎えてくれる」joyポーズ。3日以上あいた「おかえり」の時だけ、
-  // 両腕を広げた歓迎ポーズ(joy_5)で迎える（2026-07-23ルク指示）
-  homeJoyPose = homeLineKey === "greet_comeback" ? 5 : 2;
+  // ヒーローカードでは「迎えてくれる」joyポーズ（いいね）を表示。
+  // ※おかえり用のjoy_5（両腕を広げた歓迎ポーズ）は、レイヤーアニメが付くまで待機
+  //   （2026-07-23ルク指示。画像は assets_src/characters/sakuya/joy_5_おかえり_採用待ち.png）
+  homeJoyPose = 2;
   showPose($("#home-chara"), `joy_${homeJoyPose}`, trainer().name);
   homeGreetingSpoken = false;
   renderQuote($("#home-quote"), homeLineKey);
@@ -1500,7 +1501,7 @@ function confirmQuitWorkout() {
 }
 
 // ---- 完了画面 ----
-const JOY_POSE_COUNT = 5; // joy_1〜joy_5 を完走のたびに順番に使う（joy_5＝おかえりの歓迎ポーズ）
+const JOY_POSE_COUNT = 4; // joy_1〜joy_4 を完走のたびに順番に使う
 const CONFETTI_COLORS = ["#ff4f81", "#ffb648", "#2b3a67", "#57966a", "#ff8a4f", "#fff"];
 
 function fireConfetti() {
