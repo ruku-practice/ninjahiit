@@ -260,6 +260,18 @@
   </div>
 
   <!-- ワークアウト中断の確認（window.confirmはネイティブで効かないことがあるためアプリ内モーダルに統一） -->
+  <!-- 汎用の確認ダイアログ。window.confirm()はネイティブ(WKWebView)で無反応になることがあるため -->
+  <div id="confirm-modal" class="modal-veil" hidden>
+    <div class="modal-card glass">
+      <h3 id="confirm-title"></h3>
+      <p id="confirm-body"></p>
+      <div class="tut-choices">
+        <button id="btn-confirm-ok" class="detail-start-btn" type="button">はい</button>
+        <button id="btn-confirm-cancel" class="btn-ghost" type="button">やめておく</button>
+      </div>
+    </div>
+  </div>
+
   <div id="quit-modal" class="modal-veil" hidden>
     <div class="modal-card glass">
       <h3>修行を中断する？</h3>

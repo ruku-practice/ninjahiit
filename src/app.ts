@@ -414,10 +414,10 @@ function editCustom(id: string) {
   $("#bld-name").scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
-function deleteCustom(id: string) {
+async function deleteCustom(id: string) {
   const c = customMenus().find((m) => m.id === id);
   if (!c) return;
-  if (!confirm(`「${c.title}」を削除する？（完走の記録は消えません）`)) return;
+  if (!await askConfirm({ title: `「${c.title}」を削除する？`, body: "完走の記録は消えません。", ok: "削除する" })) return;
   saveCustomMenus(customMenus().filter((m) => m.id !== id));
   if (bld.editingId === id) resetBld();
   renderBuilderList();
@@ -721,9 +721,10 @@ function renderRankRows(rows) {
 }
 
 // 忍び名を番付から非表示にする（罰しないトーン・自分の画面だけに反映・いつでもマイページから戻せる）
-function hideRankRow(ninjaId: string, name: string) {
+async function hideRankRow(ninjaId: string, name: string) {
   if (!ninjaId) return;
-  if (!confirm(`「${name}」を番付から非表示にする？\n（あなたの画面だけに反映されます。マイページからいつでも戻せます）`)) return;
+  if (!await askConfirm({ title: `「${name}」を番付から非表示にする？`,
+    body: "あなたの画面だけに反映されます。マイページからいつでも戻せます。", ok: "非表示にする" })) return;
   hideNinja(ninjaId, name);
   showToast(`「${name}」を番付から非表示にしたよ`);
   if (lastRankRows) renderRankRows(lastRankRows); // 再取得せず手元のデータで即再描画
@@ -788,7 +789,7 @@ function renderFriendRows(board) {
 // なかま解除（罰しないトーン：確認ダイアログ→双方向で削除→一覧を即更新）
 async function unfriendRow(friendId: string, name: string) {
   if (!friendId || friendRemovePending) return;
-  if (!confirm(`「${name}」さんをなかまから外しますか？`)) return;
+  if (!await askConfirm({ title: `「${name}」さんをなかまから外す？`, ok: "外す" })) return;
   friendRemovePending = true;
   try {
     if (!navigator.onLine) { showToast("オフラインです。電波のあるところでもう一度試してね"); return; }
@@ -1525,6 +1526,27 @@ function togglePause() {
   else resumeEngine();
 }
 
+// 汎用の確認ダイアログ。window.confirm()はネイティブ（Capacitor WKWebView）で無反応になることが
+// あり、実機で「削除できない」「解除できない」と見える（2026-07-23 UT D-2/E-2の既知リスク）。
+// 中断だけ先にモーダル化してあったので、残っていた削除・非表示・なかま解除も同じ土台へ寄せる。
+let confirmResolve: ((v: boolean) => void) | null = null;
+function askConfirm(o: { title: string; body?: string; ok?: string; cancel?: string }): Promise<boolean> {
+  $("#confirm-title").textContent = o.title;
+  const body = $("#confirm-body");
+  body.textContent = o.body || "";
+  body.hidden = !o.body;
+  $("#btn-confirm-ok").textContent = o.ok || "はい";
+  $("#btn-confirm-cancel").textContent = o.cancel || "やめておく";
+  $("#confirm-modal").hidden = false;
+  return new Promise((resolve) => { confirmResolve = resolve; });
+}
+function closeConfirm(answer: boolean) {
+  $("#confirm-modal").hidden = true;
+  const r = confirmResolve;
+  confirmResolve = null;
+  if (r) r(answer);
+}
+
 // window.confirm()はネイティブ（Capacitor WKWebView）で機能しないことがあり、
 // 「←」で中断できなくなる実機バグの原因だった。アプリ内モーダルに置き換える（2026-07-23）。
 function quitWorkout() {
@@ -1853,6 +1875,10 @@ document.addEventListener("DOMContentLoaded", () => {
   $("#btn-quit").onclick = quitWorkout;
   $("#btn-quit-confirm").onclick = confirmQuitWorkout;
   $("#btn-quit-cancel").onclick = closeQuitModal;
+  $("#btn-confirm-ok").onclick = () => closeConfirm(true);
+  $("#btn-confirm-cancel").onclick = () => closeConfirm(false);
+  // 外側（すりガラス部分）のタップは「やめておく」扱い＝破壊的な操作を誤爆させない
+  $("#confirm-modal").onclick = (e) => { if (e.target === $("#confirm-modal")) closeConfirm(false); };
   $("#btn-done-home").onclick = renderHome;
   $("#btn-copy-image").onclick = copyShareImage;
   $("#btn-catalog").onclick = renderCatalog;

@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800;900&family=Baloo+2:wght@700;800&display=swap" rel="stylesheet">
-  <script type="module" crossorigin src="./bundle/index-4I0mjX4x.js"></script>
+  <script type="module" crossorigin src="./bundle/index-DGebZbvQ.js"></script>
   <link rel="stylesheet" crossorigin href="./bundle/index-DQW6az-2.css">
 </head>
 <body>
@@ -261,6 +261,18 @@
   </div>
 
   <!-- ワークアウト中断の確認（window.confirmはネイティブで効かないことがあるためアプリ内モーダルに統一） -->
+  <!-- 汎用の確認ダイアログ。window.confirm()はネイティブ(WKWebView)で無反応になることがあるため -->
+  <div id="confirm-modal" class="modal-veil" hidden>
+    <div class="modal-card glass">
+      <h3 id="confirm-title"></h3>
+      <p id="confirm-body"></p>
+      <div class="tut-choices">
+        <button id="btn-confirm-ok" class="detail-start-btn" type="button">はい</button>
+        <button id="btn-confirm-cancel" class="btn-ghost" type="button">やめておく</button>
+      </div>
+    </div>
+  </div>
+
   <div id="quit-modal" class="modal-veil" hidden>
     <div class="modal-card glass">
       <h3>修行を中断する？</h3>
