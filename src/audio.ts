@@ -102,6 +102,9 @@ export const Sound: any = {
   // ユーザー操作より前かどうか（未解錠＝suspended）。解錠済みなら interrupted でも発話を試してよい
   unlocked() { return !!this.ctx && this.ctx.state !== "suspended"; },
 
+  // 鳴らし始めた（＝これから鳴る予定の）オシレータ。stopAll()で確実に黙らせるために保持する
+  _live: [],
+
   _tone(freq, durMs, type = "sine", gain = 0.25, when = 0) {
     if (!this.enabled || !this.ctx) return;
     const t0 = this.ctx.currentTime + when;
@@ -114,6 +117,16 @@ export const Sound: any = {
     osc.connect(g).connect(getMasterBus(this.ctx).gain); // destination直結ではなくマスターバス経由
     osc.start(t0);
     osc.stop(t0 + durMs / 1000);
+    this._live.push(osc);
+    osc.onended = () => { const i = this._live.indexOf(osc); if (i >= 0) this._live.splice(i, 1); };
+  },
+
+  // 予約済みの効果音も含めて全部止める。
+  // これが無かったため、アプリを離れる直前に鳴った/予約された音が画面が消えたあとに鳴っていた
+  // （2026-07-23 ルク報告「閉じようとした時に警戒的なビープ音」＝880Hz矩形波のcountTick）。
+  // workStart(+0.1s)とfinish(+0.15s刻み)は未来の時刻に予約するので、離脱時に取り消す必要がある。
+  stopAll() {
+    for (const osc of this._live.splice(0)) { try { osc.stop(); } catch (e) {} }
   },
 
   countTick() { this._tone(880, 120, "square", SE_GAINS.countTick); },          // 残り3,2,1秒

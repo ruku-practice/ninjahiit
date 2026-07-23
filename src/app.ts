@@ -1471,6 +1471,7 @@ function pauseEngine() {
   if (!e || e.finished || e.pausedAt !== null) return;
   e.pause();
   Voice.stop();
+  Sound.stopAll();
   Bgm.pause();
   $("#run-chara video")?.pause();
   setPauseButtonUI(true);
@@ -2015,6 +2016,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // PodcastなどをBGM代わりに聴けない（2026-07-23ルク指示）
       Bgm.pause();
       Voice.stop();
+      Sound.stopAll();   // 予約済みの効果音も取り消す（離脱後に鳴るのを防ぐ）
     } else if (document.visibilityState === "visible") {
       if (autoPausedByVisibility) {
         resumeEngine();
@@ -2032,7 +2034,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
   // visibilitychangeが来ないままプロセスが止まる経路（スワイプ終了・電源断など）の保険
-  window.addEventListener("pagehide", () => { Bgm.pause(); Voice.stop(); });
+  window.addEventListener("pagehide", () => { Bgm.pause(); Voice.stop(); Sound.stopAll(); });
 
   // ネイティブ(Capacitor)ではアセット同梱のためSW不要（capacitor://で動くので条件的にも登録されない）
   if ("serviceWorker" in navigator && location.protocol === "https:" && !window.Capacitor) {
