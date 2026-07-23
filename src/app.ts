@@ -1940,14 +1940,22 @@ document.addEventListener("DOMContentLoaded", () => {
         pauseEngine();
         autoPausedByVisibility = true;
       }
+      // アプリを離れたらBGMと声は必ず止める。裏で鳴り続けると
+      // PodcastなどをBGM代わりに聴けない（2026-07-23ルク指示）
+      Bgm.pause();
+      Voice.stop();
     } else if (document.visibilityState === "visible") {
       if (autoPausedByVisibility) {
         resumeEngine();
         autoPausedByVisibility = false;
+      } else {
+        Bgm.resume();   // ワークアウト中の復帰はresumeEngine側でBGMも戻る
       }
       if (state.engine && !state.engine.finished) acquireWakeLock();
     }
   });
+  // visibilitychangeが来ないままプロセスが止まる経路（スワイプ終了・電源断など）の保険
+  window.addEventListener("pagehide", () => { Bgm.pause(); Voice.stop(); });
 
   // ネイティブ(Capacitor)ではアセット同梱のためSW不要（capacitor://で動くので条件的にも登録されない）
   if ("serviceWorker" in navigator && location.protocol === "https:" && !window.Capacitor) {
