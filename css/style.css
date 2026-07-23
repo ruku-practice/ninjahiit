@@ -880,6 +880,20 @@ p.kcal-note { text-align: center; }
   box-shadow: inset 0 0 0 1px rgba(120,150,190,0.3); }
 #poke-menu-btns button:active { transform: scale(0.97); }
 
+/* ---- 完了画面: まだの仲間へ手裏剣（2026-07-23）---- */
+.done-poke { width: min(92vw, 420px); margin: 0 auto; border-radius: 16px; padding: 12px 14px;
+  display: flex; flex-direction: column; gap: 9px; text-align: left; }
+.done-poke > b { display: block; color: #1f2a44; font-size: 0.86rem; font-weight: 900; line-height: 1.5; }
+.done-poke-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.done-poke-name { flex: 1; min-width: 0; font-weight: 900; color: #1f2a44; font-size: 0.86rem;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.done-poke-btn { flex: none; border: none; cursor: pointer; border-radius: 999px; padding: 7px 12px;
+  background: var(--grad-cta); color: #fff; font-family: inherit; font-weight: 900; font-size: 0.76rem;
+  box-shadow: var(--shadow-pop); }
+.done-poke-btn:active { transform: scale(0.94); }
+.done-poke-btn:disabled, .done-poke-btn.is-sent { background: rgba(120,150,190,0.35); color: #fff;
+  box-shadow: none; cursor: default; }
+
 /* ---- 完了画面: やったメニューの中身 ---- */
 .done-menu { width: min(92vw, 420px); margin: 0 auto; border-radius: 16px; padding: 10px 12px;
   clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%); }

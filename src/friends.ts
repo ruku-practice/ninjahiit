@@ -99,6 +99,13 @@ export function removeFriendFromBoard(board: FriendRow[], friendId: string): Fri
   return board.filter((f) => f.friend_id !== friendId);
 }
 
+// 完走画面「まだの仲間へ手裏剣」に出す相手を絞り込む純粋関数。
+// done_today===false の仲間だけ・最大max人（既定3人）。取得失敗(null)は空配列で安全に返す。
+export function pokeableFriends(board: FriendRow[] | null, max = 3): FriendRow[] {
+  if (!board) return [];
+  return board.filter((f) => f.done_today === false).slice(0, max);
+}
+
 export async function fetchUnseenPokes(): Promise<PokeRow[]> {
   if (!cloudEnabled()) return [];
   try {

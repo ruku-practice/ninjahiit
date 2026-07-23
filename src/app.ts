@@ -11,7 +11,7 @@ import {
 import { Bgm, Sound, Voice } from "./audio.ts";
 import { WorkoutEngine } from "./timer.ts";
 import { Native } from "./native.ts";
-import { KOBAN_RATES, SHIELD_MAX, addKoban, kobanBalance } from "./points.ts";
+import { KOBAN_RATES, SHIELD_MAX, addKoban, kobanBalance, kobanLedger, canEarnPokeKoban } from "./points.ts";
 import { maybeShowInterstitial, recordFirstLaunch } from "./ads.ts";
 import { syncNow } from "./sync.ts";
 import { ensureSignedIn, isOAuthReturnUrl } from "./cloud.ts";
@@ -23,7 +23,7 @@ import {
 } from "./ranking.ts";
 import {
   POKE_MESSAGES, addFriendByCode, fetchUnseenPokes, friendsBoard, markPokesSeen, myFriendCode, sendPoke,
-  removeFriend, removeFriendFromBoard,
+  removeFriend, removeFriendFromBoard, pokeableFriends,
 } from "./friends.ts";
 
 
@@ -789,9 +789,27 @@ async function throwPoke(msgIdx: number) {
   if (!target) return;
   showToast("手裏剣を投げています…");
   const r = await sendPoke(target, msgIdx);
-  if (r === "ok") showToast("手裏剣を投げた！相手が次にアプリを開いた時に届くよ 🥷");
+  if (r === "ok") {
+    markDonePokeSent(target);
+    // 投げた側の小判（1日3回まで・2026-07-23ルク決裁）
+    let kobanText = "";
+    if (canEarnPokeKoban(kobanLedger(), "poke_sent", todayStr())) {
+      const e = addKoban(KOBAN_RATES.pokeSent, "poke_sent", target);
+      kobanText = ` +${e.delta}小判`;
+    }
+    showToast(`手裏剣を投げた！相手が次にアプリを開いた時に届くよ 🥷${kobanText}`);
+  }
   else if (r === "already_today") showToast("その相手には今日はもう投げたよ。また明日！");
   else showToast("投げられなかった…電波を確認してもう一度");
+}
+
+// 完了画面の「まだの仲間へ手裏剣」行を、投げた相手だけ無効表示に変える（二重送信防止）
+function markDonePokeSent(friendId: string) {
+  const btn = document.querySelector(`#done-poke-list .done-poke-btn[data-id="${friendId}"]`) as any;
+  if (!btn) return;
+  btn.disabled = true;
+  btn.textContent = "投げたよ！";
+  btn.classList.add("is-sent");
 }
 
 // ウィジェットへ現在の状態を届ける（起動時・完走時）
@@ -813,7 +831,15 @@ async function checkPokes() {
   const first = pokes[0];
   const msg = POKE_MESSAGES[first.msg_idx] || POKE_MESSAGES[0];
   const extra = pokes.length > 1 ? `（ほか${pokes.length - 1}件）` : "";
-  showToast(`🥷 ${first.from_name}から手裏剣：「${msg}」${extra}`, 5000);
+  // 受け取った側の小判（1件+2・1日3件まで・2026-07-23ルク決裁）。届いた分だけ上限まで加算する
+  const day = todayStr();
+  let earned = 0;
+  for (const p of pokes) {
+    if (!canEarnPokeKoban(kobanLedger(), "poke_received", day)) break;
+    earned += addKoban(KOBAN_RATES.pokeReceived, "poke_received", String(p.poke_id)).delta;
+  }
+  const kobanText = earned > 0 ? ` +${earned}小判` : "";
+  showToast(`🥷 ${first.from_name}から手裏剣：「${msg}」${extra}${kobanText}`, 5000);
   try {
     Sound.init();
     if (Sound.ctx && Sound.ctx.state === "running" && state.settings.sound) {
@@ -1542,6 +1568,28 @@ function renderDone(workout, totalWorkSec) {
     `${trainer().name}と一緒に「${workout.title}」完走した！🥷 #毎日筋トレ #CryptoNinja`);
   $("#btn-share").href = `https://twitter.com/intent/tweet?text=${text}`;
   show("screen-done");
+  renderDonePokeSection();
+}
+
+// 完了画面「まだの仲間へ手裏剣」（2026-07-23）。非同期取得なので renderDone 本体は待たせず後から差し込む。
+async function renderDonePokeSection() {
+  const wrap = $("#done-poke");
+  const list = $("#done-poke-list");
+  wrap.hidden = true;
+  list.innerHTML = "";
+  const board = await friendsBoard();
+  if (!$("#screen-done").classList.contains("active")) return; // 取得中に画面を離れていたら反映しない
+  const targets = pokeableFriends(board);
+  if (!targets.length) return;
+  list.innerHTML = targets.map((f) =>
+    `<div class="done-poke-row">` +
+      `<span class="done-poke-name">${escHtml(f.ninja_name)}</span>` +
+      `<button class="done-poke-btn" data-id="${f.friend_id}">手裏剣を投げる 🥷</button>` +
+    `</div>`).join("");
+  list.querySelectorAll(".done-poke-btn").forEach((b: any) => {
+    b.onclick = () => openPokeMenu(b.dataset.id);
+  });
+  wrap.hidden = false;
 }
 
 // ---- 完了画面のシェア画像（2026-07-23ルク指示）----
