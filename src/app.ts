@@ -208,6 +208,12 @@ const LIVE_POSES = {
         "10_irides", "11_handwear", "12_eyelash", "13_front_hair"],
       aspect: "298 / 760", arm: "38.26% 30.00%", bob: "37.58% 31.18%", sway: "37.58% 22.04%", blink: "35.91% 23.42%", blinkTilt: "-6.2deg",
     },
+    joy_5: {
+      files: ["00_back_hair", "01_footwear", "02_legwear", "03_neck", "04_handwear",
+        "05_topwear", "06_ears", "07_face", "08_mouth", "09_nose",
+        "10_eyewhite", "11_irides", "12_eyelash", "13_headwear", "14_front_hair"],
+      aspect: "345 / 736", arm: "48.84% 33.02%", bob: "50.43% 35.05%", sway: "49.57% 21.54%", blink: "49.71% 22.55%", blinkTilt: "-4.9deg",
+    },
   },
 };
 // パーツ名→動きのクラス。st-sway=髪ゆれ、st-bob=頭のゆらぎ、st-arm=腕のゆれ、st-blink=まばたき（imgに付与）
@@ -1241,10 +1247,9 @@ function renderHome() {
   stopCatalog();
   Bgm.play("title");   // ホーム＝タイトル曲（ユーザー操作前は再生が拒否されるので、次のタップで鳴る）
   homeLineKey = homeGreetingKey();
-  // ヒーローカードでは「迎えてくれる」joyポーズ（いいね）を表示。
-  // ※おかえり用のjoy_5（両腕を広げた歓迎ポーズ）は、レイヤーアニメが付くまで待機
-  //   （2026-07-23ルク指示。画像は assets_src/characters/sakuya/joy_5_おかえり_採用待ち.png）
-  homeJoyPose = 2;
+  // ヒーローカードは「迎えてくれる」joyポーズ。3日以上あいた「おかえり」の時だけ、
+  // 両腕を広げた歓迎ポーズ(joy_5)で迎える（2026-07-23ルク指示・2026-07-24レイヤーアニメ完成で復帰）
+  homeJoyPose = homeLineKey === "greet_comeback" ? 5 : 2;
   showPose($("#home-chara"), `joy_${homeJoyPose}`, trainer().name);
   homeGreetingSpoken = false;
   renderQuote($("#home-quote"), homeLineKey);
@@ -1566,7 +1571,7 @@ function confirmQuitWorkout() {
 }
 
 // ---- 完了画面 ----
-const JOY_POSE_COUNT = 4; // joy_1〜joy_4 を完走のたびに順番に使う
+const JOY_POSE_COUNT = 5; // joy_1〜joy_5 を完走のたびに順番に使う（joy_5＝おかえりの歓迎ポーズ）
 const CONFETTI_COLORS = ["#ff4f81", "#ffb648", "#2b3a67", "#57966a", "#ff8a4f", "#fff"];
 
 function fireConfetti() {
