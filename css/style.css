@@ -968,12 +968,20 @@ p.kcal-note { text-align: center; }
 }
 .chara-box .st-chara .st-sway { animation: st-sway 4.6s ease-in-out infinite; transform-origin: var(--st-sway-origin, 69.97% 10.47%); }
 .chara-box .st-chara .st-bob { animation: st-bob 6.4s ease-in-out infinite; transform-origin: var(--st-bob-origin, 55.45% 33.38%); }
+/* 腕は肩を支点にごく浅く揺らす。±1.2°より大きいと腰に添えた手が離れて見える（2026-07-23検証） */
+.chara-box .st-chara .st-arm { animation: st-arm 5.6s ease-in-out infinite; transform-origin: var(--st-arm-origin, 50% 32%); }
 .chara-box .st-chara .st-blink img { animation: st-blink 5.2s linear infinite; transform-origin: var(--st-blink-origin, 54.79% 23.69%); }
 @keyframes st-breath { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.012); } }
 @keyframes st-sway { 0%, 100% { transform: rotate(0.7deg); } 50% { transform: rotate(-1.9deg); } }
 @keyframes st-bob { 0%, 100% { transform: rotate(0deg); } 30% { transform: rotate(0.9deg); } 72% { transform: rotate(-0.7deg); } }
+@keyframes st-arm { 0%, 100% { transform: rotate(-1.2deg); } 50% { transform: rotate(1.2deg); } }
 /* まばたき：目のレイヤーを一瞬つぶす（裏はSee-throughが補完した肌なので閉眼に見える） */
-@keyframes st-blink { 0%, 91% { transform: scaleY(1); } 93%, 95% { transform: scaleY(0.05); } 97%, 100% { transform: scaleY(1); } }
+/* まぶたは顔の傾き(--st-blink-tilt)に沿って閉じる。傾いた顔で横一直線に閉じると不自然なため */
+@keyframes st-blink {
+  0%, 91%   { transform: rotate(var(--st-blink-tilt, 0deg)) scaleY(1)    rotate(calc(-1 * var(--st-blink-tilt, 0deg))); }
+  93%, 95%  { transform: rotate(var(--st-blink-tilt, 0deg)) scaleY(0.05) rotate(calc(-1 * var(--st-blink-tilt, 0deg))); }
+  97%, 100% { transform: rotate(var(--st-blink-tilt, 0deg)) scaleY(1)    rotate(calc(-1 * var(--st-blink-tilt, 0deg))); }
+}
 @media (prefers-reduced-motion: reduce) {
   .chara-box .st-chara, .chara-box .st-chara * { animation: none !important; }
 }

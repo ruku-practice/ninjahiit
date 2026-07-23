@@ -140,37 +140,39 @@ function showPose(el, pose, label) {
 // レイヤーが読み込めなければ従来の1枚絵に自動で戻す。
 // 各ポーズ: files=レイヤー(奥→手前)、aspect=切り抜きの縦横比、
 // bob=首のつけ根 / sway=ポニーテール結び目 / blink=目の中心（いずれも切り抜き内%座標。PSDのbboxから算出）
+// blinkTilt=左右の目を結ぶ線の角度。顔が傾いたポーズでまぶたが横一直線に閉じないようにする
 const LIVE_POSES = {
   "assets/characters/sakuya": {
     joy_1: {
       files: ["00_back_hair", "01_handwear", "02_footwear", "03_headwear", "04_legwear",
         "05_topwear", "06_neck", "07_ears", "08_face", "09_nose", "10_mouth",
         "11_eyewhite", "12_irides", "13_eyelash", "14_front_hair"],
-      aspect: "379 / 758", bob: "47.23% 35.22%", sway: "53.43% 24.01%", blink: "51.72% 25.99%",
+      aspect: "379 / 758", arm: "38.79% 33.25%", bob: "47.23% 35.22%", sway: "53.43% 24.01%", blink: "51.72% 25.99%", blinkTilt: "15.8deg",
     },
     joy_2: {
       files: ["00_back_hair", "01_footwear", "02_legwear", "03_neck", "04_headwear",
         "05_handwear", "06_topwear", "07_ears", "08_face", "09_mouth",
         "10_nose", "11_eyewhite", "12_irides", "13_eyelash", "14_front_hair"],
-      aspect: "303 / 764", bob: "55.45% 33.38%", sway: "69.97% 10.47%", blink: "54.79% 23.69%",
+      aspect: "303 / 764", arm: "50.83% 31.81%", bob: "55.45% 33.38%", sway: "69.97% 10.47%", blink: "54.79% 23.69%", blinkTilt: "-4.5deg",
     },
     joy_3: {
       files: ["00_back_hair", "01_headwear", "02_footwear", "03_legwear", "04_topwear",
         "05_ears", "06_face", "07_mouth", "08_nose", "09_eyewhite",
         "10_irides", "11_eyelash", "12_handwear", "13_front_hair"],
-      aspect: "307 / 759", bob: "44.63% 33.33%", sway: "40.16% 21.52%", blink: "44.14% 25.43%",
+      aspect: "307 / 759", arm: "43.65% 33.33%", bob: "44.63% 33.33%", sway: "40.16% 21.52%", blink: "44.14% 25.43%", blinkTilt: "-7.1deg",
     },
     joy_4: {
       files: ["00_back_hair", "01_headwear", "02_footwear", "03_legwear", "04_topwear",
         "05_ears", "06_face", "07_mouth", "08_nose", "09_eyewhite",
         "10_irides", "11_handwear", "12_eyelash", "13_front_hair"],
-      aspect: "298 / 760", bob: "37.58% 31.18%", sway: "37.58% 22.04%", blink: "35.91% 23.42%",
+      aspect: "298 / 760", arm: "38.26% 30.00%", bob: "37.58% 31.18%", sway: "37.58% 22.04%", blink: "35.91% 23.42%", blinkTilt: "-6.2deg",
     },
   },
 };
-// パーツ名→動きのクラス。st-sway=髪ゆれ、st-bob=頭のゆらぎ、st-blink=まばたき（imgに付与）
+// パーツ名→動きのクラス。st-sway=髪ゆれ、st-bob=頭のゆらぎ、st-arm=腕のゆれ、st-blink=まばたき（imgに付与）
 const LIVE_PART_MOTION = {
   back_hair: "st-sway",
+  handwear: "st-arm",
   headwear: "st-bob", ears: "st-bob", face: "st-bob", mouth: "st-bob", nose: "st-bob",
   front_hair: "st-bob",
   eyewhite: "st-bob st-blink", irides: "st-bob st-blink", eyelash: "st-bob st-blink",
@@ -188,6 +190,8 @@ function showLiveChara(el, pose, label) {
   box.style.setProperty("--st-bob-origin", data.bob);
   box.style.setProperty("--st-sway-origin", data.sway);
   box.style.setProperty("--st-blink-origin", data.blink);
+  box.style.setProperty("--st-blink-tilt", data.blinkTilt || "0deg");
+  box.style.setProperty("--st-arm-origin", data.arm);
   for (const f of data.files) {
     const part = f.slice(3); // "00_back_hair" → "back_hair"
     const wrap = document.createElement("div");
@@ -1034,7 +1038,7 @@ function renderStatusCard() {
 let homeLineKey = "greet_first";   // いま表示中のセリフのボイスキー
 let homeGreetingSpoken = false;    // このホーム表示であいさつを喋ったか
 let greetingAutoSpoken = false;    // セッション中に自動あいさつを済ませたか（連発防止）
-let homeJoyPose = 2;               // いま表示中のjoyポーズ番号(1〜4)
+let homeJoyPose = 2;               // いま表示中のjoyポーズ番号(1〜JOY_POSE_COUNT)
 
 // 音声が解錠済み（＝一度でも操作済み or ネイティブ）なら、ホーム到着時にあいさつを自動発声
 function maybeSpeakGreeting() {
@@ -1053,7 +1057,7 @@ function maybeSpeakGreeting() {
 function spinHomeChara() {
   const box = $("#home-chara");
   let n = homeJoyPose;
-  while (n === homeJoyPose) n = 1 + Math.floor(Math.random() * 4);
+  while (n === homeJoyPose) n = 1 + Math.floor(Math.random() * JOY_POSE_COUNT);
   homeJoyPose = n;
   box.classList.remove("chara-spin");
   void box.offsetWidth; // アニメーション再発火
@@ -1168,13 +1172,15 @@ function renderRecoCard() {
 function renderHome() {
   stopCatalog();
   Bgm.play("title");   // ホーム＝タイトル曲（ユーザー操作前は再生が拒否されるので、次のタップで鳴る）
-  // ヒーローカードでは「迎えてくれる」joyポーズ（いいね）を表示
-  showPose($("#home-chara"), "joy_2", trainer().name);
   homeLineKey = homeGreetingKey();
+  // ヒーローカードは「迎えてくれる」joyポーズ。3日以上あいた「おかえり」の時だけ、
+  // 両腕を広げた歓迎ポーズ(joy_5)で迎える（2026-07-23ルク指示）
+  homeJoyPose = homeLineKey === "greet_comeback" ? 5 : 2;
+  showPose($("#home-chara"), `joy_${homeJoyPose}`, trainer().name);
   homeGreetingSpoken = false;
   renderQuote($("#home-quote"), homeLineKey);
   maybeSpeakGreeting();
-  for (let i = 1; i <= 4; i++) new Image().src = `${trainer().dir}/joy_${i}.png`;
+  for (let i = 1; i <= JOY_POSE_COUNT; i++) new Image().src = `${trainer().dir}/joy_${i}.png`;
   // タップ切替時のチラつき防止：レイヤー版アセット（1ポーズ約60KB）も先読み
   const livePoses = LIVE_POSES[trainer().dir] || {};
   for (const [p, d] of Object.entries<any>(livePoses)) {
@@ -1468,7 +1474,7 @@ function confirmQuitWorkout() {
 }
 
 // ---- 完了画面 ----
-const JOY_POSE_COUNT = 4; // joy_1〜joy_4 を完走のたびに順番に使う
+const JOY_POSE_COUNT = 5; // joy_1〜joy_5 を完走のたびに順番に使う（joy_5＝おかえりの歓迎ポーズ）
 const CONFETTI_COLORS = ["#ff4f81", "#ffb648", "#2b3a67", "#57966a", "#ff8a4f", "#fff"];
 
 function fireConfetti() {
