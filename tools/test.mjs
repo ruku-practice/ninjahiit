@@ -613,10 +613,13 @@ eq("audio: サンプルレートが変わっても比例して計算される(44
   ok("tutorial: 各動画にsrcとタイトルがある",
      Object.values(TUTORIAL_VIDEOS).every((v) => v.src && v.title));
   {
-    // READYフラグと実ファイルの整合（フラグだけtrueで動画がない、を防ぐ）
-    const dir = new URL("../public/", import.meta.url);
-    const exists = Object.values(TUTORIAL_VIDEOS).every((v) => existsSync(new URL(v.src, dir)));
-    ok("tutorial: READY=trueなら動画ファイルが揃っている", !TUTORIAL_READY || exists);
+    // READYフラグと実ファイルの整合（フラグだけtrueで動画がない、を防ぐ）。
+    // 動画はサーバー配信（絶対URL）に切り替えたが、配信元はローカルの public/ を build→deploy する。
+    // そのため src が https の絶対URLであること＋配信元ファイルが public 配下に存在することの両方を確認する。
+    const dir = new URL("../public/assets/videos/tutorial/", import.meta.url);
+    const allRemote = Object.values(TUTORIAL_VIDEOS).every((v) => /^https:\/\//.test(v.src));
+    const exists = Object.values(TUTORIAL_VIDEOS).every((v) => existsSync(new URL(v.src.split("/").pop(), dir)));
+    ok("tutorial: READY=trueなら配信元の動画ファイルが揃っている", !TUTORIAL_READY || (allRemote && exists));
   }
   {
     const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");

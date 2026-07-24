@@ -385,9 +385,15 @@ export function quoteLines(text: string): string[][] {
 // falseの間は初回モーダルもマイページの導線も出さない（未完成の動画を触らせないため）。
 export const TUTORIAL_READY = true;   // 動作確認用に一時的にtrue（初稿動画を配置済み）
 
+// チュートリアル動画はサーバー（rukupractice.com/kintore/play/ 配下）を参照する。
+// アプリには焼き込まず、サーバーの1ファイルを差し替えるだけで全ユーザー（申請ビルド含む）へ即反映できる
+// ＝解説動画を作り直しても再申請が不要。お手本動画（種目）は従来どおり埋め込みなので、
+// オフラインでもワークアウト自体は完結する（ネットが要るのは初回のチュートリアル案内だけ）。
+const TUTORIAL_BASE = "https://rukupractice.com/kintore/play/assets/videos/tutorial";
+
 export const TUTORIAL_VIDEOS = {
-  overview: { title: "概要", note: "約1分でざっくり", src: "assets/videos/tutorial/overview.mp4" },
-  detail: { title: "詳細", note: "約2分でしっかり", src: "assets/videos/tutorial/detail.mp4" },
+  overview: { title: "概要", note: "約1分でざっくり", src: `${TUTORIAL_BASE}/overview.mp4` },
+  detail: { title: "詳細", note: "約2分でしっかり", src: `${TUTORIAL_BASE}/detail.mp4` },
 };
 
 // 初回のチュートリアル案内を出すか。ack=案内済みフラグ（一度trueになったら二度と出さない）
