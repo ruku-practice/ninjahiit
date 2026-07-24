@@ -202,6 +202,15 @@
           <span class="set-arrow">›</span>
         </div>
       </a>
+      <button id="btn-credits-link" class="set-card glass set-link" type="button">
+        <div class="set-row">
+          <div class="set-info">
+            <b>📜 クレジット</b>
+            <small>制作・キャラクター・楽曲・ボイスについて</small>
+          </div>
+          <span class="set-arrow">›</span>
+        </div>
+      </button>
 
       <p class="fan-note">本アプリはCryptoNinjaのファンメイド（二次創作）アプリです。</p>
     </div>
@@ -280,6 +289,28 @@
         <button id="btn-quit-confirm" class="detail-start-btn" type="button">中断してホームへ</button>
         <button id="btn-quit-cancel" class="btn-ghost" type="button">つづける</button>
       </div>
+    </div>
+  </div>
+
+  <!-- クレジット（マイページ「このアプリについて」から常時いつでも見られる） -->
+  <div id="credits-modal" class="modal-veil" hidden>
+    <div class="modal-card glass credits-card">
+      <h3>クレジット</h3>
+      <div class="credits-body">
+        <p><b>製作者：ルク</b><br>
+          <a href="https://x.com/ruku_practice" target="_blank" rel="noopener">X（Twitter）</a>　<a href="https://rukupractice.substack.com" target="_blank" rel="noopener">Substack</a></p>
+        <p><b>キャラクター協力：クリプトニンジャ</b><br>
+          <a href="https://www.ninja-dao.com/" target="_blank" rel="noopener">公式サイト</a>　<a href="https://note.com/danku_mj/n/nc0f2b06daae6" target="_blank" rel="noopener">解説記事</a><br>
+          本アプリはガイドラインに沿った<br>ファンメイド二次創作です。</p>
+        <p><b>曲：</b><a href="https://suno.com/@ikehaya" target="_blank" rel="noopener">咲耶</a><br>
+          咲耶の原曲をSunoで<br>フィットネスアプリBGM向けにアレンジ</p>
+        <p class="credits-sub">タイトル画面・ワークアウト：<br>
+          「<a href="https://suno.com/song/3975d807-5396-48b8-8fa9-1709148353ab" target="_blank" rel="noopener">フラクタル・ランナー</a>」Cover</p>
+        <p><b>声（ボイス）</b><br>
+          <a href="https://github.com/Aratako/Irodori-TTS" target="_blank" rel="noopener">Irodori-TTS</a>（Arataka氏 / MIT License）<br>
+          サクヤのボイスを生成</p>
+      </div>
+      <button id="btn-credits-close" class="detail-start-btn" type="button">閉じる</button>
     </div>
   </div>
 

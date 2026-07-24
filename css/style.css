@@ -967,6 +967,15 @@ p.kcal-note { text-align: center; }
   filter: drop-shadow(0 6px 14px rgba(50,74,120,0.28)); }
 .set-info b .set-ico { width: 20px; height: 20px; vertical-align: -4px; margin-right: 2px; }
 
+/* ---- クレジット（マイページ「このアプリについて」・2026-07-24）---- */
+.credits-card { max-height: 82vh; overflow-y: auto; }
+.credits-body { width: 100%; text-align: left; }
+.credits-body p { margin: 0 0 14px; }
+.credits-body p:last-child { margin-bottom: 0; }
+.credits-body .credits-sub { margin-top: -8px; font-size: 0.8rem; }
+.credits-body a { color: var(--gold); font-weight: 800; text-decoration: underline; }
+.credits-body a:active { opacity: 0.7; }
+
 /* ---- レイヤー分割キャラ（See-through製 live アセット）：呼吸・髪ゆれ・まばたき ----
    .st-chara は1枚絵<img>の置き換え。中の .st-layer は全レイヤー同寸で重ねるだけ。
    ピボット（transform-origin）はPSDのレイヤー座標から算出した固定値：

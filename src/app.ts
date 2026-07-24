@@ -2001,6 +2001,12 @@ document.addEventListener("DOMContentLoaded", () => {
     maybeAskTutorial();   // 健康注意を読み終えてから、チュートリアルの案内を出す（重ならないように）
   };
   $("#btn-health-notice-link").onclick = () => { $("#health-modal").hidden = false; };
+
+  // クレジット：マイページ「このアプリについて」からいつでも見られる。
+  // 外側（すりガラス）タップとボタンの両方で閉じる（confirm-modalと同じ作法）
+  $("#btn-credits-link").onclick = () => { $("#credits-modal").hidden = false; };
+  $("#btn-credits-close").onclick = () => { $("#credits-modal").hidden = true; };
+  $("#credits-modal").onclick = (e) => { if (e.target === $("#credits-modal")) $("#credits-modal").hidden = true; };
   if (shouldShowHealthNotice(store.get("health_notice_ack", false))) {
     $("#health-modal").hidden = false;
   }

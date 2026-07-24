@@ -781,5 +781,30 @@ eq("audio: サンプルレートが変わっても比例して計算される(44
      (ts.match(/syncSoundUI\(\)/g) || []).length >= 3);
 }
 
+// ---- クレジット（マイページ「このアプリについて」・2026-07-24）----
+{
+  const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  const ts = readFileSync(new URL("../src/app.ts", import.meta.url), "utf8");
+  ok("credits: 「このアプリについて」直下（プライバシーポリシーの次）に導線がある",
+     /プライバシーポリシー・免責事項[\s\S]{0,300}?id="btn-credits-link"/.test(html));
+  ok("credits: モーダルのDOMと閉じるボタンがある",
+     /id="credits-modal" class="modal-veil" hidden[\s\S]{0,2000}?id="btn-credits-close"/.test(html));
+  // 表示文の正本（BGM/CREDITS.md）と一致していることを確認する項目
+  ok("credits: 製作者リンク（X・Substack）がある",
+     html.includes('href="https://x.com/ruku_practice"') && html.includes('href="https://rukupractice.substack.com"'));
+  ok("credits: キャラクター協力リンク（クリプトニンジャ公式・解説記事）がある",
+     html.includes('href="https://www.ninja-dao.com/"') && html.includes('href="https://note.com/danku_mj/n/nc0f2b06daae6"'));
+  ok("credits: 楽曲リンク（咲耶・フラクタル・ランナー）がBGM/CREDITS.mdの正本と一致",
+     html.includes('href="https://suno.com/@ikehaya"') && html.includes('href="https://suno.com/song/3975d807-5396-48b8-8fa9-1709148353ab"'));
+  ok("credits: ボイスのクレジット（Irodori-TTS・MIT License）がある",
+     html.includes('href="https://github.com/Aratako/Irodori-TTS"') && html.includes("MIT License"));
+  ok("credits: 外部リンクは既存パターン(target=_blank + rel=noopener)で開く。7本すべて",
+     (html.match(/<a href="https:\/\/(x\.com\/ruku_practice|rukupractice\.substack\.com|www\.ninja-dao\.com\/|note\.com\/danku_mj\/n\/nc0f2b06daae6|suno\.com\/@ikehaya|suno\.com\/song\/3975d807-5396-48b8-8fa9-1709148353ab|github\.com\/Aratako\/Irodori-TTS)" target="_blank" rel="noopener">/g) || []).length === 7);
+  ok("credits: 開閉の配線がある（開く・閉じる・外側タップで閉じる）",
+     ts.includes('$("#btn-credits-link").onclick = () => { $("#credits-modal").hidden = false; };') &&
+     ts.includes('$("#btn-credits-close").onclick = () => { $("#credits-modal").hidden = true; };') &&
+     /#credits-modal"\)\.onclick[\s\S]{0,120}?\$\("#credits-modal"\)\.hidden = true;/.test(ts));
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
