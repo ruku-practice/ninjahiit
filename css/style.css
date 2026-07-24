@@ -935,11 +935,20 @@ p.kcal-note { text-align: center; }
     position: relative;
     /* スマホ画面らしく見せる控えめな縁取り（任意演出） */
     box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 24px 70px rgba(0,0,0,0.4);
-    /* transformはno-opだが、これによりbodyがposition:fixedな子孫（下部ナビ・トースト・
-       検出/実行画面のオーバーレイ・モーダル等）の containing block になる。
-       結果としてそれらのleft:0/right:0やleft:50%+translateXは実ビューポートではなく
-       この430pxカラム基準で計算され、広い画面でもカラム内にきれいに収まる。 */
-    transform: translateZ(0);
+    /* 【2026-07-24】旧実装の transform: translateZ(0)（fixed子孫をカラムに閉じ込める
+       トリック）は撤去した。ページがスクロールするとfixed子孫がbodyごと画面外へ
+       流れる致命傷があるため（マイページのクレジットモーダルが「開いても見えない」）。
+       fixed要素はビューポート基準に戻し、全幅系の3つ（.hud-env・#screen-run::after・
+       .detail-cta）だけ下でカラム幅に個別固定する。中央寄せ系（.toast・.poke-menu・
+       .modal-card）はカラム自体が中央配置なので無調整で一致する。 */
+  }
+
+  /* 全幅fixedの3要素をカラム(430px中央)に閉じ込める（inset:0/left:0-right:0の上書き） */
+  .hud-env,
+  #screen-run.hud::after,
+  .detail-cta {
+    left: calc(50% - 215px);
+    right: calc(50% - 215px);
   }
 
   /* vw/vh系ユニットは上のtransformトリックの影響を受けず実ビューポート基準のまま残るため、
