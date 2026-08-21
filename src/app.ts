@@ -15,6 +15,7 @@ import { KOBAN_RATES, SHIELD_MAX, addKoban, kobanBalance, kobanLedger, canEarnPo
 import { maybeShowInterstitial, recordFirstLaunch } from "./ads.ts";
 import { syncNow } from "./sync.ts";
 import { ensureSignedIn, isOAuthReturnUrl } from "./cloud.ts";
+import { mirrorToWaiwai, restoreFromWaiwaiIfEmpty } from "./waiwai.ts";
 // Google連携(linkGoogle/signOutGoogle/getIdentityStatus)はv1でUIを蓋にしたため未import。
 // 将来復活のため関数自体はcloud.tsに残置（審査前仕分け§1b・2026-07-21ルク決定）。
 import {
@@ -32,7 +33,12 @@ const store = {
     try { return JSON.parse(localStorage.getItem("ninjahiit_" + key)) ?? fallback; }
     catch { return fallback; }
   },
-  set(key, value) { localStorage.setItem("ninjahiit_" + key, JSON.stringify(value)); },
+  set(key, value) {
+    localStorage.setItem("ninjahiit_" + key, JSON.stringify(value));
+    // わいわいSDKへのミラー（PK-14セーブ保全）: fire-and-forget、失敗しても上のローカル
+    // 保存には無関係。対象キー以外・SDK未接続時はno-op（waiwai.ts参照）。
+    mirrorToWaiwai(key, value);
+  },
 };
 
 interface HistoryEntry {
@@ -2104,6 +2110,13 @@ document.addEventListener("DOMContentLoaded", () => {
     Native.restoreIfEmpty().then((restored) => {
       if (restored) { location.reload(); return; }
       Native.syncReminder(state.settings.reminderTime, todayStats().count > 0, streakDays());
+    });
+  } else {
+    // Web/PWA（わいわいタウン埋め込み含む）: localStorageが消えていたらわいわいSDK側の
+    // バックアップから復元→リロード（PK-14セーブ保全。Native.restoreIfEmptyと同じ
+    // 「ローカルが空のときだけ触る」方針、waiwai.ts参照）。
+    restoreFromWaiwaiIfEmpty().then((restored) => {
+      if (restored) location.reload();
     });
   }
 
