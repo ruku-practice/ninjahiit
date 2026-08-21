@@ -19,7 +19,26 @@ export function supabasePromise(): Promise<any> | null {
 
 // サインイン済みのuser_idを返す。セッションが無ければ匿名サインインを試みる。
 // （匿名サインインはSupabase側で Authentication → Sign In / Up → Anonymous sign-ins を有効にする必要あり）
-export async function ensureSignedIn(): Promise<string | null> {
+//
+// 実行中の1本を共有する（2026-07-29修正）。
+// 起動直後は app.ts / sync.ts / friends.ts / ranking.ts から同時に呼ばれるため、
+// ガードが無いと全員が「セッション無し」を見てから各自 signInAnonymously() を叩き、
+// 1回の起動で匿名アカウントが複数生まれていた（実測: 87件中45件が同一秒に作られたペア）。
+// 捨てられる側にデータは付かないが、利用者数が水増しされて指標が使えなくなる。
+// 実行中の呼び出しを1本に束ねる（同時に呼ばれても本体は1回だけ動く）。純粋なのでテスト可能
+export function singleFlight<T>(fn: () => Promise<T>): () => Promise<T> {
+  let inflight: Promise<T> | null = null;
+  return () => {
+    if (!inflight) {
+      inflight = fn().finally(() => { inflight = null; });
+    }
+    return inflight;
+  };
+}
+
+export const ensureSignedIn = singleFlight(signInOnce);
+
+async function signInOnce(): Promise<string | null> {
   const p = supabasePromise();
   if (!p) return null;
   try {

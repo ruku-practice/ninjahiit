@@ -18,7 +18,7 @@ import {
 } from "../src/points.ts";
 import { pendingResults, syncCursor, setSyncCursor } from "../src/sync.ts";
 import { validateNinjaName, filterHiddenRanking, hideNinja, unhideNinja, hiddenNinjas } from "../src/ranking.ts";
-import { isOAuthReturnUrl } from "../src/cloud.ts";
+import { isOAuthReturnUrl, singleFlight } from "../src/cloud.ts";
 import { streakBonusExp } from "../src/data.ts";
 import { AUDIO_MIX, MP3_ENCODER_DELAY_SEC, mp3TrimSampleCount, trimChannelData,
   BGM_TRACKS, BGM_VOLUME, BGM_DUCK_VOLUME, bgmFadeSteps, shouldDuckForVoice } from "../src/audio.ts";
@@ -805,6 +805,32 @@ eq("audio: サンプルレートが変わっても比例して計算される(44
      ts.includes('$("#btn-credits-close").onclick = () => { $("#credits-modal").hidden = true; };') &&
      /#credits-modal"\)\.onclick[\s\S]{0,120}?\$\("#credits-modal"\)\.hidden = true;/.test(ts));
 }
+
+// ---- singleFlight（匿名アカウント二重作成の再発防止・2026-07-29） ----
+// 起動直後は app.ts / sync.ts / friends.ts / ranking.ts から ensureSignedIn() が同時に呼ばれる。
+// ガードが無いと全員が signInAnonymously() を叩き、1起動で複数アカウントが生まれる
+await (async () => {
+  let calls = 0;
+  let release;
+  const gate = new Promise((r) => { release = r; });
+  const guarded = singleFlight(async () => { calls++; await gate; return "uid-1"; });
+
+  const all = Promise.all([guarded(), guarded(), guarded()]);
+  release();
+  eq("singleFlight: 同時3回でも本体は1回だけ動く", calls, 1);
+  eq("singleFlight: 3人とも同じ結果を受け取る", await all, ["uid-1", "uid-1", "uid-1"]);
+
+  // 完了後は解放される＝次の呼び出しは新しく走る（セッション切れ後に再サインインできる）
+  eq("singleFlight: 完了後の呼び出しは走り直す", await guarded(), "uid-1");
+  eq("singleFlight: 走り直しで本体は2回目", calls, 2);
+
+  // 失敗しても詰まらない（オフラインで1度失敗したら二度と再試行できない、を防ぐ）
+  let boom = 0;
+  const failing = singleFlight(async () => { boom++; throw new Error("offline"); });
+  await failing().catch(() => {});
+  await failing().catch(() => {});
+  eq("singleFlight: 失敗しても次回また試せる", boom, 2);
+})();
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
