@@ -92,6 +92,17 @@ export async function mirrorToWaiwai(key: string, value: unknown): Promise<void>
   }
 }
 
+// リロード無限ループ防止（2026-08-27・実害バグ修正）：
+// iOS Safari＋わいわいタウンiframe埋め込みでは、上部コメントのとおり localStorage が
+// 「一時領域」扱いになり、setItem直後のlocation.reload()をまたいで値が残らないことがある。
+// すると次のロードでも ninjahiit_history が空のまま→復元「成功」（history以外のどれか1キーが
+// 復元できただけでも restored=true になる）→reload…を永久に繰り返し、画面がほぼ黒のまま
+// 数秒おきに一瞬だけ描画がチラ見えする（実測: 2026-08-27カトスミさん報告）。
+// sessionStorageは同一タブ内のreloadをまたいで確実に残る（クロスサイト遷移時に効く
+// ストレージ分離とは別物・同一ブラウジングコンテキストが続く限り消えない）ため、
+// 「このタブでは復元を試みた」の一回きりフラグに使い、2回目以降は無条件でスキップする。
+const RESTORE_ATTEMPTED_KEY = "ninjahiit_waiwai_restore_attempted";
+
 // 起動時に一度だけ呼ぶ。ninjahiit_history が既にローカルにあるなら何もしない
 // （native.ts の Native.restoreIfEmpty と同じ「生きているなら触らない」方針）。
 // 空のときだけ、わいわいSDK側の各キーから復元を試みる。1つでも復元できたキーが
@@ -99,6 +110,14 @@ export async function mirrorToWaiwai(key: string, value: unknown): Promise<void>
 export async function restoreFromWaiwaiIfEmpty(): Promise<boolean> {
   if (typeof localStorage === "undefined") return false;
   if (localStorage.getItem("ninjahiit_history")) return false;
+  try {
+    if (typeof sessionStorage !== "undefined") {
+      if (sessionStorage.getItem(RESTORE_ATTEMPTED_KEY)) return false;
+      sessionStorage.setItem(RESTORE_ATTEMPTED_KEY, "1");
+    }
+  } catch {
+    // sessionStorageが使えない環境（プライベートモード等）はガード無しで1回だけ試みる
+  }
   const ok = await loadSdk();
   if (!ok || !window.waiwai) return false;
   let restored = false;
