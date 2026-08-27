@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800;900&family=Baloo+2:wght@700;800&display=swap" rel="stylesheet">
-  <script type="module" crossorigin src="./bundle/index-BtVFTfPw.js"></script>
+  <script type="module" crossorigin src="./bundle/index-CLVBue7P.js"></script>
   <link rel="stylesheet" crossorigin href="./bundle/index-B7Idv1jp.css">
 </head>
 <body>
@@ -244,6 +244,17 @@
 
   <div id="toast" class="toast"></div>
 
+  <!-- 手裏剣メッセージ選択（Duolingo式: 用意された応援文から選ぶだけ）。
+       なかま画面(#screen-ranking)と完了画面(#screen-done)の両方から開かれるため、
+       特定の画面の子要素にせず全画面共通のオーバーレイとして置く
+       （2026-08-27修正: 以前は#screen-ranking内にネストしており、完了画面から
+       開くと親要素のdisplay:noneに隠れてボタン無反応になっていた） -->
+  <div id="poke-menu" class="poke-menu glass" hidden>
+    <b>どの手裏剣を投げる？</b>
+    <div id="poke-menu-btns"></div>
+    <button id="poke-menu-cancel" class="rank-rename-btn">やめる</button>
+  </div>
+
   <!-- 運動前の健康注意（初回起動時に1回・マイページからいつでも再表示可） -->
   <div id="health-modal" class="modal-veil" hidden>
     <div class="modal-card glass">
@@ -412,13 +423,6 @@
         </div>
       </div>
       <div id="friend-list" class="rank-list"></div>
-
-      <!-- 手裏剣メッセージ選択（Duolingo式: 用意された応援文から選ぶだけ） -->
-      <div id="poke-menu" class="poke-menu glass" hidden>
-        <b>どの手裏剣を投げる？</b>
-        <div id="poke-menu-btns"></div>
-        <button id="poke-menu-cancel" class="rank-rename-btn">やめる</button>
-      </div>
 
       <p class="fan-note">本アプリはCryptoNinjaのファンメイド（二次創作）アプリです。</p>
     </div>
