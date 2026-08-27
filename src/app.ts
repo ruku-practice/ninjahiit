@@ -1641,8 +1641,10 @@ function renderDone(workout, totalWorkSec) {
     (missionCleared ? `<li>🚩 今日の任務クリア！（＋${MISSION_BONUS_EXP}修行値込み）</li>` : "") +
     (state.lastStreakBonus ? `<li>🔥 連続${streakDays()}日ボーナス ＋${state.lastStreakBonus}修行値込み</li>` : "") +
     `<li>${s > 0 ? `🔥 ${s}日連続` : "また明日も待ってるよ"}</li>`;
+  // 2026-08-27ルク指示：計測用の短縮リンクをハッシュタグ行の次の行に追加
+  // （https://rukupractice.com/go/kintore-share → 302でApp Storeへ・?src=share付与）
   const text = encodeURIComponent(
-    `${trainer().name}と一緒に「${workout.title}」完走した！🥷 #4分筋トレ #CryptoNinja`);
+    `${trainer().name}と一緒に「${workout.title}」完走した！🥷 #4分筋トレ #CryptoNinja\nhttps://rukupractice.com/go/kintore-share`);
   $("#btn-share").href = `https://twitter.com/intent/tweet?text=${text}`;
   show("screen-done");
   renderDonePokeSection();
