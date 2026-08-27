@@ -67,9 +67,20 @@ const quote = (key, vars = {}) =>
   pick(trainer().quotes[key]).replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? "");
 
 // ---- 画面遷移 ----
+// FB-2（2026-08-27）：マイページ/実施履歴/詳細/番付/マイメニューの5画面は同じ
+// `.detail-scroll`クラスのスクロールコンテナを共有しており、以前は`$(".detail-scroll")`
+// （querySelector＝DOM順で最初に見つかった1個＝常にマイページのコンテナ）だけをリセット
+// する行が詳細画面の遷移直前に1箇所だけあったが、実際には対象がズレていて無効だった。
+// 画面を隠しても各要素のscrollTopは保持されるため、前回そのタブを下までスクロールした
+// 状態のまま次に開くと、開いた瞬間から一番下に見える（マイメニューで実機報告・Note8）。
+// show()自身が遷移先画面の中の`.detail-scroll`だけを毎回先頭へ戻すようにし、
+// 呼び出し側で個別にリセットを覚えておかなくても全画面で一貫して直る形にした。
 function show(screenId) {
   document.querySelectorAll<any>(".screen").forEach(s => s.classList.remove("active"));
-  $("#" + screenId).classList.add("active");
+  const el = $("#" + screenId);
+  el.classList.add("active");
+  const scroller = el.querySelector(".detail-scroll");
+  if (scroller) scroller.scrollTop = 0;
 }
 
 // ---- キャラ表示（PNGがあれば表示、なければ絵文字プレースホルダー） ----
@@ -518,8 +529,7 @@ function openDetail(workout, from) {
   }
   $("#btn-detail-start").onclick = () => { stopCatalog(); startWorkout(p); };
   $("#detail-hero").onclick = null;
-  $(".detail-scroll").scrollTop = 0;
-  show("screen-detail");
+  show("screen-detail"); // スクロール先頭リセットはshow()側に統一済み（旧$(".detail-scroll")は対象がズレていた）
 }
 
 function detailBack() {
@@ -1173,6 +1183,11 @@ function fitCardTitles() {
 let tutorialQueueRest: string[] = [];
 let tutorialReturnScreen = "screen-home";
 
+// チュートリアル動画（唯一「音の出る」動画。実演動画等は無音のためBGM干渉は起きない）は
+// 再生中BGMと二重に鳴って聞き取りづらくなるため、動画の再生/一時停止に連動してBGMを
+// 一時停止/再開する（2026-08-27ルク実機報告・Note8）。Bgm.pause/resumeはWeb/Android＝
+// <audio>要素、iOS(Native.hasBgm)＝AudioSessionBridge(AVAudioPlayer)を内部で振り分けるため、
+// ここでBgmを呼ぶだけで3プラットフォームとも同じ挙動になる。
 function playTutorial(key: string) {
   const v = TUTORIAL_VIDEOS[key as keyof typeof TUTORIAL_VIDEOS];
   if (!v) return;
@@ -1199,6 +1214,7 @@ function closeTutorial() {
   el.load();
   tutorialQueueRest = [];
   show(tutorialReturnScreen);
+  Bgm.resume(); // 動画を閉じたら必ずBGMへ戻す（pauseイベント経由の再開に加えて明示的に一度）
 }
 
 // ホーム吹き出しの描画。改行ルールは data.ts の quoteLines() が決める（左寄せ・句読点で折り返し）。
@@ -2030,10 +2046,22 @@ document.addEventListener("DOMContentLoaded", () => {
   $("#btn-tut-play-overview").onclick = () => { tutorialQueueRest = []; playTutorial("overview"); };
   $("#btn-tut-play-detail").onclick = () => { tutorialQueueRest = []; playTutorial("detail"); };
   $("#btn-tutorial-back").onclick = closeTutorial;
-  ($("#tutorial-video") as HTMLVideoElement).addEventListener("ended", () => {
-    const next = tutorialQueueRest.shift();
-    if (next) playTutorial(next); // 「両方見る」の2本目へ
-  });
+  {
+    // FB-1（2026-08-27）：動画の再生/一時停止に連動してBGMを止める/戻す。
+    // play→pause、pause→resumeを素直に紐付けるだけで「再生中は止める・一時停止/終了/閉じるで戻す」
+    // が全部揃う（ended到達時はブラウザ仕様上pauseが先に発火するため、素の一時停止と自然な曲終わりを
+    // 区別する必要がある＝videoElement.endedで判定し、曲送り中(次のキューがある)は再開しない）。
+    const tutorialVideoEl = $("#tutorial-video") as HTMLVideoElement;
+    tutorialVideoEl.addEventListener("play", () => Bgm.pause());
+    tutorialVideoEl.addEventListener("pause", () => {
+      if (!tutorialVideoEl.ended) Bgm.resume(); // ユーザーが一時停止ボタンを押した場合のみ即再開
+    });
+    tutorialVideoEl.addEventListener("ended", () => {
+      const next = tutorialQueueRest.shift();
+      if (next) playTutorial(next); // 「両方見る」の2本目へ（BGMは止めたまま=playTutorial→playイベントで維持）
+      else Bgm.resume(); // これ以上再生する動画が無ければBGMを戻す
+    });
+  }
   // 動画が未配置のうちは初回モーダルもマイページの導線も出さない（未完成の動画を触らせない）
   $("#btn-tutorial-link").hidden = !TUTORIAL_READY;
   function maybeAskTutorial() {
